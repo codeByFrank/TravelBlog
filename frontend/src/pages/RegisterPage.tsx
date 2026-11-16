@@ -20,26 +20,31 @@ export default function RegisterPage() {
     }
 
     return (
-        <form onSubmit={handleSubmit}>
-            <h1>Konto erstellen</h1>
-            <input
-                placeholder="Benutzername"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
-            />
-            <input
-                placeholder="Passwort (mind. 8 Zeichen)"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="new-password"
-            />
-            {error && <p>{error}</p>}
-            <button type="submit">Registrieren</button>
-            <p>
-                Schon ein Konto? <Link to="/login">Anmelden</Link>
-            </p>
-        </form>
+        <main className="mx-auto flex max-w-md flex-col gap-4 px-6 py-16">
+            <form onSubmit={handleSubmit}>
+                <h1>Konto erstellen</h1>
+                <input
+                    placeholder="Benutzername"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    autoComplete="username"
+                />
+                <input
+                    placeholder="Passwort (mind. 8 Zeichen)"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
+                />
+                {error && <p>{error}</p>}
+                <button type="submit" className="text-4xl font-bold tracking-tight">Registrieren</button>
+                <p className="text-muted">
+                    Bereits registriert?{' '}
+                    <Link to="/login" className="font-semibold text-accent hover:text-accent-dark">
+                        Anmelden
+                    </Link>
+                </p>
+            </form>
+        </main>
     )
 }

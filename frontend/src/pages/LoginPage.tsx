@@ -27,26 +27,31 @@ export default function LoginPage() {
     }
 
     return (
-        <form onSubmit={handleSubmit}>
-            <h1>Anmelden</h1>
-            <input
-                placeholder="Benutzername"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
-            />
-            <input
-                placeholder="Passwort"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-            />
-            {error && <p>{error}</p>}
-            <button type="submit">Anmelden</button>
-            <p>
-                Noch kein Konto? <Link to="/register">Registrieren</Link>
-            </p>
-        </form>
+        <main className="mx-auto flex max-w-md flex-col gap-4 px-6 py-16">
+            <form onSubmit={handleSubmit}>
+                <h1>Anmelden</h1>
+                <input
+                    placeholder="Benutzername"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    autoComplete="username"
+                />
+                <input
+                    placeholder="Passwort"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                />
+                {error && <p>{error}</p>}
+                <button type="submit" className="text-4xl font-bold tracking-tight">Anmelden</button>
+                <p className="text-muted">
+                    Noch kein Konto?{' '}
+                    <Link to="/register" className="font-semibold text-accent hover:text-accent-dark">
+                        Registrieren
+                    </Link>
+                </p>
+            </form>
+        </main>
     )
 }
