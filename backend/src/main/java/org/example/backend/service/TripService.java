@@ -3,7 +3,9 @@ package org.example.backend.service;
 import org.example.backend.dto.TripRequest;
 import org.example.backend.model.Trip;
 import org.example.backend.repository.TripRepo;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -21,6 +23,10 @@ public class TripService {
     }
 
     public Trip createTrip(String userId, TripRequest request) {
+        if (request.endDate().isBefore(request.startDate())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Das Enddatum darf nicht vor dem Startdatum liegen.");
+        }
         Trip trip = new Trip(
                 null,
                 request.title().trim(),

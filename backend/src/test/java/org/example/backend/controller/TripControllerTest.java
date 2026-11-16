@@ -124,7 +124,8 @@ class TripControllerTest {
                                   "endDate": "2024-05-20"
                                 }
                                 """))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest());
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.title").value("Bitte einen Titel eingeben."));
 
         assertEquals(0, tripRepo.count());
     }
@@ -137,5 +138,20 @@ class TripControllerTest {
                                 {"title": "Italien", "startDate": "2024-05-12", "endDate": "2024-05-20"}
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isUnauthorized());
+    }
+
+    @Test
+    void createTrip_returnsBadRequest_whenEndDateIsBeforeStartDate() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/trips")
+                        .header("Authorization", bearer("user-1"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title": "Italien", "startDate": "2024-05-20", "endDate": "2024-05-12"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.detail")
+                        .value("Das Enddatum darf nicht vor dem Startdatum liegen."));
+
+        assertEquals(0, tripRepo.count());
     }
 }
