@@ -13,8 +13,10 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - GitHub Actions runs three workflows (`.github/workflows/`):
   - `maven.yml` (Java CI with Maven): builds and tests the backend with `mvn -B clean verify` on every push to a branch
     other than `main`.
-  - `build_backend.yml` (SonarQube_backend) and `build_frontend.yml` (SonarQube_frontend): on every pull request and
-    push to `main`, send the code to SonarQube Cloud for analysis. They do not build, test, or lint before the scan.
+  - `build_backend.yml` (SonarQube_backend): on every pull request and push to `main`, builds and tests the backend
+    and analyzes it with SonarQube Cloud.
+  - `build_frontend.yml` (SonarQube_frontend): on every pull request and push to `main`, sends `frontend/src` to
+    SonarQube Cloud for analysis; it does not lint or build before the scan.
 - SonarQube Cloud is used because it was introduced in the course; it reports bugs, code smells, security hotspots,
   duplication, and test coverage, and comments the Quality Gate result on each pull request.
 - Backend and frontend are two separate SonarQube Cloud projects in the organization `dinara-mfl`:
@@ -23,9 +25,12 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - A pull request is merged only when its Quality Gate has passed.
 - Backend coverage is measured with JaCoCo (`jacoco-maven-plugin` in `backend/pom.xml`); `mvn verify` writes the report
   to `backend/target/site/jacoco/jacoco.xml`.
-- Not set up at the moment: `build_backend.yml` was reset to the plain SonarQube template on 2026-11-16, so it neither
-  builds nor tests before the scan, does not pass the JaCoCo report, and does not limit the analysis to `backend/`.
-  Backend coverage therefore does not reach SonarQube Cloud, and frontend files can show up in the backend analysis.
+- `build_backend.yml` runs `mvn -B verify` and the SonarQube Maven plugin in one command, in the working directory
+  `backend/`: Maven builds, runs the tests, writes the JaCoCo report, and then starts the analysis, so the analysis
+  covers only the backend and includes coverage. The organization is set in `backend/pom.xml`
+  (`sonar.organization`), the project key in the workflow.
+- The backend is not analyzed with SonarQube's automatic configuration, because it does not fit a repository that
+  contains backend and frontend.
 - The frontend has no automated tests: frontend testing is not part of the course. Frontend coverage is therefore
   excluded from the analysis (`sonar.coverage.exclusions=**/*`). Lint, type check, and build are the frontend checks;
   they currently run only locally (`npm run lint`, `npm run build`), not in CI.

@@ -52,8 +52,9 @@ If a requested change conflicts with these documents, point out the conflict bef
 
 - MongoDB
 - GitHub Actions (`.github/workflows/`): pushes to branches other than `main` build and test the backend
-  (`maven.yml`); every pull request and push to `main` is analyzed with SonarQube Cloud (`build_backend.yml`,
-  `build_frontend.yml`). Details in `docs/architecture.md` → CI and Code Quality
+  (`maven.yml`); on every pull request and push to `main` the backend is built, tested, and analyzed with SonarQube
+  Cloud (`build_backend.yml`), and the frontend is analyzed (`build_frontend.yml`). Details in
+  `docs/architecture.md` → CI and Code Quality
 - The frontend has no automated tests (not part of the course); its checks are lint, type check, and build
 - External services, all free and without an API key: OpenStreetMap tiles, Nominatim (place search)
 - Deployment target: not decided
