@@ -46,15 +46,14 @@ If a requested change conflicts with these documents, point out the conflict bef
 - Spring Web MVC
 - Spring Validation
 - Spring Data MongoDB
-- Spring Security (planned for login, not added yet)
+- Spring Security with JWT login tokens (jjwt)
 
 ### Infrastructure
 
 - MongoDB
-- GitHub Actions (`.github/workflows/`): on every pull request and push to `main`, builds and tests the backend
-  (`build_backend.yml`) and lints and builds the frontend (`build_frontend.yml`), then analyzes both with SonarQube
-  Cloud; pushes to other branches build and test the backend (`maven.yml`). Details in `docs/architecture.md` → CI and
-  Code Quality
+- GitHub Actions (`.github/workflows/`): pushes to branches other than `main` build and test the backend
+  (`maven.yml`); every pull request and push to `main` is analyzed with SonarQube Cloud (`build_backend.yml`,
+  `build_frontend.yml`). Details in `docs/architecture.md` → CI and Code Quality
 - The frontend has no automated tests (not part of the course); its checks are lint, type check, and build
 - External services, all free and without an API key: OpenStreetMap tiles, Nominatim (place search)
 - Deployment target: not decided
@@ -105,7 +104,8 @@ If a requested change conflicts with these documents, point out the conflict bef
 - Never print secrets or private keys in logs or command output.
 - Never expose credentials in source code.
 - Never modify or expose SSH private keys.
-- Use environment variables or local configuration for secrets.
+- Use environment variables or local configuration for secrets. The backend needs `MONGODB_URI` and `JWT_SECRET`
+  (see `README.md`).
 
 ## Verification
 

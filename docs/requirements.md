@@ -223,7 +223,6 @@ Future ideas should not be implemented unless explicitly requested.
 
 ## 18. Open Questions
 
-* How is the login kept after authentication: session cookie or JWT?
 * Where are uploaded photos stored (server disk, Cloudinary, MongoDB GridFS), and which limits apply (file size,
   number per stop)?
 * Where is the application deployed?
