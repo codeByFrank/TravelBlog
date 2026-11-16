@@ -8,11 +8,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.time.LocalDate;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -36,7 +39,7 @@ class TripControllerTest {
 
     @Test
     void getAllTrips_returnsSavedTrip() throws Exception {
-        Trip trip = new Trip("1", "TestTrip", "Test", LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "user-1");
+        Trip trip = new Trip("1", "TestTrip", "Test", LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC","user-1");
         tripRepo.save(trip);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
@@ -60,11 +63,11 @@ class TripControllerTest {
     @Test
     void getAllTrips_returnsNewestTripFirst() throws Exception {
         tripRepo.save(new Trip("old", "OldTrip", "Test",
-                LocalDate.of(2023, 8, 1), LocalDate.of(2023, 8, 10), "user-1"));
+                LocalDate.of(2023, 8, 1), LocalDate.of(2023, 8, 10), "#DCEAF7", "user-1"));
         tripRepo.save(new Trip("new", "NewTrip", "Test",
-                LocalDate.of(2025, 2, 3), LocalDate.of(2025, 2, 9), "user-1"));
+                LocalDate.of(2025, 2, 3), LocalDate.of(2025, 2, 9), "#DCEAF7", "user-1"));
         tripRepo.save(new Trip("middle", "MiddleTrip", "Test",
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "user-1"));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", "user-1"));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
                         .header("Authorization", bearer("user-1")))
@@ -98,11 +101,74 @@ class TripControllerTest {
     @Test
     void getAllTrips_doesNotReturnTripsOfOtherUsers() throws Exception {
         tripRepo.save(new Trip("2", "OtherTrip", "Test",
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "user-2"));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC","user-2"));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
                         .header("Authorization", bearer("user-1")))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content().json("[]"));
+    }
+
+    @Test
+    void createTrip_savesTripForLoggedInUser() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/trips")
+                        .header("Authorization", bearer("user-1"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "Italien 2024",
+                                  "description": "Rom, Florenz, Venedig",
+                                  "startDate": "2024-05-12",
+                                  "endDate": "2024-05-20",
+                                  "coverColor": "#E3F0FC"
+                                }
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isCreated())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").isNotEmpty())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Italien 2024"));
+        assertEquals(1, tripRepo.findAllByUserIdOrderByStartDateDesc("user-1").size());
+    }
+
+    @Test
+    void createTrip_returnsBadRequest_whenTitleIsMissing() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/trips")
+                        .header("Authorization", bearer("user-1"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "",
+                                  "startDate": "2024-05-12",
+                                  "endDate": "2024-05-20"
+                                }
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.title").value("Bitte einen Titel eingeben."));
+
+        assertEquals(0, tripRepo.count());
+    }
+
+    @Test
+    void createTrip_returnsUnauthorized_withoutToken() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/trips")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title": "Italien", "startDate": "2024-05-12", "endDate": "2024-05-20"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isUnauthorized());
+    }
+
+    @Test
+    void createTrip_returnsBadRequest_whenEndDateIsBeforeStartDate() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/trips")
+                        .header("Authorization", bearer("user-1"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title": "Italien", "startDate": "2024-05-20", "endDate": "2024-05-12"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.detail")
+                        .value("Das Enddatum darf nicht vor dem Startdatum liegen."));
+
+        assertEquals(0, tripRepo.count());
     }
 }
