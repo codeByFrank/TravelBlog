@@ -69,3 +69,20 @@ export default function TripsPage() {
                 <section className="flex flex-col items-center gap-2 rounded-card bg-surface px-6 py-14 text-center shadow-card">
                     <h2 className="text-xl font-bold">Noch keine Reisen</h2>
                     <p className="max-w-md text-muted">
+                        Sobald du deine erste Reise anlegst, erscheint sie hier.
+                    </p>
+                </section>
+            )}
+
+            {!loading && !error && trips.length > 0 && (
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(min(300px,100%),1fr))] gap-6">
+                    {trips.map((trip, index) => (
+                        <TripCard key={trip.id} trip={trip} index={index}/>
+                    ))}
+                </div>
+            )}
+
+            <NewTripDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onCreated={handleCreated}/>
+        </div>
+    )
+}

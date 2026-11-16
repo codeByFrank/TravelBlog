@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState, type FormEvent} from 'react'
 import {getErrorMessage, getFieldErrors} from '../api/client'
-import {createTrip, type Trip} from '../api/trips'
+import {createTrip} from '../api/trips'
+import type {Trip} from '../types/trip'
 import {COVER_COLORS, DEFAULT_COVER_COLOR} from '../coverColors'
 import FormField from './FormField'
 

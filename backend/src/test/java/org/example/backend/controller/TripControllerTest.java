@@ -63,11 +63,11 @@ class TripControllerTest {
     @Test
     void getAllTrips_returnsNewestTripFirst() throws Exception {
         tripRepo.save(new Trip("old", "OldTrip", "Test",
-                LocalDate.of(2023, 8, 1), LocalDate.of(2023, 8, 10), "user-1"));
+                LocalDate.of(2023, 8, 1), LocalDate.of(2023, 8, 10), "#DCEAF7", "user-1"));
         tripRepo.save(new Trip("new", "NewTrip", "Test",
-                LocalDate.of(2025, 2, 3), LocalDate.of(2025, 2, 9), "user-1"));
+                LocalDate.of(2025, 2, 3), LocalDate.of(2025, 2, 9), "#DCEAF7", "user-1"));
         tripRepo.save(new Trip("middle", "MiddleTrip", "Test",
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "user-1"));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", "user-1"));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
                         .header("Authorization", bearer("user-1")))
@@ -125,10 +125,8 @@ class TripControllerTest {
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").isNotEmpty())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Italien 2024"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.userId").value("user-1"));
-
-        assertEquals(1, tripRepo.findAllByUserId("user-1").size());
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Italien 2024"));
+        assertEquals(1, tripRepo.findAllByUserIdOrderByStartDateDesc("user-1").size());
     }
 
     @Test

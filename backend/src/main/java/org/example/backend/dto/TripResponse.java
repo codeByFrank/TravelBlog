@@ -6,5 +6,6 @@ public record TripResponse(String id,
                            String title,
                            String description,
                            LocalDate startDate,
-                           LocalDate endDate) {
+                           LocalDate endDate,
+                           String coverColor) {
 }
