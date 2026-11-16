@@ -1,13 +1,5 @@
 import api from './client'
-
-export type Trip = {
-    id: string
-    title: string
-    description: string | null
-    startDate: string // ISO date, e.g. "2024-05-12"
-    endDate: string
-    coverColor: string | null
-}
+import type {Trip} from '../types/trip'
 
 export type TripRequest = {
     title: string
@@ -17,7 +9,8 @@ export type TripRequest = {
     coverColor: string | null
 }
 
-export async function fetchTrips(): Promise<Trip[]> {
+// Trips of the logged-in user, newest first
+export async function getTrips(): Promise<Trip[]> {
     const response = await api.get<Trip[]>('/api/trips')
     return response.data
 }

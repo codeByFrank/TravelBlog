@@ -1,6 +1,7 @@
 package org.example.backend.service;
 
 import org.example.backend.dto.TripRequest;
+import org.example.backend.dto.TripResponse;
 import org.example.backend.model.Trip;
 import org.example.backend.repository.TripRepo;
 import org.springframework.http.HttpStatus;
@@ -17,12 +18,15 @@ public class TripService {
     public TripService(TripRepo tripRepo) {
         this.tripRepo = tripRepo;
     }
-    
-    public List<Trip> getAllTrips(String userId) {
-        return tripRepo.findAllByUserId(userId);
+
+    // Trips of the user, newest first; the owner id is not sent to the client
+    public List<TripResponse> getAllTrips(String userId) {
+        return tripRepo.findAllByUserIdOrderByStartDateDesc(userId).stream()
+                .map(TripService::toResponse)
+                .toList();
     }
 
-    public Trip createTrip(String userId, TripRequest request) {
+    public TripResponse createTrip(String userId, TripRequest request) {
         if (request.endDate().isBefore(request.startDate())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Das Enddatum darf nicht vor dem Startdatum liegen.");
@@ -35,6 +39,11 @@ public class TripService {
                 request.endDate(),
                 request.coverColor(),
                 userId);
-        return tripRepo.save(trip);
+        return toResponse(tripRepo.save(trip));
+    }
+
+    private static TripResponse toResponse(Trip trip) {
+        return new TripResponse(trip.id(), trip.title(), trip.description(),
+                trip.startDate(), trip.endDate(), trip.coverColor());
     }
 }

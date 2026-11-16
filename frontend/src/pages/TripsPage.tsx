@@ -1,9 +1,11 @@
 import {useEffect, useState} from 'react'
-import {fetchTrips, type Trip} from '../api/trips'
+import {getErrorMessage} from '../api/client'
+import {getTrips} from '../api/trips'
 import NewTripDialog from '../components/NewTripDialog'
 import TripCard from '../components/TripCard'
+import type {Trip} from '../types/trip'
 
-// Newest trip first
+// Newest trip first, like the order from the backend
 function byStartDateDesc(a: Trip, b: Trip): number {
     return b.startDate.localeCompare(a.startDate)
 }
@@ -14,20 +16,32 @@ export default function TripsPage() {
     const [error, setError] = useState('')
     const [dialogOpen, setDialogOpen] = useState(false)
 
+    // Load the trips once when the page opens
     useEffect(() => {
-        fetchTrips()
-            .then((loaded) => setTrips([...loaded].sort(byStartDateDesc)))
-            .catch(() => setError('Die Reisen konnten nicht geladen werden.'))
-            .finally(() => setLoading(false))
+        let cancelled = false // ignore the answer if the page was left in the meantime
+        getTrips()
+            .then((data) => {
+                if (!cancelled) setTrips(data)
+            })
+            .catch((err) => {
+                if (!cancelled) setError(getErrorMessage(err, 'Deine Reisen konnten nicht geladen werden.'))
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false)
+            })
+        return () => {
+            cancelled = true
+        }
     }, [])
 
+    // A new trip is added to the list in date order without reloading the page
     function handleCreated(trip: Trip) {
         setTrips((current) => [trip, ...current].sort(byStartDateDesc))
         setDialogOpen(false)
     }
 
     return (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-7">
             <section className="flex flex-wrap items-end justify-between gap-4">
                 <div className="flex flex-col gap-1.5">
                     <h1 className="text-4xl font-bold tracking-tight">Meine Reisen</h1>
@@ -45,27 +59,13 @@ export default function TripsPage() {
 
             {loading && <p className="text-muted">Reisen werden geladen …</p>}
 
-            {error && (
+            {!loading && error && (
                 <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
                     {error}
                 </p>
             )}
 
             {!loading && !error && trips.length === 0 && (
-                <p className="rounded-card bg-surface p-8 text-center text-muted shadow-card">
-                    Noch keine Reisen. Lege deine erste Reise an!
-                </p>
-            )}
-
-            {trips.length > 0 && (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {trips.map((trip) => (
-                        <TripCard key={trip.id} trip={trip}/>
-                    ))}
-                </div>
-            )}
-
-            <NewTripDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onCreated={handleCreated}/>
-        </div>
-    )
-}
+                <section className="flex flex-col items-center gap-2 rounded-card bg-surface px-6 py-14 text-center shadow-card">
+                    <h2 className="text-xl font-bold">Noch keine Reisen</h2>
+                    <p className="max-w-md text-muted">
