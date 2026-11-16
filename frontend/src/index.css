@@ -13,6 +13,10 @@
     --color-accent: #1F6FBF;       /* the one blue accent */
     --color-accent-dark: #17558F;  /* accent hover */
     --color-accent-soft: #E3F0FC;  /* active nav link background */
+    --color-cover-1: #DCEBF8;      /* placeholder trip covers (blue, green, sand, lilac) */
+    --color-cover-2: #E1F0EA;
+    --color-cover-3: #F6EBDD;
+    --color-cover-4: #EAE6F5;
     --radius-card: 20px;
     --shadow-card: 0 8px 30px rgba(31, 80, 130, 0.08);
 }
