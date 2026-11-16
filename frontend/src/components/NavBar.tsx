@@ -1,10 +1,11 @@
 import {Link, NavLink} from "react-router-dom";
 import {HOME_PATH, navPages} from '../navigation'
+import LogoutButton from './LogoutButton'
 
 const linkBase = 'flex min-h-11 items-center rounded-full px-4 text-[15px] font-semibold'
 
 export default function NavBar() {
-
+    const username = localStorage.getItem('username')
     return (
         <header className="border-b border-line bg-surface">
             {/* Same width as the page content. On small screens: logo and profile in the first row,
@@ -35,14 +36,11 @@ export default function NavBar() {
                     ))}
                 </nav>
 
-                {/* Placeholder: shows the user's initials and opens the profile menu once login exists */}
-                <button
-                    type="button"
-                    aria-label="Profil öffnen"
-                    className="ml-auto flex size-11 cursor-pointer items-center justify-center rounded-full bg-accent-soft text-accent"
-                >
-                    <UserIcon/>
-                </button>
+                {/* Logged-in user and logout */}
+                <div className="ml-auto flex items-center gap-3">
+                    <span className="text-[15px] font-semibold text-muted">{username}</span>
+                    <LogoutButton/>
+                </div>
             </div>
         </header>
     )
@@ -63,25 +61,6 @@ function CloudIcon() {
             className="text-accent"
         >
             <path d="M7 18a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 9.5a4.25 4.25 0 0 1-.5 8.5H7z"/>
-        </svg>
-    )
-}
-
-function UserIcon() {
-    return (
-        <svg
-            aria-hidden="true"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <circle cx="12" cy="8" r="4"/>
-            <path d="M4 21a8 8 0 0 1 16 0"/>
         </svg>
     )
 }

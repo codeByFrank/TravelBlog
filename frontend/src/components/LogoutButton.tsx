@@ -11,8 +11,13 @@ export default function LogoutButton() {
     }
 
     return (
-        <button type="button" onClick={logout}>
+        <button
+            type="button"
+            onClick={logout}
+            className="flex min-h-11 cursor-pointer items-center rounded-full px-4 text-[15px] font-semibold text-muted hover:text-ink"
+        >
             Abmelden
         </button>
+
     )
 }
