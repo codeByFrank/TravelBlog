@@ -27,9 +27,12 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - A pull request is merged only when its Quality Gate has passed.
 - Backend coverage is measured with JaCoCo (`jacoco-maven-plugin` in `backend/pom.xml`); `mvn verify` writes the report
   to `backend/target/site/jacoco/jacoco.xml`.
-- `build_backend.yml` first runs `mvn -B verify`, then the scan; the scanner gets the source, test, and class
-  directories of `backend/` and the path of the JaCoCo report, so the analysis covers only the backend and includes
-  coverage.
+- `build_backend.yml` runs `mvn -B verify` and the SonarQube Maven plugin in one command, in the working directory
+  `backend/`: Maven builds, runs the tests, writes the JaCoCo report, and then starts the analysis, so the analysis
+  covers only the backend and includes coverage. The organization is set in `backend/pom.xml`
+  (`sonar.organization`), the project key in the workflow.
+- The backend is not analyzed with SonarQube's automatic configuration, because it does not fit a repository that
+  contains backend and frontend.
 - The frontend has no automated tests: frontend testing is not part of the course. Frontend coverage is therefore
   excluded from the analysis (`sonar.coverage.exclusions=**/*`); lint, type check, and build are the frontend checks.
 
