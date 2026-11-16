@@ -8,11 +8,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.time.LocalDate;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -85,5 +88,54 @@ class TripControllerTest {
                         .header("Authorization", bearer("user-1")))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content().json("[]"));
+    }
+
+    @Test
+    void createTrip_savesTripForLoggedInUser() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/trips")
+                        .header("Authorization", bearer("user-1"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "Italien 2024",
+                                  "description": "Rom, Florenz, Venedig",
+                                  "startDate": "2024-05-12",
+                                  "endDate": "2024-05-20",
+                                  "coverColor": "#E3F0FC"
+                                }
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isCreated())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").isNotEmpty())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Italien 2024"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.userId").value("user-1"));
+
+        assertEquals(1, tripRepo.findAllByUserId("user-1").size());
+    }
+
+    @Test
+    void createTrip_returnsBadRequest_whenTitleIsMissing() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/trips")
+                        .header("Authorization", bearer("user-1"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "",
+                                  "startDate": "2024-05-12",
+                                  "endDate": "2024-05-20"
+                                }
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest());
+
+        assertEquals(0, tripRepo.count());
+    }
+
+    @Test
+    void createTrip_returnsUnauthorized_withoutToken() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/trips")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title": "Italien", "startDate": "2024-05-12", "endDate": "2024-05-20"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isUnauthorized());
     }
 }
