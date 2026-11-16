@@ -9,7 +9,7 @@ import {PRIORITY_LABELS, type Priority, type WishlistEntry, type WishlistEntryRe
 const PRIORITY_STYLES: Record<Priority, string> = {
     HIGH: 'bg-accent text-white',
     MEDIUM: 'bg-accent-soft text-accent-dark',
-    LOW: 'bg-page text-muted',
+    LOW: 'bg-page text-ink-soft',
 }
 
 // Sort order: the most wanted destinations come first
@@ -24,8 +24,7 @@ export default function WishlistPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
-    // Which form is open: none, the form for a new entry, or the form for one existing entry
-    const [showAddForm, setShowAddForm] = useState(false)
+    // The entry shown in the form; while this is null the form creates a new entry
     const [entryToEdit, setEntryToEdit] = useState<WishlistEntry | null>(null)
     // The entry the user wants to delete; the confirmation dialog is open while this is set
     const [entryToDelete, setEntryToDelete] = useState<WishlistEntry | null>(null)
@@ -41,7 +40,6 @@ export default function WishlistPage() {
     async function handleAdd(request: WishlistEntryRequest) {
         const newEntry = await addWishlistEntry(request)
         setEntries([...entries, newEntry])
-        setShowAddForm(false)
     }
 
     async function handleUpdate(id: string, request: WishlistEntryRequest) {
@@ -56,19 +54,13 @@ export default function WishlistPage() {
         try {
             await deleteWishlistEntry(entry.id)
             setEntries(entries.filter((existingEntry) => existingEntry.id !== entry.id))
+            // The deleted entry may be the one that is open in the form
+            if (entryToEdit?.id === entry.id) {
+                setEntryToEdit(null)
+            }
         } catch (err) {
             setError(getErrorMessage(err, 'Der Eintrag konnte nicht gelöscht werden.'))
         }
-    }
-
-    function openAddForm() {
-        setEntryToEdit(null)
-        setShowAddForm(true)
-    }
-
-    function openEditForm(entry: WishlistEntry) {
-        setShowAddForm(false)
-        setEntryToEdit(entry)
     }
 
     const sortedEntries = entries.toSorted(
@@ -77,20 +69,9 @@ export default function WishlistPage() {
 
     return (
         <section className="flex flex-col gap-8">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-                <div className="flex flex-col gap-1.5">
-                    <h1 className="text-4xl font-bold tracking-tight">Wunschliste</h1>
-                    <p className="text-muted">Orte, die du noch sehen möchtest – und warum.</p>
-                </div>
-                {!showAddForm && (
-                    <button
-                        type="button"
-                        onClick={openAddForm}
-                        className="min-h-12 cursor-pointer rounded-full bg-accent px-6 text-[15px] font-semibold text-white shadow-[0_6px_18px_rgba(31,111,191,0.25)] hover:bg-accent-dark"
-                    >
-                        Wunsch hinzufügen
-                    </button>
-                )}
+            <div className="flex flex-col gap-1.5">
+                <h1 className="text-4xl font-bold tracking-tight">Wunschliste</h1>
+                <p className="text-muted">Orte, die du noch sehen möchtest – und warum.</p>
             </div>
 
             {error && (
@@ -99,63 +80,71 @@ export default function WishlistPage() {
                 </p>
             )}
 
-            {showAddForm && (
-                <WishlistForm onSave={handleAdd} onCancel={() => setShowAddForm(false)}/>
-            )}
+            {/* As in the mockup: the list on the left, the form next to it on the right */}
+            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+                <div className="flex flex-col gap-4">
+                    {loading && <p className="text-muted">Wunschliste wird geladen …</p>}
 
-            {loading && <p className="text-muted">Wunschliste wird geladen …</p>}
+                    {!loading && !error && entries.length === 0 && (
+                        <p className="rounded-card bg-surface p-8 text-center text-muted shadow-card">
+                            Deine Wunschliste ist noch leer. Füge dein erstes Wunschziel hinzu.
+                        </p>
+                    )}
 
-            {!loading && !error && entries.length === 0 && !showAddForm && (
-                <p className="rounded-card bg-surface p-8 text-center text-muted shadow-card">
-                    Deine Wunschliste ist noch leer. Füge dein erstes Reiseziel hinzu.
-                </p>
-            )}
+                    <ul className="flex flex-col gap-4">
+                        {sortedEntries.map((entry) => (
+                            <li
+                                key={entry.id}
+                                className={`flex flex-col gap-3 rounded-card bg-surface p-6 shadow-card ${
+                                    entryToEdit?.id === entry.id ? 'ring-2 ring-accent' : ''
+                                }`}
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <h2 className="text-xl font-bold tracking-tight">{entry.destination}</h2>
+                                    <span
+                                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${PRIORITY_STYLES[entry.priority]}`}
+                                    >
+                                        Priorität: {PRIORITY_LABELS[entry.priority].toLowerCase()}
+                                    </span>
+                                </div>
+                                <p className="whitespace-pre-line text-ink-soft">{entry.reason}</p>
+                                <div className="flex justify-end gap-3 pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setEntryToEdit(entry)}
+                                        className="min-h-10 cursor-pointer rounded-full border border-line-strong bg-surface px-4 text-sm font-semibold text-accent hover:bg-accent-soft"
+                                    >
+                                        Bearbeiten
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEntryToDelete(entry)}
+                                        className="min-h-10 cursor-pointer rounded-full border border-line-strong bg-surface px-4 text-sm font-semibold text-red-700 hover:bg-red-50"
+                                    >
+                                        Löschen
+                                    </button>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
 
-            <ul className="grid gap-5 md:grid-cols-2">
-                {sortedEntries.map((entry) =>
-                    entryToEdit?.id === entry.id ? (
-                        <li key={entry.id} className="md:col-span-2">
-                            <WishlistForm
-                                entry={entry}
-                                onSave={(request) => handleUpdate(entry.id, request)}
-                                onCancel={() => setEntryToEdit(null)}
-                            />
-                        </li>
-                    ) : (
-                        <li key={entry.id} className="flex flex-col gap-3 rounded-card bg-surface p-6 shadow-card">
-                            <div className="flex items-start justify-between gap-3">
-                                <h2 className="text-xl font-bold tracking-tight">{entry.destination}</h2>
-                                <span
-                                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${PRIORITY_STYLES[entry.priority]}`}
-                                >
-                                    {PRIORITY_LABELS[entry.priority]}
-                                </span>
-                            </div>
-                            <p className="text-ink-soft">{entry.reason}</p>
-                            <div className="mt-auto flex gap-4 pt-2 text-sm font-semibold">
-                                <button
-                                    type="button"
-                                    onClick={() => openEditForm(entry)}
-                                    className="cursor-pointer text-accent hover:text-accent-dark"
-                                >
-                                    Bearbeiten
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setEntryToDelete(entry)}
-                                    className="cursor-pointer text-red-700 hover:text-red-800"
-                                >
-                                    Löschen
-                                </button>
-                            </div>
-                        </li>
-                    ),
+                {/* The key makes React build a fresh form when another entry is chosen */}
+                {entryToEdit ? (
+                    <WishlistForm
+                        key={entryToEdit.id}
+                        entry={entryToEdit}
+                        onSave={(request) => handleUpdate(entryToEdit.id, request)}
+                        onCancel={() => setEntryToEdit(null)}
+                    />
+                ) : (
+                    <WishlistForm key="new" onSave={handleAdd}/>
                 )}
-            </ul>
+            </div>
 
             {entryToDelete && (
                 <ConfirmDialog
-                    title="Wunsch löschen?"
+                    title="Wunschziel löschen?"
                     message={`„${entryToDelete.destination}“ wird endgültig von deiner Wunschliste entfernt.`}
                     confirmLabel="Löschen"
                     onConfirm={() => handleDelete(entryToDelete)}
