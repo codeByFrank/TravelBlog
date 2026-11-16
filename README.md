@@ -48,6 +48,10 @@ Set the variable in one of these ways:
 
 Spring Boot does not read `.env` files; the variable has to be set in the environment of the process.
 
+The backend also needs the environment variable `JWT_SECRET`: a random string of at least 32 characters used to sign
+login tokens (e.g. generated with `openssl rand -base64 48`). Never commit it. Set it the same way as `MONGODB_URI`.
+The tests use their own value from `backend/src/test/resources/application.properties`.
+
 ### 2. Start the backend
 
 ```
