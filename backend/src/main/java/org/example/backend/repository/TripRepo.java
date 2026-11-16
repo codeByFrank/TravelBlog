@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface TripRepo extends MongoRepository<Trip, String> {
-    List<Trip> findAllByUserId(String userId);
+    List<Trip> findAllByUserIdOrderByStartDateDesc(String userId);
 }

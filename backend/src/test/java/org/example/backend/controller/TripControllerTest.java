@@ -52,7 +52,26 @@ class TripControllerTest {
                             "endDate": "2024-05-20"
                           }
                         ]
-                        """));
+                        """))
+                // The owner id stays on the server
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].userId").doesNotExist());
+    }
+
+    @Test
+    void getAllTrips_returnsNewestTripFirst() throws Exception {
+        tripRepo.save(new Trip("old", "OldTrip", "Test",
+                LocalDate.of(2023, 8, 1), LocalDate.of(2023, 8, 10), "user-1"));
+        tripRepo.save(new Trip("new", "NewTrip", "Test",
+                LocalDate.of(2025, 2, 3), LocalDate.of(2025, 2, 9), "user-1"));
+        tripRepo.save(new Trip("middle", "MiddleTrip", "Test",
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "user-1"));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
+                        .header("Authorization", bearer("user-1")))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].id").value("new"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[1].id").value("middle"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$[2].id").value("old"));
     }
 
     @Test
