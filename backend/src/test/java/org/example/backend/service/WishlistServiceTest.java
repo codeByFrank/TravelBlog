@@ -1,8 +1,9 @@
 package org.example.backend.service;
 
+import org.example.backend.dto.WishlistEntryRequest;
+import org.example.backend.dto.WishlistEntryResponse;
 import org.example.backend.model.Priority;
 import org.example.backend.model.WishlistEntry;
-import org.example.backend.dto.WishlistEntryRequest;
 import org.example.backend.repository.WishlistRepo;
 import org.junit.jupiter.api.Test;
 
@@ -27,56 +28,101 @@ class WishlistServiceTest {
     private final WishlistService wishlistService = new WishlistService(wishlistRepo);
 
     @Test
-    void getAllEntries_returnsEntriesOfUser() {
+    void getAllEntries_returnsEntriesOfUserWithoutUserId() {
         // GIVEN
-        WishlistEntry entry = new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH);
+        WishlistEntry entry = new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, "Februar");
         when(wishlistRepo.findAllByUserId(USER_ID)).thenReturn(List.of(entry));
 
         // WHEN
-        List<WishlistEntry> actual = wishlistService.getAllEntries(USER_ID);
+        List<WishlistEntryResponse> actual = wishlistService.getAllEntries(USER_ID);
 
         // THEN
-        assertEquals(List.of(entry), actual);
+        WishlistEntryResponse expected =
+                new WishlistEntryResponse("1", "Island", "Nordlichter sehen", Priority.HIGH, "Februar");
+        assertEquals(List.of(expected), actual);
         verify(wishlistRepo).findAllByUserId(USER_ID);
     }
 
     @Test
     void addEntry_savesEntryWithUserAndWithoutId() {
         // GIVEN
-        WishlistEntryRequest request = new WishlistEntryRequest("Island", "Nordlichter sehen", Priority.HIGH);
-        WishlistEntry entryToSave = new WishlistEntry(null, USER_ID, "Island", "Nordlichter sehen", Priority.HIGH);
-        WishlistEntry savedEntry = entryToSave.withId("1");
-        when(wishlistRepo.save(entryToSave)).thenReturn(savedEntry);
+        WishlistEntryRequest request =
+                new WishlistEntryRequest("Island", "Nordlichter sehen", Priority.HIGH, "Februar");
+        WishlistEntry entryToSave =
+                new WishlistEntry(null, USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, "Februar");
+        when(wishlistRepo.save(entryToSave)).thenReturn(entryToSave.withId("1"));
 
         // WHEN
-        WishlistEntry actual = wishlistService.addEntry(USER_ID, request);
+        WishlistEntryResponse actual = wishlistService.addEntry(USER_ID, request);
 
         // THEN
-        assertEquals(savedEntry, actual);
+        WishlistEntryResponse expected =
+                new WishlistEntryResponse("1", "Island", "Nordlichter sehen", Priority.HIGH, "Februar");
+        assertEquals(expected, actual);
+        verify(wishlistRepo).save(entryToSave);
+    }
+
+    @Test
+    void addEntry_storesNoBestTravelTime_whenItIsBlank() {
+        // GIVEN
+        WishlistEntryRequest request = new WishlistEntryRequest("Island", "Nordlichter sehen", Priority.HIGH, "  ");
+        WishlistEntry entryToSave =
+                new WishlistEntry(null, USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, null);
+        when(wishlistRepo.save(entryToSave)).thenReturn(entryToSave.withId("1"));
+
+        // WHEN
+        WishlistEntryResponse actual = wishlistService.addEntry(USER_ID, request);
+
+        // THEN
+        WishlistEntryResponse expected =
+                new WishlistEntryResponse("1", "Island", "Nordlichter sehen", Priority.HIGH, null);
+        assertEquals(expected, actual);
         verify(wishlistRepo).save(entryToSave);
     }
 
     @Test
     void updateEntry_savesChangedEntry_whenEntryBelongsToUser() {
         // GIVEN
-        WishlistEntry existingEntry = new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH);
-        WishlistEntryRequest request = new WishlistEntryRequest("Japan", "Kirschblüte", Priority.MEDIUM);
-        WishlistEntry expected = new WishlistEntry("1", USER_ID, "Japan", "Kirschblüte", Priority.MEDIUM);
+        WishlistEntry existingEntry =
+                new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, "Februar");
+        WishlistEntryRequest request = new WishlistEntryRequest("Japan", "Kirschblüte", Priority.MEDIUM, "April");
+        WishlistEntry entryToSave = new WishlistEntry("1", USER_ID, "Japan", "Kirschblüte", Priority.MEDIUM, "April");
         when(wishlistRepo.findByIdAndUserId("1", USER_ID)).thenReturn(Optional.of(existingEntry));
-        when(wishlistRepo.save(expected)).thenReturn(expected);
+        when(wishlistRepo.save(entryToSave)).thenReturn(entryToSave);
 
         // WHEN
-        WishlistEntry actual = wishlistService.updateEntry(USER_ID, "1", request);
+        WishlistEntryResponse actual = wishlistService.updateEntry(USER_ID, "1", request);
 
         // THEN
+        WishlistEntryResponse expected =
+                new WishlistEntryResponse("1", "Japan", "Kirschblüte", Priority.MEDIUM, "April");
         assertEquals(expected, actual);
-        verify(wishlistRepo).save(expected);
+        verify(wishlistRepo).save(entryToSave);
+    }
+
+    @Test
+    void updateEntry_removesBestTravelTime_whenRequestHasNone() {
+        // GIVEN
+        WishlistEntry existingEntry =
+                new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, "Februar");
+        WishlistEntryRequest request = new WishlistEntryRequest("Island", "Nordlichter sehen", Priority.HIGH, null);
+        WishlistEntry entryToSave = existingEntry.withBestTravelTime(null);
+        when(wishlistRepo.findByIdAndUserId("1", USER_ID)).thenReturn(Optional.of(existingEntry));
+        when(wishlistRepo.save(entryToSave)).thenReturn(entryToSave);
+
+        // WHEN
+        WishlistEntryResponse actual = wishlistService.updateEntry(USER_ID, "1", request);
+
+        // THEN
+        WishlistEntryResponse expected =
+                new WishlistEntryResponse("1", "Island", "Nordlichter sehen", Priority.HIGH, null);
+        assertEquals(expected, actual);
     }
 
     @Test
     void updateEntry_throwsException_whenEntryDoesNotExistOrBelongsToAnotherUser() {
         // GIVEN
-        WishlistEntryRequest request = new WishlistEntryRequest("Japan", "Kirschblüte", Priority.MEDIUM);
+        WishlistEntryRequest request = new WishlistEntryRequest("Japan", "Kirschblüte", Priority.MEDIUM, null);
         when(wishlistRepo.findByIdAndUserId("1", USER_ID)).thenReturn(Optional.empty());
 
         // WHEN + THEN
@@ -88,7 +134,8 @@ class WishlistServiceTest {
     @Test
     void deleteEntry_deletesEntry_whenEntryBelongsToUser() {
         // GIVEN
-        WishlistEntry existingEntry = new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH);
+        WishlistEntry existingEntry =
+                new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, null);
         when(wishlistRepo.findByIdAndUserId("1", USER_ID)).thenReturn(Optional.of(existingEntry));
 
         // WHEN

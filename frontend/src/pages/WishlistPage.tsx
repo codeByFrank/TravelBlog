@@ -108,21 +108,27 @@ export default function WishlistPage() {
                                     </span>
                                 </div>
                                 <p className="whitespace-pre-line text-ink-soft">{entry.reason}</p>
-                                <div className="flex justify-end gap-3 pt-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => setEntryToEdit(entry)}
-                                        className="min-h-10 cursor-pointer rounded-full border border-line-strong bg-surface px-4 text-sm font-semibold text-accent hover:bg-accent-soft"
-                                    >
-                                        Bearbeiten
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setEntryToDelete(entry)}
-                                        className="min-h-10 cursor-pointer rounded-full border border-line-strong bg-surface px-4 text-sm font-semibold text-red-700 hover:bg-red-50"
-                                    >
-                                        Löschen
-                                    </button>
+                                {/* As in the mockup: the best travel time on the left, the buttons on the right */}
+                                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                                    <p className="text-sm text-muted">
+                                        {entry.bestTravelTime && `Beste Reisezeit: ${entry.bestTravelTime}`}
+                                    </p>
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setEntryToEdit(entry)}
+                                            className="min-h-10 cursor-pointer rounded-full border border-line-strong bg-surface px-4 text-sm font-semibold text-accent hover:bg-accent-soft"
+                                        >
+                                            Bearbeiten
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setEntryToDelete(entry)}
+                                            className="min-h-10 cursor-pointer rounded-full border border-line-strong bg-surface px-4 text-sm font-semibold text-red-700 hover:bg-red-50"
+                                        >
+                                            Löschen
+                                        </button>
+                                    </div>
                                 </div>
                             </li>
                         ))}

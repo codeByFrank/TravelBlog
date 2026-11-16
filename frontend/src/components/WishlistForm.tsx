@@ -21,6 +21,7 @@ export default function WishlistForm({entry, onSave, onCancel}: WishlistFormProp
     const [destination, setDestination] = useState(entry?.destination ?? '')
     const [reason, setReason] = useState(entry?.reason ?? '')
     const [priority, setPriority] = useState<Priority>(entry?.priority ?? 'MEDIUM')
+    const [bestTravelTime, setBestTravelTime] = useState(entry?.bestTravelTime ?? '')
     const [error, setError] = useState('')
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
     const [submitting, setSubmitting] = useState(false)
@@ -31,12 +32,13 @@ export default function WishlistForm({entry, onSave, onCancel}: WishlistFormProp
         setFieldErrors({})
         setSubmitting(true)
         try {
-            await onSave({destination, reason, priority})
+            await onSave({destination, reason, priority, bestTravelTime})
             // After creating an entry the form stays open, so empty it for the next one
             if (!entry) {
                 setDestination('')
                 setReason('')
                 setPriority('MEDIUM')
+                setBestTravelTime('')
             }
         } catch (err) {
             // A validation error (400) carries an "errors" object with one message per field
@@ -101,6 +103,20 @@ export default function WishlistForm({entry, onSave, onCancel}: WishlistFormProp
                     <option value="LOW">{PRIORITY_LABELS.LOW}</option>
                 </select>
             </div>
+
+            <FormField
+                id="bestTravelTime"
+                label="Beste Reisezeit (optional)"
+                placeholder="z. B. Februar"
+                value={bestTravelTime}
+                onChange={(e) => setBestTravelTime(e.target.value)}
+                maxLength={100}
+            />
+            {fieldErrors.bestTravelTime && (
+                <p role="alert" className="-mt-3 text-sm text-red-700">
+                    Beste Reisezeit: {fieldErrors.bestTravelTime}
+                </p>
+            )}
 
             {error && (
                 <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">

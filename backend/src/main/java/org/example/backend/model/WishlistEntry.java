@@ -8,11 +8,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * A place or country the user still wants to visit.
  * One WishlistEntry is stored as one document in the MongoDB collection "wishlist".
  *
- * @param id          unique id of the entry, created by MongoDB when the entry is saved for the first time
- * @param userId      id of the user this entry belongs to
- * @param destination the place or country, e.g. "Island"
- * @param reason      why the user wants to go there, e.g. "Nordlichter sehen"
- * @param priority    how much the user wants to go there
+ * @param id             unique id of the entry, created by MongoDB when the entry is saved for the first time
+ * @param userId         id of the user this entry belongs to
+ * @param destination    the place or country, e.g. "Island"
+ * @param reason         why the user wants to go there, e.g. "Nordlichter sehen"
+ * @param priority       how much the user wants to go there
+ * @param bestTravelTime when to go there, e.g. "Februar"; null when the user left it empty
  */
 @Document(collection = "wishlist")
 @With
@@ -21,6 +22,7 @@ public record WishlistEntry(
         String userId,
         String destination,
         String reason,
-        Priority priority
+        Priority priority,
+        String bestTravelTime
 ) {
 }

@@ -2,7 +2,7 @@ package org.example.backend.controller;
 
 import jakarta.validation.Valid;
 import org.example.backend.dto.WishlistEntryRequest;
-import org.example.backend.model.WishlistEntry;
+import org.example.backend.dto.WishlistEntryResponse;
 import org.example.backend.service.WishlistService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -41,21 +41,21 @@ public class WishlistController {
     }
 
     @GetMapping
-    public List<WishlistEntry> getAllEntries(@AuthenticationPrincipal String userId) {
+    public List<WishlistEntryResponse> getAllEntries(@AuthenticationPrincipal String userId) {
         return wishlistService.getAllEntries(userId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public WishlistEntry addEntry(@AuthenticationPrincipal String userId,
-                                  @Valid @RequestBody WishlistEntryRequest request) {
+    public WishlistEntryResponse addEntry(@AuthenticationPrincipal String userId,
+                                          @Valid @RequestBody WishlistEntryRequest request) {
         return wishlistService.addEntry(userId, request);
     }
 
     @PutMapping("/{id}")
-    public WishlistEntry updateEntry(@AuthenticationPrincipal String userId,
-                                     @PathVariable String id,
-                                     @Valid @RequestBody WishlistEntryRequest request) {
+    public WishlistEntryResponse updateEntry(@AuthenticationPrincipal String userId,
+                                             @PathVariable String id,
+                                             @Valid @RequestBody WishlistEntryRequest request) {
         return wishlistService.updateEntry(userId, id, request);
     }
 
