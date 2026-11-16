@@ -1,7 +1,8 @@
 package org.example.backend.service;
 
-import org.example.backend.model.WishlistEntry;
 import org.example.backend.dto.WishlistEntryRequest;
+import org.example.backend.dto.WishlistEntryResponse;
+import org.example.backend.model.WishlistEntry;
 import org.example.backend.repository.WishlistRepo;
 import org.springframework.stereotype.Service;
 
@@ -25,24 +26,28 @@ public class WishlistService {
     /**
      * Returns all wishlist entries of one user.
      */
-    public List<WishlistEntry> getAllEntries(String userId) {
-        return wishlistRepo.findAllByUserId(userId);
+    public List<WishlistEntryResponse> getAllEntries(String userId) {
+        return wishlistRepo.findAllByUserId(userId).stream()
+                .map(WishlistService::toResponse)
+                .toList();
     }
 
     /**
      * Creates a new wishlist entry for the given user.
      * The id is null here; MongoDB creates it when the entry is saved.
      */
-    public WishlistEntry addEntry(String userId, WishlistEntryRequest request) {
+    public WishlistEntryResponse addEntry(String userId, WishlistEntryRequest request) {
         WishlistEntry newEntry = new WishlistEntry(
                 null,
                 userId,
                 request.destination(),
                 request.reason(),
-                request.priority()
+                request.priority(),
+                emptyToNull(request.bestTravelTime())
         );
 
-        return wishlistRepo.save(newEntry);
+        WishlistEntry savedEntry = wishlistRepo.save(newEntry);
+        return toResponse(savedEntry);
     }
 
     /**
@@ -50,15 +55,17 @@ public class WishlistService {
      *
      * @throws NoSuchElementException when the entry does not exist or belongs to another user
      */
-    public WishlistEntry updateEntry(String userId, String id, WishlistEntryRequest request) {
+    public WishlistEntryResponse updateEntry(String userId, String id, WishlistEntryRequest request) {
         WishlistEntry existingEntry = findEntryOfUser(userId, id);
 
         WishlistEntry updatedEntry = existingEntry
                 .withDestination(request.destination())
                 .withReason(request.reason())
-                .withPriority(request.priority());
+                .withPriority(request.priority())
+                .withBestTravelTime(emptyToNull(request.bestTravelTime()));
 
-        return wishlistRepo.save(updatedEntry);
+        WishlistEntry savedEntry = wishlistRepo.save(updatedEntry);
+        return toResponse(savedEntry);
     }
 
     /**
@@ -80,5 +87,29 @@ public class WishlistService {
     private WishlistEntry findEntryOfUser(String userId, String id) {
         return wishlistRepo.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new NoSuchElementException("Wishlist entry not found: " + id));
+    }
+
+    /**
+     * Turns the stored document into the answer for the client.
+     * The userId is left out on purpose: the owner id is not sent to the client.
+     */
+    private static WishlistEntryResponse toResponse(WishlistEntry entry) {
+        return new WishlistEntryResponse(
+                entry.id(),
+                entry.destination(),
+                entry.reason(),
+                entry.priority(),
+                entry.bestTravelTime()
+        );
+    }
+
+    /**
+     * The best travel time is optional: an empty or blank text is stored as "no value" (null).
+     */
+    private static String emptyToNull(String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        return text.trim();
     }
 }

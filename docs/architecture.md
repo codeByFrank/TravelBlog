@@ -64,7 +64,8 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - A trip document contains its stops as an embedded array, because a trip is always loaded together with its stops
   and the detail page then needs a single query.
 - Every trip and wishlist entry stores the id of its owner (`userId`); every query filters by the logged-in user.
-- The API returns DTOs (e.g. `TripResponse`), not the documents: the owner id stays on the server.
+- The API returns DTOs (e.g. `TripResponse`, `WishlistEntryResponse`), not the documents: the owner id stays on the
+  server.
 - `GET /api/trips` returns the user's trips sorted by start date, newest first.
 - MongoDB has no foreign keys: when a trip is deleted, its photos are deleted in code.
 - Coordinates are stored as GeoJSON points (`{ type: "Point", coordinates: [longitude, latitude] }`). Leaflet
