@@ -34,4 +34,11 @@ export function getErrorMessage(error: unknown, fallback: string): string {
     return fallback
 }
 
+export function getFieldErrors(error: unknown): Record<string, string> {
+    if (axios.isAxiosError(error)) {
+        return error.response?.data?.errors ?? {}
+    }
+    return {}
+}
+
 export default api

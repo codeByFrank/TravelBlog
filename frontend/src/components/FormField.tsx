@@ -2,10 +2,13 @@ import type {InputHTMLAttributes} from 'react'
 
 type FormFieldProps = InputHTMLAttributes<HTMLInputElement> & {
     label: string
+    error?: string
 }
 
-// Label with input, styled like the rest of the app
-export default function FormField({label, id, ...inputProps}: FormFieldProps) {
+// Label with input, styled like the rest of the app; shows a field error below the input
+export default function FormField({label, id, error, ...inputProps}: FormFieldProps) {
+    const borderClass = error ? 'border-red-400' : 'border-line-strong'
+
     return (
         <div className="flex flex-col gap-2">
             <label htmlFor={id} className="text-sm font-semibold text-ink-soft">
@@ -13,9 +16,16 @@ export default function FormField({label, id, ...inputProps}: FormFieldProps) {
             </label>
             <input
                 id={id}
-                className="min-h-12 rounded-xl border border-line-strong bg-surface px-4 text-[15px] text-ink outline-none placeholder:text-muted/70 focus:border-accent focus:ring-4 focus:ring-accent-soft"
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? `${id}-error` : undefined}
+                className={`min-h-12 rounded-xl border ${borderClass} bg-surface px-4 text-[15px] text-ink outline-none placeholder:text-muted/70 focus:border-accent focus:ring-4 focus:ring-accent-soft`}
                 {...inputProps}
             />
+            {error && (
+                <p id={`${id}-error`} className="text-sm text-red-700">
+                    {error}
+                </p>
+            )}
         </div>
     )
 }
