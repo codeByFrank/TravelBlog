@@ -3,7 +3,10 @@ import {getErrorMessage} from '../api/client'
 import {getTrips} from '../api/trips'
 import NewTripDialog from '../components/NewTripDialog'
 import TripCard from '../components/TripCard'
+import TripFilters from '../components/TripFilters'
+import TripStats from '../components/TripStats'
 import type {Trip} from '../types/trip'
+import {ALL_YEARS, filterTrips, getTripDays, getYears} from '../utils/tripFilters'
 
 // Newest trip first, like the order from the backend
 function byStartDateDesc(a: Trip, b: Trip): number {
@@ -15,6 +18,8 @@ export default function TripsPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [dialogOpen, setDialogOpen] = useState(false)
+    const [query, setQuery] = useState('')
+    const [year, setYear] = useState(ALL_YEARS)
 
     // Load the trips once when the page opens
     useEffect(() => {
@@ -33,6 +38,18 @@ export default function TripsPage() {
             cancelled = true
         }
     }, [])
+
+    const shownTrips = filterTrips(trips, query, year)
+    // Totals over all trips, independent of search and year; countries, places and distance follow with stops
+    const stats = [
+        {label: 'Reisen', value: String(trips.length)},
+        {label: 'Reisetage', value: String(trips.reduce((sum, trip) => sum + getTripDays(trip), 0))},
+    ]
+
+    function resetFilters() {
+        setQuery('')
+        setYear(ALL_YEARS)
+    }
 
     // A new trip is added to the list in date order without reloading the page
     function handleCreated(trip: Trip) {
@@ -75,11 +92,38 @@ export default function TripsPage() {
             )}
 
             {!loading && !error && trips.length > 0 && (
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(min(300px,100%),1fr))] gap-6">
-                    {trips.map((trip, index) => (
-                        <TripCard key={trip.id} trip={trip} index={index}/>
-                    ))}
-                </div>
+                <>
+                    <TripStats stats={stats}/>
+                    <TripFilters
+                        query={query}
+                        onQueryChange={setQuery}
+                        years={getYears(trips)}
+                        selectedYear={year}
+                        onYearChange={setYear}
+                        resultCount={shownTrips.length}
+                    />
+
+                    {shownTrips.length === 0 ? (
+                        <section className="flex flex-col items-center gap-3 rounded-card bg-surface px-6 py-14 text-center shadow-card">
+                            <h2 className="text-xl font-bold">Keine Reisen gefunden</h2>
+                            <p className="max-w-md text-muted">Ändere den Suchbegriff oder wähle ein anderes Jahr.</p>
+                            <button
+                                type="button"
+                                onClick={resetFilters}
+                                className="mt-1 min-h-11 cursor-pointer rounded-full border border-line-strong bg-surface px-5 text-sm font-semibold text-ink hover:border-accent"
+                            >
+                                Filter zurücksetzen
+                            </button>
+                        </section>
+                    ) : (
+                        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(300px,100%),1fr))] gap-6">
+                            {shownTrips.map((trip) => (
+                                // The index in the full list keeps each card's fallback color while filtering
+                                <TripCard key={trip.id} trip={trip} index={trips.indexOf(trip)}/>
+                            ))}
+                        </div>
+                    )}
+                </>
             )}
 
             <NewTripDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onCreated={handleCreated}/>

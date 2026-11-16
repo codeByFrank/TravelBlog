@@ -17,6 +17,7 @@
     --color-cover-2: #E1F0EA;
     --color-cover-3: #F6EBDD;
     --color-cover-4: #EAE6F5;
+    --color-chip: #F0F5FA;         /* small badges on cards, e.g. "9 Tage" */
     --radius-card: 20px;
     --shadow-card: 0 8px 30px rgba(31, 80, 130, 0.08);
 }
