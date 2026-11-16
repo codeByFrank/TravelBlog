@@ -36,7 +36,7 @@ class TripControllerTest {
 
     @Test
     void getAllTrips_returnsSavedTrip() throws Exception {
-        Trip trip = new Trip("1", "TestTrip", "Test", LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "user-1");
+        Trip trip = new Trip("1", "TestTrip", "Test", LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC","user-1");
         tripRepo.save(trip);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
@@ -79,7 +79,7 @@ class TripControllerTest {
     @Test
     void getAllTrips_doesNotReturnTripsOfOtherUsers() throws Exception {
         tripRepo.save(new Trip("2", "OtherTrip", "Test",
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "user-2"));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC","user-2"));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
                         .header("Authorization", bearer("user-1")))

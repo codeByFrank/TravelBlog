@@ -13,5 +13,6 @@ public record Trip(@Id String id,
                    String description,
                    LocalDate startDate,
                    LocalDate endDate,
+                   String coverColor,
                    String userId) {
 }
