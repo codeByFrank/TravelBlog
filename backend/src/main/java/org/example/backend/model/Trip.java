@@ -12,5 +12,6 @@ public record Trip(@Id String id,
                    String title,
                    String description,
                    LocalDate startDate,
-                   LocalDate endDate) {
+                   LocalDate endDate,
+                   String userId) {
 }
