@@ -43,4 +43,10 @@ public class TripController {
                                    @Valid @RequestBody TripRequest request) {
         return tripService.updateTrip(userId, id, request);
     }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteTrip(@AuthenticationPrincipal String userId, @PathVariable String id) {
+        tripService.deleteTrip(userId, id);
+    }
 }

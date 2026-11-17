@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -258,5 +259,27 @@ class TripControllerTest {
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.errors.title").exists());
+    }
+
+    @Test
+    void deleteTrip_deletesTripAndReturnsNoContent() throws Exception {
+        saveTrip("1", "user-1");
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/trips/1")
+                        .header("Authorization", bearer("user-1")))
+                .andExpect(MockMvcResultMatchers.status().isNoContent());
+
+        assertTrue(tripRepo.findById("1").isEmpty());
+    }
+
+    @Test
+    void deleteTrip_returnsNotFound_whenTripBelongsToAnotherUser() throws Exception {
+        saveTrip("1", "user-2");
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/trips/1")
+                        .header("Authorization", bearer("user-1")))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+
+        assertTrue(tripRepo.findById("1").isPresent());
     }
 }

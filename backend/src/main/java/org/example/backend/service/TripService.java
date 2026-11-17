@@ -70,4 +70,8 @@ public class TripService {
                     "Das Enddatum darf nicht vor dem Startdatum liegen.");
         }
     }
+
+    public void deleteTrip(String userId, String id) {
+        tripRepo.delete(findTripOfUser(userId, id));
+    }
 }
