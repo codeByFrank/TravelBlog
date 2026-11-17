@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -35,6 +36,11 @@ class TripControllerTest {
 
     private String bearer(String userId) {
         return "Bearer " + jwtService.createToken(userId);
+    }
+
+    private Trip saveTrip(String id, String userId) {
+        return tripRepo.save(new Trip(id, "Italien", "Rom und Florenz",
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", userId));
     }
 
     @Test
@@ -170,5 +176,110 @@ class TripControllerTest {
                         .value("Das Enddatum darf nicht vor dem Startdatum liegen."));
 
         assertEquals(0, tripRepo.count());
+    }
+
+    @Test
+    void getTrip_returnsTrip_whenTripBelongsToUser() throws Exception {
+        saveTrip("1", "user-1");
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/1")
+                        .header("Authorization", bearer("user-1")))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("1"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Italien"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.userId").doesNotExist());
+    }
+
+    @Test
+    void getTrip_returnsNotFound_whenTripBelongsToAnotherUser() throws Exception {
+        saveTrip("1", "user-2");
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/1")
+                        .header("Authorization", bearer("user-1")))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    void getTrip_returnsNotFound_whenTripDoesNotExist() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/unknown")
+                        .header("Authorization", bearer("user-1")))
+                .andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.detail").value("Reise nicht gefunden."));
+    }
+
+    @Test
+    void updateTrip_changesTrip_whenTripBelongsToUser() throws Exception {
+        saveTrip("1", "user-1");
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1")
+                        .header("Authorization", bearer("user-1"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "Italien im Mai",
+                                  "description": "Rom, Florenz, Venedig",
+                                  "startDate": "2024-05-10",
+                                  "endDate": "2024-05-22",
+                                  "coverColor": "#E0EFEA"
+                                }
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Italien im Mai"));
+
+        Trip saved = tripRepo.findById("1").orElseThrow();
+        assertEquals("Italien im Mai", saved.title());
+        assertEquals(LocalDate.of(2024, 5, 22), saved.endDate());
+        assertEquals("user-1", saved.userId());
+    }
+
+    @Test
+    void updateTrip_returnsNotFound_whenTripBelongsToAnotherUser() throws Exception {
+        saveTrip("1", "user-2");
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1")
+                        .header("Authorization", bearer("user-1"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title": "Gehackt", "startDate": "2024-05-12", "endDate": "2024-05-20"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+
+        assertEquals("Italien", tripRepo.findById("1").orElseThrow().title());
+    }
+
+    @Test
+    void updateTrip_returnsBadRequest_whenTitleIsMissing() throws Exception {
+        saveTrip("1", "user-1");
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1")
+                        .header("Authorization", bearer("user-1"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title": "", "startDate": "2024-05-12", "endDate": "2024-05-20"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.title").exists());
+    }
+
+    @Test
+    void deleteTrip_deletesTripAndReturnsNoContent() throws Exception {
+        saveTrip("1", "user-1");
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/trips/1")
+                        .header("Authorization", bearer("user-1")))
+                .andExpect(MockMvcResultMatchers.status().isNoContent());
+
+        assertTrue(tripRepo.findById("1").isEmpty());
+    }
+
+    @Test
+    void deleteTrip_returnsNotFound_whenTripBelongsToAnotherUser() throws Exception {
+        saveTrip("1", "user-2");
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/trips/1")
+                        .header("Authorization", bearer("user-1")))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+
+        assertTrue(tripRepo.findById("1").isPresent());
     }
 }

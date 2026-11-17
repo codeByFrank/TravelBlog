@@ -27,10 +27,7 @@ public class TripService {
     }
 
     public TripResponse createTrip(String userId, TripRequest request) {
-        if (request.endDate().isBefore(request.startDate())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Das Enddatum darf nicht vor dem Startdatum liegen.");
-        }
+        checkDateRange(request);
         Trip trip = new Trip(
                 null,
                 request.title().trim(),
@@ -45,5 +42,36 @@ public class TripService {
     private static TripResponse toResponse(Trip trip) {
         return new TripResponse(trip.id(), trip.title(), trip.description(),
                 trip.startDate(), trip.endDate(), trip.coverColor());
+    }
+
+    public TripResponse getTrip(String userId, String id) {
+        return toResponse(findTripOfUser(userId, id));
+    }
+
+    private Trip findTripOfUser(String userId, String id) {
+        return tripRepo.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reise nicht gefunden."));
+    }
+
+    public TripResponse updateTrip(String userId, String id, TripRequest request) {
+        checkDateRange(request);
+        Trip updated = findTripOfUser(userId, id)
+                .withTitle(request.title().trim())
+                .withDescription(request.description())
+                .withStartDate(request.startDate())
+                .withEndDate(request.endDate())
+                .withCoverColor(request.coverColor());
+        return toResponse(tripRepo.save(updated));
+    }
+
+    private static void checkDateRange(TripRequest request) {
+        if (request.endDate().isBefore(request.startDate())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Das Enddatum darf nicht vor dem Startdatum liegen.");
+        }
+    }
+
+    public void deleteTrip(String userId, String id) {
+        tripRepo.delete(findTripOfUser(userId, id));
     }
 }

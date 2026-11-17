@@ -19,3 +19,17 @@ export async function createTrip(request: TripRequest): Promise<Trip> {
     const response = await api.post<Trip>('/api/trips', request)
     return response.data
 }
+
+export async function getTrip(id: string): Promise<Trip> {
+    const response = await api.get<Trip>(`/api/trips/${id}`)
+    return response.data
+}
+
+export async function updateTrip(id: string, request: TripRequest): Promise<Trip> {
+    const response = await api.put<Trip>(`/api/trips/${id}`, request)
+    return response.data
+}
+
+export async function deleteTrip(id: string): Promise<void> {
+    await api.delete(`/api/trips/${id}`)
+}
