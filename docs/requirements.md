@@ -29,12 +29,13 @@ their own data only; it is a personal travel diary, not a social network.
 * Search and filter by year, country or city, and free text
 * Place search by name when adding a stop
 * Statistics: countries, stops, distance, breakdown by year
+* Tags for trips ("Berge", "Meer", "Städtetrip", "Essen") and filtering by them
 
 ## 4. Trips
 
 Trips are the main objects of the application. A trip belongs to exactly one user.
 
-A trip must have a title and a date range. It may have a description and a cover image.
+A trip must have a title and a date range. It may have a description, a cover image, and tags.
 
 The overview page must display at least:
 
@@ -113,6 +114,7 @@ Users must be able to find their trips:
 * by year, e.g. all trips of 2023
 * by country or city, e.g. "Italien" or "Prag"
 * by free text in titles and notes
+* by tags: several tags can be selected, and only trips that have all of them are shown
 
 ## 11. Statistics
 
@@ -211,7 +213,7 @@ Features outside of this scope should not be implemented unless explicitly reque
 Potential future functionality may include:
 
 * short information about cities and sights from Wikipedia
-* tags (e.g. "Berge", "Meer") and filtering by them
+* tags for stops (once trips have stops), using the same list as the trip tags
 * public trips and a shared feed
 * routes along roads instead of straight lines, and the means of transport per section
 * historical weather for a stop's place and date

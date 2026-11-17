@@ -1,4 +1,4 @@
-import {useState, type FormEvent} from 'react'
+import {useState, type SubmitEvent} from 'react'
 import {Link, useNavigate} from 'react-router-dom'
 import api, {getErrorMessage, TOKEN_KEY} from '../api/client'
 import AuthCard from '../components/AuthCard'
@@ -16,7 +16,7 @@ export default function LoginPage() {
     const [submitting, setSubmitting] = useState(false)
     const navigate = useNavigate()
 
-    async function handleSubmit(event: FormEvent) {
+    async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault()
         setError('')
         setSubmitting(true)
@@ -24,7 +24,7 @@ export default function LoginPage() {
             const response = await api.post<LoginResponse>('/api/auth/login', {username, password})
             localStorage.setItem(TOKEN_KEY, response.data.token)
             localStorage.setItem('username', response.data.username)
-            navigate('/')
+            void navigate('/')
         } catch (err) {
             setError(getErrorMessage(err, 'Anmeldung fehlgeschlagen.'))
         } finally {
@@ -45,7 +45,7 @@ export default function LoginPage() {
                 </>
             }
         >
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5">
                 <FormField
                     id="username"
                     label="Benutzername"

@@ -1,4 +1,4 @@
-import {useState, type FormEvent} from 'react'
+import {useState, type SubmitEvent} from 'react'
 import {Link, useNavigate} from 'react-router-dom'
 import api, {getErrorMessage} from '../api/client'
 import AuthCard from '../components/AuthCard'
@@ -11,7 +11,7 @@ export default function RegisterPage() {
     const [submitting, setSubmitting] = useState(false)
     const navigate = useNavigate()
 
-    async function handleSubmit(event: FormEvent) {
+    async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault()
         setError('')
 
@@ -27,7 +27,7 @@ export default function RegisterPage() {
         setSubmitting(true)
         try {
             await api.post('/api/auth/register', {username, password})
-            navigate('/login')
+            void navigate('/login')
         } catch (err) {
             setError(getErrorMessage(err, 'Registrierung fehlgeschlagen.'))
         } finally {
@@ -48,7 +48,7 @@ export default function RegisterPage() {
                 </>
             }
         >
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5">
                 <FormField
                     id="username"
                     label="Benutzername"

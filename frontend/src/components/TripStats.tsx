@@ -4,7 +4,7 @@ export type TripStat = {
 }
 
 // Row of white tiles above the trip list, e.g. "Reisen 6"; the page decides which numbers it shows
-export default function TripStats({stats}: { stats: TripStat[] }) {
+export default function TripStats({stats}: Readonly<{ stats: TripStat[] }>) {
     return (
         <dl className="grid grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-4">
             {stats.map((stat) => (

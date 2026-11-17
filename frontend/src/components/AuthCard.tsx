@@ -8,7 +8,7 @@ type AuthCardProps = {
 }
 
 // Shared frame for the login and registration pages: logo, white card, link below
-export default function AuthCard({title, subtitle, footer, children}: AuthCardProps) {
+export default function AuthCard({title, subtitle, footer, children}: Readonly<AuthCardProps>) {
     return (
         <main className="flex min-h-screen items-center justify-center px-6 py-12">
             <div className="flex w-full max-w-md flex-col gap-8">

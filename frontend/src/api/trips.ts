@@ -1,5 +1,5 @@
 import api from './client'
-import type {Trip} from '../types/trip'
+import type {Trip, TripTag} from '../types/trip'
 
 export type TripRequest = {
     title: string
@@ -7,6 +7,7 @@ export type TripRequest = {
     startDate: string
     endDate: string
     coverColor: string | null
+    tags: TripTag[]
 }
 
 // Trips of the logged-in user, newest first

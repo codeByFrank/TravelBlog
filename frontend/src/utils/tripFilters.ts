@@ -1,10 +1,13 @@
-// Search, year filter and small calculations for the trip overview.
+import {TRIP_TAG_LABELS, type TripTag} from '../types/trip'
+
+// Search, year and tag filter and small calculations for the trip overview.
 // They only need these fields, so they work with every trip type that has them.
 export type FilterableTrip = {
     title: string
     description?: string | null
     startDate: string // ISO date, e.g. "2024-05-12"
     endDate: string
+    tags?: TripTag[]
 }
 
 // Value of the year filter that shows all trips
@@ -20,13 +23,24 @@ export function getYears(trips: FilterableTrip[]): string[] {
     return [...new Set(trips.map(getTripYear))].sort((a, b) => b.localeCompare(a))
 }
 
-// Trips that match the search text (title or description, case-insensitive) and the selected year
-export function filterTrips<T extends FilterableTrip>(trips: T[], query: string, year: string): T[] {
+// Trips that match all filters at once:
+// - the search text in title, description or tag names (case-insensitive),
+// - the selected year,
+// - every selected tag (AND): with "Berge" and "Essen" only trips that have both are shown.
+export function filterTrips<T extends FilterableTrip>(
+    trips: T[],
+    query: string,
+    year: string,
+    selectedTags: TripTag[] = [],
+): T[] {
     const search = query.trim().toLocaleLowerCase('de')
     return trips.filter((trip) => {
+        const tags = trip.tags ?? []
         const matchesYear = year === ALL_YEARS || getTripYear(trip) === year
-        const text = `${trip.title} ${trip.description ?? ''}`.toLocaleLowerCase('de')
-        return matchesYear && text.includes(search)
+        const matchesTags = selectedTags.every((tag) => tags.includes(tag))
+        const tagNames = tags.map((tag) => TRIP_TAG_LABELS[tag]).join(' ')
+        const text = `${trip.title} ${trip.description ?? ''} ${tagNames}`.toLocaleLowerCase('de')
+        return matchesYear && matchesTags && text.includes(search)
     })
 }
 

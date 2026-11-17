@@ -153,7 +153,7 @@ export default function WishlistPage() {
                     title="Wunschziel löschen?"
                     message={`„${entryToDelete.destination}“ wird endgültig von deiner Wunschliste entfernt.`}
                     confirmLabel="Löschen"
-                    onConfirm={() => handleDelete(entryToDelete)}
+                    onConfirm={() => void handleDelete(entryToDelete)}
                     onCancel={() => setEntryToDelete(null)}
                 />
             )}

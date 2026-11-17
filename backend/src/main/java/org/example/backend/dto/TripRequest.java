@@ -5,7 +5,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import org.example.backend.model.TripTag;
+
 import java.time.LocalDate;
+import java.util.List;
 
 public record TripRequest(
         @NotBlank(message = "Bitte einen Titel eingeben.")
@@ -22,5 +25,8 @@ public record TripRequest(
         LocalDate endDate,
 
         @Pattern(regexp = "^#[0-9A-Fa-f]{6}$", message = "Ungültige Farbe.")
-        String coverColor) {
+        String coverColor,
+
+        // Optional; unknown values are rejected when the JSON is read
+        List<TripTag> tags) {
 }

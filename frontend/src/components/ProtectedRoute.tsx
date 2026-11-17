@@ -2,9 +2,10 @@ import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { TOKEN_KEY } from '../api/client'
 
-export default function ProtectedRoute({ children }: { children: ReactNode }) {
+export default function ProtectedRoute({ children }: Readonly<{ children: ReactNode }>) {
     if (!localStorage.getItem(TOKEN_KEY)) {
         return <Navigate to="/login" replace />
     }
-    return children
+    // Wrapped in a fragment so that both branches return a JSX element
+    return <>{children}</>
 }

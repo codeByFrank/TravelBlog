@@ -3,12 +3,14 @@ package org.example.backend.service;
 import org.example.backend.dto.TripRequest;
 import org.example.backend.dto.TripResponse;
 import org.example.backend.model.Trip;
+import org.example.backend.model.TripTag;
 import org.example.backend.repository.TripRepo;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class TripService {
@@ -35,13 +37,27 @@ public class TripService {
                 request.startDate(),
                 request.endDate(),
                 request.coverColor(),
+                normalizeTags(request.tags()),
                 userId);
         return toResponse(tripRepo.save(trip));
     }
 
     private static TripResponse toResponse(Trip trip) {
         return new TripResponse(trip.id(), trip.title(), trip.description(),
-                trip.startDate(), trip.endDate(), trip.coverColor());
+                trip.startDate(), trip.endDate(), trip.coverColor(), normalizeTags(trip.tags()));
+    }
+
+    // No tags (also trips saved before tags existed) become an empty list;
+    // duplicates are removed and the order follows the TripTag enum
+    private static List<TripTag> normalizeTags(List<TripTag> tags) {
+        if (tags == null) {
+            return List.of();
+        }
+        return tags.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .sorted()
+                .toList();
     }
 
     public TripResponse getTrip(String userId, String id) {
@@ -60,7 +76,8 @@ public class TripService {
                 .withDescription(request.description())
                 .withStartDate(request.startDate())
                 .withEndDate(request.endDate())
-                .withCoverColor(request.coverColor());
+                .withCoverColor(request.coverColor())
+                .withTags(normalizeTags(request.tags()));
         return toResponse(tripRepo.save(updated));
     }
 
