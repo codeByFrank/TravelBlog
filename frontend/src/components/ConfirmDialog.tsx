@@ -7,7 +7,7 @@ type ConfirmDialogProps = {
 }
 
 // Modal question before a destructive action, e.g. deleting an entry
-export default function ConfirmDialog({title, message, confirmLabel, onConfirm, onCancel}: ConfirmDialogProps) {
+export default function ConfirmDialog({title, message, confirmLabel, onConfirm, onCancel}: Readonly<ConfirmDialogProps>) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-6">
             <div

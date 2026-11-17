@@ -7,7 +7,7 @@ export default function LogoutButton() {
     function logout() {
         localStorage.removeItem(TOKEN_KEY)
         localStorage.removeItem('username')
-        navigate('/login')
+        void navigate('/login')
     }
 
     return (

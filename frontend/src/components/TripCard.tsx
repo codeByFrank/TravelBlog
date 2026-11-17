@@ -2,6 +2,7 @@ import {Link} from 'react-router-dom'
 import type {Trip} from '../types/trip'
 import {formatDateRange} from '../utils/dates'
 import {getTripDays} from '../utils/tripFilters'
+import TagBadges from './TagBadges'
 
 // Pastel placeholder covers from the mockup, used in turn for trips without a chosen color
 const fallbackCoverColors = ['bg-cover-1', 'bg-cover-2', 'bg-cover-3', 'bg-cover-4']
@@ -17,7 +18,7 @@ function formatDays(days: number): string {
 }
 
 // One tile on the "Meine Reisen" page; the whole card links to the trip's detail page
-export default function TripCard({trip, index}: TripCardProps) {
+export default function TripCard({trip, index}: Readonly<TripCardProps>) {
     // The color chosen in "Neue Reise" wins; trips without a color get a pastel tone in turn
     const fallbackClass = trip.coverColor ? '' : fallbackCoverColors[index % fallbackCoverColors.length]
 
@@ -42,6 +43,7 @@ export default function TripCard({trip, index}: TripCardProps) {
                         {formatDays(getTripDays(trip))}
                     </span>
                 </div>
+                <TagBadges tags={trip.tags}/>
             </div>
         </Link>
     )

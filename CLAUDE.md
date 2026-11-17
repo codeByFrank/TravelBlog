@@ -99,6 +99,22 @@ If a requested change conflicts with these documents, point out the conflict bef
 - Do not introduce new frameworks without discussing it first.
 - Do not add new dependencies without a concrete reason.
 
+## Code Quality (SonarQube)
+
+- New and changed code must not have SonarQube issues. The team checks with SonarQube for IDE in IntelliJ; the same
+  rules decide the Quality Gate on pull requests.
+- Fix an issue in the code rather than suppressing it; if a rule really does not fit, explain why in the pull request.
+- Rules that came up in this project:
+  - React component props are read-only: `function TripCard({trip}: Readonly<TripCardProps>)`.
+  - Use semantic elements instead of ARIA roles, e.g. `<fieldset>` with `<legend>` instead of `<div role="group">`.
+  - Make spacing in JSX explicit: text next to an element goes into its own element, e.g.
+    `<span aria-hidden="true">+</span><span>Neue Reise</span>`.
+  - Promises are never left floating: `void navigate('/trips')`; an async handler is passed as
+    `onSubmit={(event) => void handleSubmit(event)}` and handles its errors itself with `try`/`catch`.
+  - Use `SubmitEvent<HTMLFormElement>` for form submit handlers; `FormEvent` is deprecated in the React types.
+  - A component returns the same type on every path, e.g. `return <>{children}</>` instead of `return children` next
+    to `return <Navigate … />`.
+
 ## Security
 
 - Never commit secrets, credentials, API keys, private keys, or `.env` files.
@@ -116,6 +132,7 @@ After making changes:
 - Run relevant backend tests and builds.
 - Verify both frontend and backend when a change affects their integration.
 - Do not consider a task complete if relevant verification fails.
+- Check new and changed files with SonarQube for IDE (see Code Quality).
 - A pull request is ready to merge only when the CI build and the SonarQube Quality Gate have passed.
 
 ## Claude Code Workflow

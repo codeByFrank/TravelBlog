@@ -96,13 +96,24 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - A stop stores references to its photos; the photo files are not stored inside the trip document.
 - Not decided: where the files are stored and which limits apply (see `requirements.md` → Open Questions).
 
+## Tags
+
+- The tags are a fixed list: `MOUNTAINS` (Berge), `SEA` (Meer), `CITY_TRIP` (Städtetrip), `FOOD` (Essen) — the enum
+  `TripTag` in the backend, the German labels in `frontend/src/types/trip.ts`. A fixed list avoids typos and
+  duplicates such as "Meer" and "meer", and the filter always shows the same buttons.
+- A trip stores its tags as a list in the trip document. The backend removes duplicates and sorts them in enum order;
+  trips saved before tags existed are returned with an empty list. An unknown tag is rejected with 400.
+- Stops will use the same list once they exist; a trip then matches a tag if the trip or one of its stops has it.
+
 ## Search and Statistics
 
 - Search and the year filter on the trip overview run in the frontend (`frontend/src/utils/tripFilters.ts`): the page
   already loads all trips of the user, one person has tens of trips rather than thousands, and the result appears
   without a new request.
 - A trip belongs to the year in which it starts.
-- Free-text search covers trip titles and descriptions; stop names, countries, and notes are added once trips have
+- The tag filter accepts several tags and combines them with AND: only trips that have every selected tag are
+  shown. "Alle" clears the selected tags. Tag, year, and search filters apply together.
+- Free-text search covers trip titles, descriptions, and tag names; stop names, countries, and notes are added once trips have
   stops.
 - Statistics are calculated from the user's trips on request; nothing is stored redundantly.
 

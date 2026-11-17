@@ -6,7 +6,7 @@ type FormFieldProps = InputHTMLAttributes<HTMLInputElement> & {
 }
 
 // Label with input, styled like the rest of the app; shows a field error below the input
-export default function FormField({label, id, error, ...inputProps}: FormFieldProps) {
+export default function FormField({label, id, error, ...inputProps}: Readonly<FormFieldProps>) {
     const borderClass = error ? 'border-red-400' : 'border-line-strong'
 
     return (

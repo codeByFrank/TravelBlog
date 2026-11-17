@@ -3,6 +3,7 @@ import {useEffect, useState} from 'react'
 import {Link, useParams, useNavigate} from 'react-router-dom'
 import {getErrorMessage} from '../api/client'
 import {getTrip, deleteTrip} from '../api/trips'
+import TagBadges from '../components/TagBadges'
 import TripDialog from '../components/TripDialog'
 import type {Trip} from '../types/trip'
 import {formatDateRange} from '../utils/dates'
@@ -12,7 +13,7 @@ function BackLink() {
     return (
         <Link to="/trips" className="flex w-fit items-center gap-1.5 text-[15px] font-semibold text-muted hover:text-ink">
             <span aria-hidden="true">‹</span>
-            Meine Reisen
+            <span>Meine Reisen</span>
         </Link>
     )
 }
@@ -54,7 +55,7 @@ export default function TripDetailPage() {
         setConfirmDelete(false)
         try {
             await deleteTrip(tripToDelete.id)
-            navigate('/trips')
+            void navigate('/trips')
         } catch (err) {
             setError(getErrorMessage(err, 'Die Reise konnte nicht gelöscht werden.'))
         }
@@ -89,6 +90,9 @@ export default function TripDetailPage() {
                     <p className="text-[15px] font-semibold text-muted">{formatDateRange(trip.startDate, trip.endDate)}</p>
                     <h1 className="text-4xl font-bold tracking-tight">{trip.title}</h1>
                     {trip.description && <p className="text-ink-soft">{trip.description}</p>}
+                    <div className="mt-1.5">
+                        <TagBadges tags={trip.tags}/>
+                    </div>
                 </div>
                 <div className="flex flex-wrap gap-3">
                     <button
@@ -127,7 +131,7 @@ export default function TripDetailPage() {
                     title="Reise löschen?"
                     message={`„${trip.title}“ wird mit allen Orten endgültig gelöscht.`}
                     confirmLabel="Löschen"
-                    onConfirm={() => handleDelete(trip)}
+                    onConfirm={() => void handleDelete(trip)}
                     onCancel={() => setConfirmDelete(false)}
                 />
             )}

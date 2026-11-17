@@ -1,4 +1,4 @@
-import {useState, type FormEvent} from 'react'
+import {useState, type SubmitEvent} from 'react'
 import axios from 'axios'
 import {getErrorMessage} from '../api/client'
 import FormField from './FormField'
@@ -17,7 +17,7 @@ type WishlistFormProps = {
 type FieldErrors = Record<string, string>
 
 // Form for creating and editing a wishlist entry
-export default function WishlistForm({entry, onSave, onCancel}: WishlistFormProps) {
+export default function WishlistForm({entry, onSave, onCancel}: Readonly<WishlistFormProps>) {
     const [destination, setDestination] = useState(entry?.destination ?? '')
     const [reason, setReason] = useState(entry?.reason ?? '')
     const [priority, setPriority] = useState<Priority>(entry?.priority ?? 'MEDIUM')
@@ -26,7 +26,7 @@ export default function WishlistForm({entry, onSave, onCancel}: WishlistFormProp
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
     const [submitting, setSubmitting] = useState(false)
 
-    async function handleSubmit(event: FormEvent) {
+    async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault()
         setError('')
         setFieldErrors({})
@@ -53,7 +53,7 @@ export default function WishlistForm({entry, onSave, onCancel}: WishlistFormProp
     }
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-card bg-surface p-6 shadow-card">
+        <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5 rounded-card bg-surface p-6 shadow-card">
             <h2 className="text-xl font-bold tracking-tight">
                 {entry ? 'Wunschziel bearbeiten' : 'Neues Wunschziel'}
             </h2>

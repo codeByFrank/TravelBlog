@@ -5,7 +5,7 @@ import TripDialog from '../components/TripDialog'
 import TripCard from '../components/TripCard'
 import TripFilters from '../components/TripFilters'
 import TripStats from '../components/TripStats'
-import type {Trip} from '../types/trip'
+import type {Trip, TripTag} from '../types/trip'
 import {ALL_YEARS, filterTrips, getTripDays, getYears} from '../utils/tripFilters'
 
 // Newest trip first, like the order from the backend
@@ -20,6 +20,7 @@ export default function TripsPage() {
     const [dialogOpen, setDialogOpen] = useState(false)
     const [query, setQuery] = useState('')
     const [year, setYear] = useState(ALL_YEARS)
+    const [selectedTags, setSelectedTags] = useState<TripTag[]>([])
 
     // Load the trips once when the page opens
     useEffect(() => {
@@ -39,7 +40,7 @@ export default function TripsPage() {
         }
     }, [])
 
-    const shownTrips = filterTrips(trips, query, year)
+    const shownTrips = filterTrips(trips, query, year, selectedTags)
     // Totals over all trips, independent of search and year; countries, places and distance follow with stops
     const stats = [
         {label: 'Reisen', value: String(trips.length)},
@@ -49,6 +50,7 @@ export default function TripsPage() {
     function resetFilters() {
         setQuery('')
         setYear(ALL_YEARS)
+        setSelectedTags([])
     }
 
     // A new trip is added to the list in date order without reloading the page
@@ -70,7 +72,7 @@ export default function TripsPage() {
                     className="flex min-h-12 cursor-pointer items-center gap-2 rounded-full bg-accent px-6 text-[15px] font-semibold text-white shadow-[0_6px_18px_rgba(31,111,191,0.25)] hover:bg-accent-dark"
                 >
                     <span aria-hidden="true" className="text-xl leading-none">+</span>
-                    Neue Reise
+                    <span>Neue Reise</span>
                 </button>
             </section>
 
@@ -100,13 +102,15 @@ export default function TripsPage() {
                         years={getYears(trips)}
                         selectedYear={year}
                         onYearChange={setYear}
+                        selectedTags={selectedTags}
+                        onTagsChange={setSelectedTags}
                         resultCount={shownTrips.length}
                     />
 
                     {shownTrips.length === 0 ? (
                         <section className="flex flex-col items-center gap-3 rounded-card bg-surface px-6 py-14 text-center shadow-card">
                             <h2 className="text-xl font-bold">Keine Reisen gefunden</h2>
-                            <p className="max-w-md text-muted">Ändere den Suchbegriff oder wähle ein anderes Jahr.</p>
+                            <p className="max-w-md text-muted">Ändere den Suchbegriff, das Jahr oder die Tags.</p>
                             <button
                                 type="button"
                                 onClick={resetFilters}

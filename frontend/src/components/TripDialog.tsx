@@ -1,7 +1,7 @@
-import {useEffect, useRef, useState, type FormEvent} from 'react'
+import {useEffect, useRef, useState, type SubmitEvent} from 'react'
 import {getErrorMessage, getFieldErrors} from '../api/client'
 import {createTrip, updateTrip} from '../api/trips'
-import type {Trip} from '../types/trip'
+import {TRIP_TAG_LABELS, TRIP_TAGS, type Trip, type TripTag} from '../types/trip'
 import {COVER_COLORS, DEFAULT_COVER_COLOR} from '../coverColors'
 import FormField from './FormField'
 
@@ -12,19 +12,36 @@ type TripDialogProps = {
     onSaved: (trip: Trip) => void
 }
 
-const EMPTY_FORM = {title: '', description: '', startDate: '', endDate: '', coverColor: DEFAULT_COVER_COLOR}
+type TripForm = {
+    title: string
+    description: string
+    startDate: string
+    endDate: string
+    coverColor: string
+    tags: TripTag[]
+}
 
-function toForm(trip: Trip): typeof EMPTY_FORM {
+const EMPTY_FORM: TripForm = {
+    title: '',
+    description: '',
+    startDate: '',
+    endDate: '',
+    coverColor: DEFAULT_COVER_COLOR,
+    tags: [],
+}
+
+function toForm(trip: Trip): TripForm {
     return {
         title: trip.title,
         description: trip.description ?? '',
         startDate: trip.startDate,
         endDate: trip.endDate,
         coverColor: trip.coverColor ?? DEFAULT_COVER_COLOR,
+        tags: trip.tags,
     }
 }
 
-export default function TripDialog({open, trip, onClose, onSaved}: TripDialogProps) {
+export default function TripDialog({open, trip, onClose, onSaved}: Readonly<TripDialogProps>) {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const [form, setForm] = useState(EMPTY_FORM)
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -46,11 +63,17 @@ export default function TripDialog({open, trip, onClose, onSaved}: TripDialogPro
         }
     }, [open, trip])
 
-    function update(field: keyof typeof EMPTY_FORM, value: string) {
+    function update(field: Exclude<keyof TripForm, 'tags'>, value: string) {
         setForm({...form, [field]: value})
     }
 
-    async function handleSubmit(event: FormEvent) {
+    // Clicking a tag selects it; clicking it again removes it
+    function toggleTag(tag: TripTag) {
+        const tags = form.tags.includes(tag) ? form.tags.filter((t) => t !== tag) : [...form.tags, tag]
+        setForm({...form, tags})
+    }
+
+    async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault()
         setFieldErrors({})
         setError('')
@@ -80,7 +103,7 @@ export default function TripDialog({open, trip, onClose, onSaved}: TripDialogPro
             aria-labelledby="trip-dialog-title"
             className="m-auto w-[calc(100%-2rem)] max-w-lg rounded-card bg-surface p-0 text-ink shadow-card backdrop:bg-ink/40"
         >
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5 p-6 sm:p-8">
+            <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5 p-6 sm:p-8">
                 <h2 id="trip-dialog-title" className="text-2xl font-bold tracking-tight">
                     {trip ? 'Reise bearbeiten' : 'Neue Reise'}
                 </h2>
@@ -150,6 +173,32 @@ export default function TripDialog({open, trip, onClose, onSaved}: TripDialogPro
                                 <span className="sr-only">{color.label}</span>
                             </label>
                         ))}
+                    </div>
+                </fieldset>
+
+                <fieldset className="flex flex-col gap-2">
+                    <legend className="mb-2 text-sm font-semibold text-ink-soft">
+                        Tags <span className="font-normal text-muted">(optional, mehrere möglich)</span>
+                    </legend>
+                    <div className="flex flex-wrap gap-2">
+                        {TRIP_TAGS.map((tag) => {
+                            const selected = form.tags.includes(tag)
+                            return (
+                                <button
+                                    key={tag}
+                                    type="button"
+                                    aria-pressed={selected}
+                                    onClick={() => toggleTag(tag)}
+                                    className={`min-h-11 cursor-pointer rounded-full border px-4.5 text-sm font-semibold ${
+                                        selected
+                                            ? 'border-accent bg-accent text-white'
+                                            : 'border-line-strong bg-surface text-ink hover:border-accent'
+                                    }`}
+                                >
+                                    {TRIP_TAG_LABELS[tag]}
+                                </button>
+                            )
+                        })}
                     </div>
                 </fieldset>
 
