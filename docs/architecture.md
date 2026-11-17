@@ -98,8 +98,12 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 
 ## Search and Statistics
 
-- Filtering by year and country uses queries on the trip's dates and on `stops.countryCode`.
-- Free-text search covers trip titles, stop names, and notes.
+- Search and the year filter on the trip overview run in the frontend (`frontend/src/utils/tripFilters.ts`): the page
+  already loads all trips of the user, one person has tens of trips rather than thousands, and the result appears
+  without a new request.
+- A trip belongs to the year in which it starts.
+- Free-text search covers trip titles and descriptions; stop names, countries, and notes are added once trips have
+  stops.
 - Statistics are calculated from the user's trips on request; nothing is stored redundantly.
 
 ## Frontend Conventions

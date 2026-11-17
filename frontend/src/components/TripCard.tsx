@@ -1,6 +1,7 @@
 import {Link} from 'react-router-dom'
 import type {Trip} from '../types/trip'
 import {formatDateRange} from '../utils/dates'
+import {getTripDays} from '../utils/tripFilters'
 
 // Pastel placeholder covers from the mockup, used in turn for trips without a chosen color
 const fallbackCoverColors = ['bg-cover-1', 'bg-cover-2', 'bg-cover-3', 'bg-cover-4']
@@ -8,6 +9,11 @@ const fallbackCoverColors = ['bg-cover-1', 'bg-cover-2', 'bg-cover-3', 'bg-cover
 type TripCardProps = {
     trip: Trip
     index: number
+}
+
+// "1 Tag", "9 Tage"
+function formatDays(days: number): string {
+    return days === 1 ? '1 Tag' : `${days} Tage`
 }
 
 // One tile on the "Meine Reisen" page; the whole card links to the trip's detail page
@@ -30,6 +36,12 @@ export default function TripCard({trip, index}: TripCardProps) {
                 </span>
                 <h2 className="text-xl font-bold tracking-tight text-ink group-hover:text-accent">{trip.title}</h2>
                 {trip.description && <p className="line-clamp-2 text-[15px] text-ink-soft">{trip.description}</p>}
+                {/* Badges; stops, distance and photos join here once trips have them */}
+                <div className="mt-1 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-chip px-3 py-1.5 text-[13px] font-semibold text-ink-soft">
+                        {formatDays(getTripDays(trip))}
+                    </span>
+                </div>
             </div>
         </Link>
     )
