@@ -37,6 +37,11 @@ class TripControllerTest {
         return "Bearer " + jwtService.createToken(userId);
     }
 
+    private Trip saveTrip(String id, String userId) {
+        return tripRepo.save(new Trip(id, "Italien", "Rom und Florenz",
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", userId));
+    }
+
     @Test
     void getAllTrips_returnsSavedTrip() throws Exception {
         Trip trip = new Trip("1", "TestTrip", "Test", LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC","user-1");
@@ -170,5 +175,34 @@ class TripControllerTest {
                         .value("Das Enddatum darf nicht vor dem Startdatum liegen."));
 
         assertEquals(0, tripRepo.count());
+    }
+
+    @Test
+    void getTrip_returnsTrip_whenTripBelongsToUser() throws Exception {
+        saveTrip("1", "user-1");
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/1")
+                        .header("Authorization", bearer("user-1")))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("1"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Italien"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.userId").doesNotExist());
+    }
+
+    @Test
+    void getTrip_returnsNotFound_whenTripBelongsToAnotherUser() throws Exception {
+        saveTrip("1", "user-2");
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/1")
+                        .header("Authorization", bearer("user-1")))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    void getTrip_returnsNotFound_whenTripDoesNotExist() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/unknown")
+                        .header("Authorization", bearer("user-1")))
+                .andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.detail").value("Reise nicht gefunden."));
     }
 }

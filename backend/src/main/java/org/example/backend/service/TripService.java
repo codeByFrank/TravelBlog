@@ -46,4 +46,13 @@ public class TripService {
         return new TripResponse(trip.id(), trip.title(), trip.description(),
                 trip.startDate(), trip.endDate(), trip.coverColor());
     }
+
+    public TripResponse getTrip(String userId, String id) {
+        return toResponse(findTripOfUser(userId, id));
+    }
+
+    private Trip findTripOfUser(String userId, String id) {
+        return tripRepo.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reise nicht gefunden."));
+    }
 }
