@@ -36,4 +36,11 @@ public class TripController {
     public TripResponse getTrip(@AuthenticationPrincipal String userId, @PathVariable String id) {
         return tripService.getTrip(userId, id);
     }
+
+    @PutMapping("/{id}")
+    public TripResponse updateTrip(@AuthenticationPrincipal String userId,
+                                   @PathVariable String id,
+                                   @Valid @RequestBody TripRequest request) {
+        return tripService.updateTrip(userId, id, request);
+    }
 }
