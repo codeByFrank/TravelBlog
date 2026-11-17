@@ -1,6 +1,5 @@
 import {useState, type SubmitEvent} from 'react'
-import axios from 'axios'
-import {getErrorMessage} from '../api/client'
+import {getErrorMessage, getFieldErrors} from '../api/client'
 import FormField from './FormField'
 import {PRIORITY_LABELS, type Priority, type WishlistEntry, type WishlistEntryRequest} from '../types/WishlistEntry'
 
@@ -42,8 +41,10 @@ export default function WishlistForm({entry, onSave, onCancel}: Readonly<Wishlis
             }
         } catch (err) {
             // A validation error (400) carries an "errors" object with one message per field
-            if (axios.isAxiosError(err) && err.response?.data?.errors) {
-                setFieldErrors(err.response.data.errors)
+            const errorsOfFields = getFieldErrors(err)
+            const hasFieldErrors = Object.keys(errorsOfFields).length > 0
+            if (hasFieldErrors) {
+                setFieldErrors(errorsOfFields)
             } else {
                 setError(getErrorMessage(err, 'Speichern fehlgeschlagen.'))
             }
@@ -65,10 +66,8 @@ export default function WishlistForm({entry, onSave, onCancel}: Readonly<Wishlis
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
                 required
+                error={fieldErrors.destination}
             />
-            {fieldErrors.destination && (
-                <p role="alert" className="-mt-3 text-sm text-red-700">Ort oder Land: {fieldErrors.destination}</p>
-            )}
 
             <div className="flex flex-col gap-2">
                 <label htmlFor="reason" className="text-sm font-semibold text-ink-soft">
@@ -85,7 +84,7 @@ export default function WishlistForm({entry, onSave, onCancel}: Readonly<Wishlis
                 />
             </div>
             {fieldErrors.reason && (
-                <p role="alert" className="-mt-3 text-sm text-red-700">Grund: {fieldErrors.reason}</p>
+                <p role="alert" className="-mt-3 text-sm text-red-700">{fieldErrors.reason}</p>
             )}
 
             <div className="flex flex-col gap-2">
@@ -111,12 +110,8 @@ export default function WishlistForm({entry, onSave, onCancel}: Readonly<Wishlis
                 value={bestTravelTime}
                 onChange={(e) => setBestTravelTime(e.target.value)}
                 maxLength={100}
+                error={fieldErrors.bestTravelTime}
             />
-            {fieldErrors.bestTravelTime && (
-                <p role="alert" className="-mt-3 text-sm text-red-700">
-                    Beste Reisezeit: {fieldErrors.bestTravelTime}
-                </p>
-            )}
 
             {error && (
                 <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">

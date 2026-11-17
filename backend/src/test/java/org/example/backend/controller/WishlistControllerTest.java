@@ -165,8 +165,10 @@ class WishlistControllerTest {
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.destination").exists())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.priority").exists())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.destination")
+                        .value("Bitte einen Ort oder ein Land eingeben."))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.priority")
+                        .value("Bitte eine Priorität wählen."))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.errors.reason").doesNotExist());
 
         assertTrue(wishlistRepo.findAll().isEmpty());
