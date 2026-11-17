@@ -1,11 +1,12 @@
 import axios from 'axios'
 import {useEffect, useState} from 'react'
-import {Link, useParams} from 'react-router-dom'
+import {Link, useParams, useNavigate} from 'react-router-dom'
 import {getErrorMessage} from '../api/client'
-import {getTrip} from '../api/trips'
+import {getTrip, deleteTrip} from '../api/trips'
 import TripDialog from '../components/TripDialog'
 import type {Trip} from '../types/trip'
 import {formatDateRange} from '../utils/dates'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 function BackLink() {
     return (
@@ -23,6 +24,8 @@ export default function TripDetailPage() {
     const [notFound, setNotFound] = useState(false)
     const [error, setError] = useState('')
     const [editOpen, setEditOpen] = useState(false)
+    const [confirmDelete, setConfirmDelete] = useState(false)
+    const navigate = useNavigate()
 
     useEffect(() => {
         if (!id) return
@@ -46,6 +49,16 @@ export default function TripDetailPage() {
             cancelled = true
         }
     }, [id])
+
+    async function handleDelete(tripToDelete: Trip) {
+        setConfirmDelete(false)
+        try {
+            await deleteTrip(tripToDelete.id)
+            navigate('/trips')
+        } catch (err) {
+            setError(getErrorMessage(err, 'Die Reise konnte nicht gelöscht werden.'))
+        }
+    }
 
     if (loading) {
         return <p className="text-muted">Reise wird geladen …</p>
@@ -80,6 +93,13 @@ export default function TripDetailPage() {
                 <div className="flex flex-wrap gap-3">
                     <button
                         type="button"
+                        onClick={() => setConfirmDelete(true)}
+                        className="min-h-12 cursor-pointer rounded-full px-5 text-[15px] font-semibold text-red-700 hover:bg-red-50"
+                    >
+                        Löschen
+                    </button>
+                    <button
+                        type="button"
                         onClick={() => setEditOpen(true)}
                         className="min-h-12 cursor-pointer rounded-full border border-line-strong bg-surface px-6 text-[15px] font-semibold text-ink hover:bg-page"
                     >
@@ -87,6 +107,10 @@ export default function TripDetailPage() {
                     </button>
                 </div>
             </section>
+
+            {error && (
+                <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
+            )}
 
             <TripDialog
                 open={editOpen}
@@ -97,6 +121,16 @@ export default function TripDetailPage() {
                     setEditOpen(false)
                 }}
             />
+
+            {confirmDelete && (
+                <ConfirmDialog
+                    title="Reise löschen?"
+                    message={`„${trip.title}“ wird mit allen Orten endgültig gelöscht.`}
+                    confirmLabel="Löschen"
+                    onConfirm={() => handleDelete(trip)}
+                    onCancel={() => setConfirmDelete(false)}
+                />
+            )}
         </div>
     )
 }
