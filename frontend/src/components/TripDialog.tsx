@@ -1,19 +1,30 @@
 import {useEffect, useRef, useState, type FormEvent} from 'react'
 import {getErrorMessage, getFieldErrors} from '../api/client'
-import {createTrip} from '../api/trips'
+import {createTrip, updateTrip} from '../api/trips'
 import type {Trip} from '../types/trip'
 import {COVER_COLORS, DEFAULT_COVER_COLOR} from '../coverColors'
 import FormField from './FormField'
 
-type NewTripDialogProps = {
+type TripDialogProps = {
     open: boolean
+    trip?: Trip | null
     onClose: () => void
-    onCreated: (trip: Trip) => void
+    onSaved: (trip: Trip) => void
 }
 
 const EMPTY_FORM = {title: '', description: '', startDate: '', endDate: '', coverColor: DEFAULT_COVER_COLOR}
 
-export default function NewTripDialog({open, onClose, onCreated}: NewTripDialogProps) {
+function toForm(trip: Trip): typeof EMPTY_FORM {
+    return {
+        title: trip.title,
+        description: trip.description ?? '',
+        startDate: trip.startDate,
+        endDate: trip.endDate,
+        coverColor: trip.coverColor ?? DEFAULT_COVER_COLOR,
+    }
+}
+
+export default function TripDialog({open, trip, onClose, onSaved}: TripDialogProps) {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const [form, setForm] = useState(EMPTY_FORM)
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -25,7 +36,7 @@ export default function NewTripDialog({open, onClose, onCreated}: NewTripDialogP
         const dialog = dialogRef.current
         if (!dialog) return
         if (open && !dialog.open) {
-            setForm(EMPTY_FORM)
+            setForm(trip ? toForm(trip) : EMPTY_FORM)
             setFieldErrors({})
             setError('')
             dialog.showModal()
@@ -33,7 +44,7 @@ export default function NewTripDialog({open, onClose, onCreated}: NewTripDialogP
         if (!open && dialog.open) {
             dialog.close()
         }
-    }, [open])
+    }, [open, trip])
 
     function update(field: keyof typeof EMPTY_FORM, value: string) {
         setForm({...form, [field]: value})
@@ -51,8 +62,9 @@ export default function NewTripDialog({open, onClose, onCreated}: NewTripDialogP
 
         setSubmitting(true)
         try {
-            const trip = await createTrip({...form, title: form.title.trim()})
-            onCreated(trip)
+            const request = {...form, title: form.title.trim()}
+            const saved = trip ? await updateTrip(trip.id, request) : await createTrip(request)
+            onSaved(saved)
         } catch (err) {
             setFieldErrors(getFieldErrors(err))
             setError(getErrorMessage(err, 'Die Reise konnte nicht gespeichert werden.'))
@@ -65,11 +77,13 @@ export default function NewTripDialog({open, onClose, onCreated}: NewTripDialogP
         <dialog
             ref={dialogRef}
             onClose={onClose}
-            aria-labelledby="new-trip-title"
+            aria-labelledby="trip-dialog-title"
             className="m-auto w-[calc(100%-2rem)] max-w-lg rounded-card bg-surface p-0 text-ink shadow-card backdrop:bg-ink/40"
         >
             <form onSubmit={handleSubmit} className="flex flex-col gap-5 p-6 sm:p-8">
-                <h2 id="new-trip-title" className="text-2xl font-bold tracking-tight">Neue Reise</h2>
+                <h2 id="trip-dialog-title" className="text-2xl font-bold tracking-tight">
+                    {trip ? 'Reise bearbeiten' : 'Neue Reise'}
+                </h2>
 
                 <FormField
                     id="trip-title"

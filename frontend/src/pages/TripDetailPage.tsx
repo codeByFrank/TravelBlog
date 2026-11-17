@@ -3,6 +3,7 @@ import {useEffect, useState} from 'react'
 import {Link, useParams} from 'react-router-dom'
 import {getErrorMessage} from '../api/client'
 import {getTrip} from '../api/trips'
+import TripDialog from '../components/TripDialog'
 import type {Trip} from '../types/trip'
 import {formatDateRange} from '../utils/dates'
 
@@ -21,6 +22,7 @@ export default function TripDetailPage() {
     const [loading, setLoading] = useState(true)
     const [notFound, setNotFound] = useState(false)
     const [error, setError] = useState('')
+    const [editOpen, setEditOpen] = useState(false)
 
     useEffect(() => {
         if (!id) return
@@ -75,7 +77,26 @@ export default function TripDetailPage() {
                     <h1 className="text-4xl font-bold tracking-tight">{trip.title}</h1>
                     {trip.description && <p className="text-ink-soft">{trip.description}</p>}
                 </div>
+                <div className="flex flex-wrap gap-3">
+                    <button
+                        type="button"
+                        onClick={() => setEditOpen(true)}
+                        className="min-h-12 cursor-pointer rounded-full border border-line-strong bg-surface px-6 text-[15px] font-semibold text-ink hover:bg-page"
+                    >
+                        Bearbeiten
+                    </button>
+                </div>
             </section>
+
+            <TripDialog
+                open={editOpen}
+                trip={trip}
+                onClose={() => setEditOpen(false)}
+                onSaved={(saved) => {
+                    setTrip(saved)
+                    setEditOpen(false)
+                }}
+            />
         </div>
     )
 }

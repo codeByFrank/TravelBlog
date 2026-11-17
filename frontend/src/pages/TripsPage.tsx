@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react'
 import {getErrorMessage} from '../api/client'
 import {getTrips} from '../api/trips'
-import NewTripDialog from '../components/NewTripDialog'
+import TripDialog from '../components/TripDialog'
 import TripCard from '../components/TripCard'
 import TripFilters from '../components/TripFilters'
 import TripStats from '../components/TripStats'
@@ -126,7 +126,7 @@ export default function TripsPage() {
                 </>
             )}
 
-            <NewTripDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onCreated={handleCreated}/>
+            <TripDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onSaved={handleCreated}/>
         </div>
     )
 }
