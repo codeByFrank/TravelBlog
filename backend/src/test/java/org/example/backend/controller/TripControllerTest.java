@@ -47,12 +47,12 @@ class TripControllerTest {
     // Saves the trip with id "1" for the given owner
     private void saveTrip(String userId) {
         tripRepo.save(new Trip("1", "Italien", "Rom und Florenz",
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", List.of(), userId));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", List.of(), List.of(), userId));
     }
 
     @Test
     void getAllTrips_returnsSavedTrip() throws Exception {
-        Trip trip = new Trip("1", "TestTrip", "Test", LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC",List.of(), USER_ID);
+        Trip trip = new Trip("1", "TestTrip", "Test", LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC",List.of(), List.of(), USER_ID);
         tripRepo.save(trip);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
@@ -76,11 +76,11 @@ class TripControllerTest {
     @Test
     void getAllTrips_returnsNewestTripFirst() throws Exception {
         tripRepo.save(new Trip("old", "OldTrip", "Test",
-                LocalDate.of(2023, 8, 1), LocalDate.of(2023, 8, 10), "#DCEAF7", List.of(), USER_ID));
+                LocalDate.of(2023, 8, 1), LocalDate.of(2023, 8, 10), "#DCEAF7", List.of(), List.of(), USER_ID));
         tripRepo.save(new Trip("new", "NewTrip", "Test",
-                LocalDate.of(2025, 2, 3), LocalDate.of(2025, 2, 9), "#DCEAF7", List.of(), USER_ID));
+                LocalDate.of(2025, 2, 3), LocalDate.of(2025, 2, 9), "#DCEAF7", List.of(), List.of(), USER_ID));
         tripRepo.save(new Trip("middle", "MiddleTrip", "Test",
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", List.of(), USER_ID));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", List.of(), List.of(), USER_ID));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
                         .header("Authorization", bearer()))
@@ -114,7 +114,7 @@ class TripControllerTest {
     @Test
     void getAllTrips_doesNotReturnTripsOfOtherUsers() throws Exception {
         tripRepo.save(new Trip("2", "OtherTrip", "Test",
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC",List.of(), OTHER_USER_ID));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC",List.of(), List.of(), OTHER_USER_ID));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
                         .header("Authorization", bearer()))
@@ -335,7 +335,7 @@ class TripControllerTest {
     void updateTrip_replacesTags() throws Exception {
         tripRepo.save(new Trip("1", "Italien", "Rom und Florenz",
                 LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7",
-                List.of(TripTag.CITY_TRIP), USER_ID));
+                List.of(TripTag.CITY_TRIP), List.of(), USER_ID));
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1")
                         .header("Authorization", bearer())
@@ -359,7 +359,7 @@ class TripControllerTest {
     void getTrip_returnsEmptyTags_forTripSavedWithoutTags() throws Exception {
         // Trips saved before tags existed have no tags field in MongoDB
         tripRepo.save(new Trip("1", "Italien", null,
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), null, null, USER_ID));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), null, null, null, USER_ID));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/1")
                         .header("Authorization", bearer()))

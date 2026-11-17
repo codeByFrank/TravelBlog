@@ -56,7 +56,8 @@ order of the visit (section 5), and the photos (section 7).
 
 A stop is a place visited during a trip.
 
-A stop must have a name, coordinates, a country, and a date. It may have a personal note, e.g. "Florenz, 14. Mai –
+A stop must have a name, coordinates, a country, and a date (the arrival date, within the dates of the trip). It
+may have a personal note, e.g. "Florenz, 14. Mai –
 Sonnenuntergang am Piazzale Michelangelo, bestes Eis der Reise".
 
 Users must be able to:

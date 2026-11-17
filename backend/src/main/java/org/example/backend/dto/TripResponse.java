@@ -11,5 +11,7 @@ public record TripResponse(String id,
                            LocalDate startDate,
                            LocalDate endDate,
                            String coverColor,
-                           List<TripTag> tags) {
+                           List<TripTag> tags,
+                           List<StopResponse> stops,
+                           long routeLengthKm) {
 }
