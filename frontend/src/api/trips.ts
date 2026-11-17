@@ -19,3 +19,8 @@ export async function createTrip(request: TripRequest): Promise<Trip> {
     const response = await api.post<Trip>('/api/trips', request)
     return response.data
 }
+
+export async function getTrip(id: string): Promise<Trip> {
+    const response = await api.get<Trip>(`/api/trips/${id}`)
+    return response.data
+}
