@@ -104,7 +104,8 @@ A country counts as visited when at least one stop of the user lies in it.
 The wishlist contains places or countries the user still wants to visit.
 
 A wishlist entry must have a destination and a reason. It should have a priority, e.g. "Island – Nordlichter sehen,
-am besten im Februar". It may have a best travel time, e.g. "Februar".
+am besten im Februar". It must have one or more countries, e.g. "Patagonien" → Argentinien and Chile, because the
+world map shows the wishlist destinations by country. It may have a best travel time, e.g. "Februar".
 
 Users must be able to create, edit, and delete wishlist entries.
 

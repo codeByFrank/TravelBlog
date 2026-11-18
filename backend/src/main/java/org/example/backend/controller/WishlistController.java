@@ -7,8 +7,6 @@ import org.example.backend.service.WishlistService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,15 +18,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
  * The HTTP endpoints of the wishlist.
  * The controller only translates between HTTP and the service; the logic is in WishlistService.
  * The userId comes from the login token (see JwtFilter), never from the request body.
+ * Invalid request bodies are answered by the GlobalExceptionHandler (400 with an "errors" object).
  */
 @RestController
 @RequestMapping("/api/wishlist")
@@ -71,21 +68,5 @@ public class WishlistController {
     @ExceptionHandler(NoSuchElementException.class)
     public ProblemDetail handleNotFound(NoSuchElementException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
-    }
-
-    /**
-     * Answers with 400 when the request body breaks a validation rule.
-     * The "errors" object tells the frontend which field is wrong: field name → message.
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail handleValidationError(MethodArgumentNotValidException exception) {
-        Map<String, String> errors = new HashMap<>();
-        for (FieldError fieldError : exception.getBindingResult().getFieldErrors()) {
-            errors.put(fieldError.getField(), fieldError.getDefaultMessage());
-        }
-
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
-        problemDetail.setProperty("errors", errors);
-        return problemDetail;
     }
 }

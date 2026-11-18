@@ -8,6 +8,7 @@ export type WishlistEntry = {
     reason: string
     priority: Priority
     bestTravelTime: string | null // optional, e.g. "Februar"
+    countryCodes: string[] // e.g. ["AR", "CL"]; empty when no country was chosen
 }
 
 // The data the frontend sends when an entry is created or changed
@@ -16,6 +17,7 @@ export type WishlistEntryRequest = {
     reason: string
     priority: Priority
     bestTravelTime: string // an empty text means "no value"
+    countryCodes: string[] // may be empty
 }
 
 // German labels for the priorities, in the order they are shown

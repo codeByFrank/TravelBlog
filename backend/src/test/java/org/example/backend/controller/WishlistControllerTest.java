@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.util.List;
 
+import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -53,8 +54,10 @@ class WishlistControllerTest {
 
     @Test
     void getAllEntries_returnsOnlyEntriesOfCurrentUserWithoutUserId() throws Exception {
-        wishlistRepo.save(new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, "Februar"));
-        wishlistRepo.save(new WishlistEntry("2", OTHER_USER_ID, "Japan", "Kirschblüte", Priority.LOW, null));
+        wishlistRepo.save(new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, "Februar",
+                List.of("IS")));
+        wishlistRepo.save(new WishlistEntry("2", OTHER_USER_ID, "Japan", "Kirschblüte", Priority.LOW, null,
+                List.of("JP")));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/wishlist")
                         .header("Authorization", bearer(USER_ID)))
@@ -66,10 +69,23 @@ class WishlistControllerTest {
                             "destination": "Island",
                             "reason": "Nordlichter sehen",
                             "priority": "HIGH",
-                            "bestTravelTime": "Februar"
+                            "bestTravelTime": "Februar",
+                            "countryCodes": ["IS"]
                           }
                         ]
                         """, JsonCompareMode.STRICT));
+    }
+
+    @Test
+    void getAllEntries_returnsEmptyCountryList_forEntriesStoredWithoutCountries() throws Exception {
+        // An entry from the time before countries existed has no countryCodes field in MongoDB
+        wishlistRepo.save(new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, null, null));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/wishlist")
+                        .header("Authorization", bearer(USER_ID)))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].countryCodes").isArray())
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].countryCodes").isEmpty());
     }
 
     @Test
@@ -90,7 +106,8 @@ class WishlistControllerTest {
                                   "destination": "Island",
                                   "reason": "Nordlichter sehen",
                                   "priority": "HIGH",
-                                  "bestTravelTime": "Februar"
+                                  "bestTravelTime": "Februar",
+                                  "countryCodes": ["IS"]
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
@@ -121,7 +138,8 @@ class WishlistControllerTest {
                                 {
                                   "destination": "Island",
                                   "reason": "Nordlichter sehen",
-                                  "priority": "HIGH"
+                                  "priority": "HIGH",
+                                  "countryCodes": ["IS"]
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
@@ -130,6 +148,47 @@ class WishlistControllerTest {
         List<WishlistEntry> savedEntries = wishlistRepo.findAllByUserId(USER_ID);
         assertEquals(1, savedEntries.size());
         assertNull(savedEntries.getFirst().bestTravelTime());
+    }
+
+    @Test
+    void addEntry_savesCountriesWithoutDuplicates() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/wishlist")
+                        .header("Authorization", bearer(USER_ID))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "destination": "Patagonien",
+                                  "reason": "Wandern im Torres del Paine",
+                                  "priority": "MEDIUM",
+                                  "countryCodes": ["AR", "CL", "AR"]
+                                }
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isCreated())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.countryCodes").value(contains("AR", "CL")));
+
+        List<WishlistEntry> savedEntries = wishlistRepo.findAllByUserId(USER_ID);
+        assertEquals(List.of("AR", "CL"), savedEntries.getFirst().countryCodes());
+    }
+
+    @Test
+    void addEntry_returns400_whenCountryCodeIsInvalid() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/wishlist")
+                        .header("Authorization", bearer(USER_ID))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "destination": "Patagonien",
+                                  "reason": "Wandern",
+                                  "priority": "MEDIUM",
+                                  "countryCodes": ["AR", "Chile"]
+                                }
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                // The field name points to the wrong code: the second one in the list
+                .andExpect(MockMvcResultMatchers.jsonPath("$.errors['countryCodes[1]']")
+                        .value("Ungültiger Ländercode."));
+
+        assertTrue(wishlistRepo.findAll().isEmpty());
     }
 
     @Test
@@ -144,7 +203,8 @@ class WishlistControllerTest {
                                   "destination": "Island",
                                   "reason": "Nordlichter sehen",
                                   "priority": "HIGH",
-                                  "bestTravelTime": "%s"
+                                  "bestTravelTime": "%s",
+                                  "countryCodes": ["IS"]
                                 }
                                 """.formatted(tooLongText)))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
@@ -165,8 +225,12 @@ class WishlistControllerTest {
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.destination").exists())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.priority").exists())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.destination")
+                        .value("Bitte einen Ort oder ein Land eingeben."))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.priority")
+                        .value("Bitte eine Priorität wählen."))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.countryCodes")
+                        .value("Bitte mindestens ein Land wählen."))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.errors.reason").doesNotExist());
 
         assertTrue(wishlistRepo.findAll().isEmpty());
@@ -174,7 +238,7 @@ class WishlistControllerTest {
 
     @Test
     void updateEntry_changesEntry_whenEntryBelongsToCurrentUser() throws Exception {
-        wishlistRepo.save(new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, "Februar"));
+        wishlistRepo.save(new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, "Februar", List.of()));
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/wishlist/1")
                         .header("Authorization", bearer(USER_ID))
@@ -184,7 +248,8 @@ class WishlistControllerTest {
                                   "destination": "Japan",
                                   "reason": "Kirschblüte",
                                   "priority": "MEDIUM",
-                                  "bestTravelTime": "April"
+                                  "bestTravelTime": "April",
+                                  "countryCodes": ["JP"]
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -198,14 +263,15 @@ class WishlistControllerTest {
                         }
                         """));
 
-        WishlistEntry expected = new WishlistEntry("1", USER_ID, "Japan", "Kirschblüte", Priority.MEDIUM, "April");
+        WishlistEntry expected = new WishlistEntry("1", USER_ID, "Japan", "Kirschblüte", Priority.MEDIUM, "April",
+                List.of("JP"));
         assertEquals(expected, wishlistRepo.findById("1").orElseThrow());
     }
 
     @Test
     void updateEntry_returns404_whenEntryBelongsToAnotherUser() throws Exception {
         WishlistEntry entryOfOtherUser =
-                new WishlistEntry("1", OTHER_USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, null);
+                new WishlistEntry("1", OTHER_USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, null, List.of());
         wishlistRepo.save(entryOfOtherUser);
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/wishlist/1")
@@ -215,7 +281,8 @@ class WishlistControllerTest {
                                 {
                                   "destination": "Japan",
                                   "reason": "Kirschblüte",
-                                  "priority": "MEDIUM"
+                                  "priority": "MEDIUM",
+                                  "countryCodes": ["JP"]
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isNotFound());
@@ -225,7 +292,7 @@ class WishlistControllerTest {
 
     @Test
     void updateEntry_returns400_whenRequestIsInvalid() throws Exception {
-        wishlistRepo.save(new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, "Februar"));
+        wishlistRepo.save(new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, "Februar", List.of()));
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/wishlist/1")
                         .header("Authorization", bearer(USER_ID))
@@ -234,7 +301,8 @@ class WishlistControllerTest {
                                 {
                                   "destination": "Japan",
                                   "reason": " ",
-                                  "priority": "MEDIUM"
+                                  "priority": "MEDIUM",
+                                  "countryCodes": ["JP"]
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
@@ -243,7 +311,7 @@ class WishlistControllerTest {
 
     @Test
     void deleteEntry_deletesEntryAndReturns204() throws Exception {
-        wishlistRepo.save(new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, "Februar"));
+        wishlistRepo.save(new WishlistEntry("1", USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, "Februar", List.of()));
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/wishlist/1")
                         .header("Authorization", bearer(USER_ID)))
@@ -262,7 +330,7 @@ class WishlistControllerTest {
 
     @Test
     void deleteEntry_returns404_whenEntryBelongsToAnotherUser() throws Exception {
-        wishlistRepo.save(new WishlistEntry("1", OTHER_USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, null));
+        wishlistRepo.save(new WishlistEntry("1", OTHER_USER_ID, "Island", "Nordlichter sehen", Priority.HIGH, null, List.of()));
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/wishlist/1")
                         .header("Authorization", bearer(USER_ID)))

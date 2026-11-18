@@ -64,6 +64,11 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - A trip document contains its stops as an embedded array, because a trip is always loaded together with its stops
   and the detail page then needs a single query.
 - Every trip and wishlist entry stores the id of its owner (`userId`); every query filters by the logged-in user.
+- A wishlist entry stores its countries as a list of ISO 3166-1 alpha-2 codes (`countryCodes`, 1 to 10). The user
+  picks them from a fixed list in the frontend (`utils/countries.ts`, generated from the same Natural Earth data as the
+  world map, with German names and continents), so no place search is needed for the wishlist. When the destination
+  is itself a country name (e.g. "Island"), the form chooses that country automatically. Entries stored before
+  countries existed are returned with an empty list.
 - The API returns DTOs (e.g. `TripResponse`, `WishlistEntryResponse`), not the documents: the owner id stays on the
   server.
 - `GET /api/trips` returns the user's trips sorted by start date, newest first.
@@ -92,6 +97,11 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 
 - Maps use Leaflet with OpenStreetMap tiles, because both are free and need no API key.
 - The world map colors countries from a GeoJSON file of country borders, matched by country code.
+- The country borders are `frontend/public/countries.geojson`: a smaller copy of the Natural Earth countries
+  (1:110m, public domain) with only the ISO code (`ISO_A2_EH`, because `ISO_A2` is `-99` for e.g. France and Norway),
+  the German name, and the continent; Antarctica is left out. The file is loaded when the world map opens.
+- The world map has no tile layer: it shows only the countries, colored as in the mockup (visited, wishlist, other).
+- Leaflet is used through `react-leaflet`, so maps are written as React components.
 - The list of visited countries is the set of distinct country codes over all stops of the user.
 
 ## Place Search
