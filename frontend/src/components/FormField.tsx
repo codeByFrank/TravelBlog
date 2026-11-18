@@ -1,7 +1,8 @@
-import type {InputHTMLAttributes} from 'react'
+import type {InputHTMLAttributes, ReactNode} from 'react'
 
 type FormFieldProps = InputHTMLAttributes<HTMLInputElement> & {
-    label: string
+    // Usually a plain text; can also contain markup, e.g. a grey "(optional)"
+    label: ReactNode
     error?: string
 }
 

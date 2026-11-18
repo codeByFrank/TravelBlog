@@ -43,7 +43,8 @@ public class WishlistService {
                 request.destination(),
                 request.reason(),
                 request.priority(),
-                emptyToNull(request.bestTravelTime())
+                emptyToNull(request.bestTravelTime()),
+                cleanCountryCodes(request.countryCodes())
         );
 
         WishlistEntry savedEntry = wishlistRepo.save(newEntry);
@@ -62,7 +63,8 @@ public class WishlistService {
                 .withDestination(request.destination())
                 .withReason(request.reason())
                 .withPriority(request.priority())
-                .withBestTravelTime(emptyToNull(request.bestTravelTime()));
+                .withBestTravelTime(emptyToNull(request.bestTravelTime()))
+                .withCountryCodes(cleanCountryCodes(request.countryCodes()));
 
         WishlistEntry savedEntry = wishlistRepo.save(updatedEntry);
         return toResponse(savedEntry);
@@ -99,8 +101,23 @@ public class WishlistService {
                 entry.destination(),
                 entry.reason(),
                 entry.priority(),
-                entry.bestTravelTime()
+                entry.bestTravelTime(),
+                cleanCountryCodes(entry.countryCodes())
         );
+    }
+
+    /**
+     * A code that appears twice is kept once.
+     * Entries stored before countries existed have no list at all (null); they are answered with an empty list.
+     * (New requests always have at least one country; WishlistEntryRequest checks that.)
+     */
+    private static List<String> cleanCountryCodes(List<String> countryCodes) {
+        if (countryCodes == null) {
+            return List.of();
+        }
+        return countryCodes.stream()
+                .distinct()
+                .toList();
     }
 
     /**

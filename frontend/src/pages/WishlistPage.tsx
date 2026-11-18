@@ -4,6 +4,7 @@ import {addWishlistEntry, deleteWishlistEntry, getWishlistEntries, updateWishlis
 import ConfirmDialog from '../components/ConfirmDialog'
 import WishlistForm from '../components/WishlistForm'
 import {PRIORITY_LABELS, type Priority, type WishlistEntry, type WishlistEntryRequest} from '../types/WishlistEntry'
+import {describeCountries} from '../utils/countries'
 
 // Colors of the priority badge
 const PRIORITY_STYLES: Record<Priority, string> = {
@@ -100,7 +101,15 @@ export default function WishlistPage() {
                                 }`}
                             >
                                 <div className="flex items-start justify-between gap-3">
-                                    <h2 className="text-xl font-bold tracking-tight">{entry.destination}</h2>
+                                    {/* As in the mockup: the countries and continent in small letters next to the name */}
+                                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                                        <h2 className="text-xl font-bold tracking-tight">{entry.destination}</h2>
+                                        {entry.countryCodes.length > 0 && (
+                                            <span className="text-sm text-muted">
+                                                {describeCountries(entry.countryCodes)}
+                                            </span>
+                                        )}
+                                    </div>
                                     <span
                                         className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${PRIORITY_STYLES[entry.priority]}`}
                                     >
