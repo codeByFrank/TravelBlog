@@ -141,7 +141,7 @@ export default function WishlistForm({entry, onSave, onCancel}: Readonly<Wishlis
                                 key={code}
                                 className="flex items-center gap-1 rounded-full bg-accent-soft py-1 pr-1 pl-3 text-sm font-semibold text-accent-dark"
                             >
-                                {getCountryName(code)}
+                                <span>{getCountryName(code)}</span>
                                 <button
                                     type="button"
                                     onClick={() => removeCountry(code)}
