@@ -4,6 +4,7 @@ import {deleteStop} from '../api/stops'
 import type {Stop, Trip} from '../types/trip'
 import {getCountryName} from '../utils/countries'
 import {formatDayMonth} from '../utils/dates'
+import {formatKm} from '../utils/tripFilters'
 import ConfirmDialog from './ConfirmDialog'
 import StopDialog from './StopDialog'
 import TripStats from './TripStats'
@@ -75,7 +76,7 @@ export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>
                         <TripStats
                             stats={[
                                 {label: 'Orte', value: String(trip.stops.length)},
-                                {label: 'Strecke (Luftlinie)', value: `${trip.routeLengthKm.toLocaleString('de-DE')} km`},
+                                {label: 'Strecke (Luftlinie)', value: formatKm(trip.routeLengthKm)},
                             ]}
                         />
                     )}
@@ -85,7 +86,7 @@ export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>
                                 {stop.distanceFromPreviousKm !== null && (
                                     <li aria-hidden="true" className="flex items-center gap-2 pl-6 text-sm font-semibold text-muted">
                                         <span>↓</span>
-                                        <span>{stop.distanceFromPreviousKm.toLocaleString('de-DE')} km</span>
+                                        <span>{formatKm(stop.distanceFromPreviousKm)}</span>
                                     </li>
                                 )}
                                 <li>

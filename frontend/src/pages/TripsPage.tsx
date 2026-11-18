@@ -7,7 +7,7 @@ import TripCard from '../components/TripCard'
 import TripFilters from '../components/TripFilters'
 import TripStats from '../components/TripStats'
 import type {Trip, TripTag} from '../types/trip'
-import {ALL_YEARS, filterTrips, getTripDays, getYears} from '../utils/tripFilters'
+import {ALL_YEARS, filterTrips, formatKm, getTotals, getYears} from '../utils/tripFilters'
 
 export default function TripsPage() {
     const navigate = useNavigate()
@@ -38,10 +38,14 @@ export default function TripsPage() {
     }, [])
 
     const shownTrips = filterTrips(trips, query, year, selectedTags)
-    // Totals over all trips, independent of search and year; countries, places and distance follow with stops
+    // Totals over all trips, independent of search and filters
+    const totals = getTotals(trips)
     const stats = [
         {label: 'Reisen', value: String(trips.length)},
-        {label: 'Reisetage', value: String(trips.reduce((sum, trip) => sum + getTripDays(trip), 0))},
+        {label: 'Reisetage', value: String(totals.days)},
+        {label: 'Länder', value: String(totals.countries)},
+        {label: 'Orte', value: String(totals.places)},
+        {label: 'Strecke gesamt', value: formatKm(totals.km)},
     ]
 
     function resetFilters() {
