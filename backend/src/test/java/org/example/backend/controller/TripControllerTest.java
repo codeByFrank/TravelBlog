@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
@@ -47,12 +48,12 @@ class TripControllerTest {
     // Saves the trip with id "1" for the given owner
     private void saveTrip(String userId) {
         tripRepo.save(new Trip("1", "Italien", "Rom und Florenz",
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", List.of(), userId));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", List.of(), List.of(), userId));
     }
 
     @Test
     void getAllTrips_returnsSavedTrip() throws Exception {
-        Trip trip = new Trip("1", "TestTrip", "Test", LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC",List.of(), USER_ID);
+        Trip trip = new Trip("1", "TestTrip", "Test", LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC",List.of(), List.of(), USER_ID);
         tripRepo.save(trip);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
@@ -76,11 +77,11 @@ class TripControllerTest {
     @Test
     void getAllTrips_returnsNewestTripFirst() throws Exception {
         tripRepo.save(new Trip("old", "OldTrip", "Test",
-                LocalDate.of(2023, 8, 1), LocalDate.of(2023, 8, 10), "#DCEAF7", List.of(), USER_ID));
+                LocalDate.of(2023, 8, 1), LocalDate.of(2023, 8, 10), "#DCEAF7", List.of(), List.of(), USER_ID));
         tripRepo.save(new Trip("new", "NewTrip", "Test",
-                LocalDate.of(2025, 2, 3), LocalDate.of(2025, 2, 9), "#DCEAF7", List.of(), USER_ID));
+                LocalDate.of(2025, 2, 3), LocalDate.of(2025, 2, 9), "#DCEAF7", List.of(), List.of(), USER_ID));
         tripRepo.save(new Trip("middle", "MiddleTrip", "Test",
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", List.of(), USER_ID));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", List.of(), List.of(), USER_ID));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
                         .header("Authorization", bearer()))
@@ -114,7 +115,7 @@ class TripControllerTest {
     @Test
     void getAllTrips_doesNotReturnTripsOfOtherUsers() throws Exception {
         tripRepo.save(new Trip("2", "OtherTrip", "Test",
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC",List.of(), OTHER_USER_ID));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC",List.of(), List.of(), OTHER_USER_ID));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
                         .header("Authorization", bearer()))
@@ -133,29 +134,69 @@ class TripControllerTest {
                                   "description": "Rom, Florenz, Venedig",
                                   "startDate": "2024-05-12",
                                   "endDate": "2024-05-20",
-                                  "coverColor": "#E3F0FC"
+                                  "coverColor": "#E3F0FC",
+                                  "firstStop": {"name": "Rom", "latitude": 41.9028, "longitude": 12.4964, "countryCode": "IT", "overnight": true}
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").isNotEmpty())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Italien 2024"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Italien 2024"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.customTitle").value("Italien 2024"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops.length()").value(1))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].name").value("Rom"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].date").value("2024-05-12"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].overnight").value(true));
         assertEquals(1, tripRepo.findAllByUserIdOrderByStartDateDesc(USER_ID).size());
     }
 
     @Test
-    void createTrip_returnsBadRequest_whenTitleIsMissing() throws Exception {
+    void createTrip_namesTripAfterFirstStop_whenTitleIsEmpty() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/trips")
                         .header("Authorization", bearer())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "title": "",
+                                  "title": "  ",
                                   "startDate": "2024-05-12",
-                                  "endDate": "2024-05-20"
+                                  "endDate": "2024-05-20",
+                                  "firstStop": {"name": "Rom", "latitude": 41.9028, "longitude": 12.4964, "countryCode": "IT", "overnight": true}
+                                }
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isCreated())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Rom"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.customTitle").doesNotExist());
+
+        assertNull(tripRepo.findAllByUserIdOrderByStartDateDesc(USER_ID).getFirst().title());
+    }
+
+    @Test
+    void createTrip_returnsBadRequest_whenFirstStopIsMissing() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/trips")
+                        .header("Authorization", bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title": "Italien", "startDate": "2024-05-12", "endDate": "2024-05-20"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.detail").value("Bitte einen Ort auswählen."));
+
+        assertEquals(0, tripRepo.count());
+    }
+
+    @Test
+    void createTrip_returnsFieldErrors_whenFirstStopIsInvalid() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/trips")
+                        .header("Authorization", bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "startDate": "2024-05-12",
+                                  "endDate": "2024-05-20",
+                                  "firstStop": {"name": "Rom", "latitude": 91, "longitude": 12.4964, "countryCode": "IT"}
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.title").value("Bitte einen Titel eingeben."));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.errors['firstStop.latitude']").value("Ungültige Koordinaten."));
 
         assertEquals(0, tripRepo.count());
     }
@@ -255,7 +296,7 @@ class TripControllerTest {
     }
 
     @Test
-    void updateTrip_returnsBadRequest_whenTitleIsMissing() throws Exception {
+    void updateTrip_removesOwnTitle_whenTitleIsEmpty() throws Exception {
         saveTrip(USER_ID);
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1")
@@ -264,8 +305,11 @@ class TripControllerTest {
                         .content("""
                                 {"title": "", "startDate": "2024-05-12", "endDate": "2024-05-20"}
                                 """))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.title").exists());
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Neue Reise"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.customTitle").doesNotExist());
+
+        assertNull(tripRepo.findById("1").orElseThrow().title());
     }
 
     @Test
@@ -300,7 +344,8 @@ class TripControllerTest {
                                   "title": "Lissabon",
                                   "startDate": "2024-10-05",
                                   "endDate": "2024-10-11",
-                                  "tags": ["FOOD", "SEA", "FOOD"]
+                                  "tags": ["FOOD", "SEA", "FOOD"],
+                                  "firstStop": {"name": "Lissabon", "latitude": 38.7223, "longitude": -9.1393, "countryCode": "PT", "overnight": true}
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
@@ -335,7 +380,7 @@ class TripControllerTest {
     void updateTrip_replacesTags() throws Exception {
         tripRepo.save(new Trip("1", "Italien", "Rom und Florenz",
                 LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7",
-                List.of(TripTag.CITY_TRIP), USER_ID));
+                List.of(TripTag.CITY_TRIP), List.of(), USER_ID));
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1")
                         .header("Authorization", bearer())
@@ -359,7 +404,7 @@ class TripControllerTest {
     void getTrip_returnsEmptyTags_forTripSavedWithoutTags() throws Exception {
         // Trips saved before tags existed have no tags field in MongoDB
         tripRepo.save(new Trip("1", "Italien", null,
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), null, null, USER_ID));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), null, null, null, USER_ID));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/1")
                         .header("Authorization", bearer()))

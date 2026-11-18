@@ -12,6 +12,12 @@ type WorldMapProps = {
     wishlistCodes: string[]
 }
 
+// Shows the German name when the mouse is over a country.
+// Outside the component, because it does not use props or state.
+function addCountryName(country: Country, layer: Layer) {
+    layer.bindTooltip(country.properties.name, {sticky: true})
+}
+
 // Shows the world as colored countries, without a street map below:
 // visited countries in blue, wishlist destinations in orange, all others light grey (as in the mockup).
 export default function WorldMap({countries, visitedCodes, wishlistCodes}: Readonly<WorldMapProps>) {
@@ -33,11 +39,6 @@ export default function WorldMap({countries, visitedCodes, wishlistCodes}: Reado
             weight: 0.8,
             fillOpacity: 1,
         }
-    }
-
-    // Shows the German name when the mouse is over a country
-    function addCountryName(country: Country, layer: Layer) {
-        layer.bindTooltip(country.properties.name, {sticky: true})
     }
 
     // react-leaflet draws a GeoJSON layer only once. The key changes when the codes change,

@@ -2,8 +2,10 @@ import {useEffect, useRef, useState, type SubmitEvent} from 'react'
 import {getErrorMessage, getFieldErrors} from '../api/client'
 import {createTrip, updateTrip} from '../api/trips'
 import {TRIP_TAG_LABELS, TRIP_TAGS, type Trip, type TripTag} from '../types/trip'
+import type {Place} from '../types/place'
 import {COVER_COLORS, DEFAULT_COVER_COLOR} from '../coverColors'
 import FormField from './FormField'
+import PlaceSearch from './PlaceSearch'
 
 type TripDialogProps = {
     open: boolean
@@ -32,7 +34,7 @@ const EMPTY_FORM: TripForm = {
 
 function toForm(trip: Trip): TripForm {
     return {
-        title: trip.title,
+        title: trip.customTitle ?? '', // empty: the title is built from the places
         description: trip.description ?? '',
         startDate: trip.startDate,
         endDate: trip.endDate,
@@ -47,6 +49,12 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
     const [error, setError] = useState('')
     const [submitting, setSubmitting] = useState(false)
+    // Only for a new trip: its first place, because every trip has at least one
+    const [place, setPlace] = useState<Place | null>(null)
+    // null: not chosen yet, then a trip of several days counts as an overnight stay
+    const [overnightChoice, setOvernightChoice] = useState<boolean | null>(null)
+    // Changes every time the dialog opens, so that the place search starts empty again
+    const [searchKey, setSearchKey] = useState(0)
 
     // The native <dialog> handles focus, Esc and the backdrop
     useEffect(() => {
@@ -56,6 +64,9 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
             setForm(trip ? toForm(trip) : EMPTY_FORM)
             setFieldErrors({})
             setError('')
+            setPlace(null)
+            setOvernightChoice(null)
+            setSearchKey((key) => key + 1)
             dialog.showModal()
         }
         if (!open && dialog.open) {
@@ -83,9 +94,23 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
             return
         }
 
+        if (!trip && !place) {
+            setFieldErrors({place: 'Bitte einen Ort suchen und auswählen.'})
+            return
+        }
+
         setSubmitting(true)
         try {
-            const request = {...form, title: form.title.trim()}
+            const firstStop = place
+                ? {
+                    name: place.name,
+                    latitude: place.latitude,
+                    longitude: place.longitude,
+                    countryCode: place.countryCode,
+                    overnight,
+                }
+                : undefined
+            const request = {...form, title: form.title.trim(), firstStop}
             const saved = trip ? await updateTrip(trip.id, request) : await createTrip(request)
             onSaved(saved)
         } catch (err) {
@@ -95,6 +120,14 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
             setSubmitting(false)
         }
     }
+
+    const overnight = overnightChoice ?? form.endDate > form.startDate
+    // Errors of the coordinates or the country belong to the place search
+    const placeError = fieldErrors.place
+        ?? fieldErrors['firstStop.name']
+        ?? fieldErrors['firstStop.latitude']
+        ?? fieldErrors['firstStop.longitude']
+        ?? fieldErrors['firstStop.countryCode']
 
     return (
         <dialog
@@ -108,14 +141,32 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
                     {trip ? 'Reise bearbeiten' : 'Neue Reise'}
                 </h2>
 
+                {!trip && (
+                    <>
+                        <PlaceSearch key={searchKey} selected={place} onSelect={setPlace} error={placeError}/>
+                        {place && (
+                            <label htmlFor="trip-first-stop-overnight" className="flex cursor-pointer items-center gap-3 text-[15px] text-ink">
+                                <input
+                                    id="trip-first-stop-overnight"
+                                    type="checkbox"
+                                    checked={overnight}
+                                    onChange={(e) => setOvernightChoice(e.target.checked)}
+                                    className="size-5 accent-accent"
+                                />
+                                <span>Hier übernachtet</span>
+                            </label>
+                        )}
+                        <p className="-mt-2 text-sm text-muted">Weitere Orte fügst du danach auf der Seite der Reise hinzu.</p>
+                    </>
+                )}
+
                 <FormField
                     id="trip-title"
-                    label="Titel"
-                    placeholder="z. B. Italien im Frühling"
+                    label={<>Titel <span className="font-normal text-muted">(optional)</span></>}
+                    placeholder={trip && !trip.customTitle ? trip.title : 'Leer lassen – wird aus den Orten erstellt'}
                     value={form.title}
                     onChange={(e) => update('title', e.target.value)}
                     error={fieldErrors.title}
-                    required
                 />
 
                 <div className="grid gap-5 sm:grid-cols-2">

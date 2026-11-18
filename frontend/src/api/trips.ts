@@ -1,6 +1,15 @@
 import api from './client'
 import type {Trip, TripTag} from '../types/trip'
 
+// The first place of a new trip; its arrival date is the start date of the trip
+export type FirstStopRequest = {
+    name: string
+    latitude: number
+    longitude: number
+    countryCode: string
+    overnight: boolean
+}
+
 export type TripRequest = {
     title: string
     description: string
@@ -8,6 +17,7 @@ export type TripRequest = {
     endDate: string
     coverColor: string | null
     tags: TripTag[]
+    firstStop?: FirstStopRequest // required when creating a trip, ignored when changing it
 }
 
 // Trips of the logged-in user, newest first
