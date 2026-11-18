@@ -1,7 +1,9 @@
+import type {ReactNode} from 'react'
 import {Link} from 'react-router-dom'
 import type {Trip} from '../types/trip'
+import {getCountryName} from '../utils/countries'
 import {formatDateRange} from '../utils/dates'
-import {getTripDays} from '../utils/tripFilters'
+import {formatKm, getCountryCodes, getTripDays} from '../utils/tripFilters'
 import TagBadges from './TagBadges'
 
 // Pastel placeholder covers from the mockup, used in turn for trips without a chosen color
@@ -17,10 +19,17 @@ function formatDays(days: number): string {
     return days === 1 ? '1 Tag' : `${days} Tage`
 }
 
+function Badge({children}: Readonly<{ children: ReactNode }>) {
+    return <span className="rounded-full bg-chip px-3 py-1.5 text-[13px] font-semibold text-ink-soft">{children}</span>
+}
+
 // One tile on the "Meine Reisen" page; the whole card links to the trip's detail page
 export default function TripCard({trip, index}: Readonly<TripCardProps>) {
     // The color chosen in "Neue Reise" wins; trips without a color get a pastel tone in turn
     const fallbackClass = trip.coverColor ? '' : fallbackCoverColors[index % fallbackCoverColors.length]
+    const countries = getCountryCodes(trip).map((code) => getCountryName(code)).join(' · ')
+    // As on the detail page: with one place, "1 Ort" and "0 km" say nothing the title does not say
+    const hasRoute = trip.stops.length > 1
 
     return (
         <Link
@@ -36,12 +45,17 @@ export default function TripCard({trip, index}: Readonly<TripCardProps>) {
                     {formatDateRange(trip.startDate, trip.endDate)}
                 </span>
                 <h2 className="text-xl font-bold tracking-tight text-ink group-hover:text-accent">{trip.title}</h2>
+                {countries && <span className="text-[15px] font-semibold text-ink-soft">{countries}</span>}
                 {trip.description && <p className="line-clamp-2 text-[15px] text-ink-soft">{trip.description}</p>}
-                {/* Badges; stops, distance and photos join here once trips have them */}
+                {/* Photos join these badges once stops have them */}
                 <div className="mt-1 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-chip px-3 py-1.5 text-[13px] font-semibold text-ink-soft">
-                        {formatDays(getTripDays(trip))}
-                    </span>
+                    <Badge>{formatDays(getTripDays(trip))}</Badge>
+                    {hasRoute && (
+                        <>
+                            <Badge>{trip.stops.length} Orte</Badge>
+                            <Badge>{formatKm(trip.routeLengthKm)}</Badge>
+                        </>
+                    )}
                 </div>
                 <TagBadges tags={trip.tags}/>
             </div>

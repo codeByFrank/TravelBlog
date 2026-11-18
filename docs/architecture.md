@@ -156,9 +156,12 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - A trip belongs to the year in which it starts.
 - The tag filter accepts several tags and combines them with AND: only trips that have every selected tag are
   shown. "Alle" clears the selected tags. Tag, year, and search filters apply together.
-- Free-text search covers trip titles, descriptions, and tag names; stop names, countries, and notes are added once trips have
-  stops.
-- Statistics are calculated from the user's trips on request; nothing is stored redundantly.
+- Free-text search covers trip titles, descriptions, tag names, and the stops' names, countries (German names), and
+  notes, so that "Florenz", "Frankreich" or "Eis" find a trip.
+- Statistics are calculated from the user's trips on request; nothing is stored redundantly. The overview totals
+  (`getTotals`: travel days, distinct countries, stops, sum of the route lengths) are computed in the frontend from
+  the trips it already loaded; they ignore search and filters. A trip card shows its countries in route order and,
+  from two stops on, the number of stops and the route length.
 
 ## Frontend Conventions
 
