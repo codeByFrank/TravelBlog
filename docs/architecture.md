@@ -119,7 +119,10 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
   the German name, and the continent; Antarctica is left out. The file is loaded when the world map opens.
 - The world map has no tile layer: it shows only the countries, colored as in the mockup (visited, wishlist, other).
 - Leaflet is used through `react-leaflet`, so maps are written as React components.
-- The list of visited countries is the set of distinct country codes over all stops of the user.
+- The list of visited countries is the set of distinct country codes over all stops of the user. The frontend
+  collects them from `GET /api/trips` (`utils/visitedCountries.ts`); there is no separate endpoint.
+- Countries too small for the 1:110m borders (e.g. Malta) still count as visited and appear in the list, with the
+  German name from the browser (`Intl.DisplayNames`), but they are not colored on the map and have no continent.
 
 ## Place Search
 
