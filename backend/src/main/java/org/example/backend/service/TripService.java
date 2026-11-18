@@ -76,8 +76,8 @@ public class TripService {
     }
 
     // A stop must lie within the dates of its trip
-    static boolean isWithinTrip(LocalDate date, LocalDate tripStart, LocalDate tripEnd) {
-        return !date.isBefore(tripStart) && !date.isAfter(tripEnd);
+    static boolean isOutsideTrip(LocalDate date, LocalDate tripStart, LocalDate tripEnd) {
+        return date.isBefore(tripStart) || date.isAfter(tripEnd);
     }
 
     // No tags (also trips saved before tags existed) become an empty list;
@@ -106,7 +106,7 @@ public class TripService {
         checkDateRange(request);
         Trip trip = findTripOfUser(userId, id);
         boolean stopOutsideNewDates = stopsOf(trip).stream()
-                .anyMatch(stop -> !isWithinTrip(stop.date(), request.startDate(), request.endDate()));
+                .anyMatch(stop -> isOutsideTrip(stop.date(), request.startDate(), request.endDate()));
         if (stopOutsideNewDates) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Einige Orte liegen außerhalb des neuen Zeitraums. Ändere zuerst ihr Datum.");

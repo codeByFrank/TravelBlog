@@ -78,7 +78,7 @@ public class StopService {
     }
 
     private static void checkDateWithinTrip(Trip trip, StopRequest request) {
-        if (!TripService.isWithinTrip(request.date(), trip.startDate(), trip.endDate())) {
+        if (TripService.isOutsideTrip(request.date(), trip.startDate(), trip.endDate())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Das Datum muss innerhalb der Reise liegen.");
         }
