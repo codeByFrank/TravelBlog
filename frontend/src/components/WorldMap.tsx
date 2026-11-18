@@ -10,6 +10,10 @@ type WorldMapProps = {
     visitedCodes: string[]
     // Country codes on the user's wishlist, e.g. ["IS", "PE"]
     wishlistCodes: string[]
+    // The visited country whose trips are shown below the map, e.g. "IT"; null if none is chosen
+    selectedCode: string | null
+    // Called when the user clicks a visited country; clicks on other countries do nothing
+    onVisitedCountryClick: (code: string) => void
 }
 
 // Shows the German name when the mouse is over a country.
@@ -20,17 +24,27 @@ function addCountryName(country: Country, layer: Layer) {
 
 // Shows the world as colored countries, without a street map below:
 // visited countries in blue, wishlist destinations in orange, all others light grey (as in the mockup).
-export default function WorldMap({countries, visitedCodes, wishlistCodes}: Readonly<WorldMapProps>) {
+export default function WorldMap({
+    countries,
+    visitedCodes,
+    wishlistCodes,
+    selectedCode,
+    onVisitedCountryClick,
+}: Readonly<WorldMapProps>) {
     // Leaflet asks this function for the look of each country.
     // The Tailwind classes work because Leaflet draws the countries as SVG paths.
     function styleCountry(country: Country | undefined): PathOptions {
         const code = country?.properties.code ?? ''
 
-        let fillClass = 'fill-land'
-        if (visitedCodes.includes(code)) {
+        // Leaflet shows the hand cursor over every country, but only visited countries can be clicked.
+        // The ! makes the Tailwind class stronger than the rule in leaflet.css.
+        let fillClass = 'fill-land cursor-default!'
+        if (code === selectedCode) {
+            fillClass = 'fill-accent-dark'
+        } else if (visitedCodes.includes(code)) {
             fillClass = 'fill-accent'
         } else if (wishlistCodes.includes(code)) {
-            fillClass = 'fill-wish'
+            fillClass = 'fill-wish cursor-default!'
         }
 
         return {
@@ -41,9 +55,21 @@ export default function WorldMap({countries, visitedCodes, wishlistCodes}: Reado
         }
     }
 
-    // react-leaflet draws a GeoJSON layer only once. The key changes when the codes change,
-    // so React builds the layer again with the new colors.
-    const colorKey = `${visitedCodes.join(',')}|${wishlistCodes.join(',')}`
+    // Leaflet calls this once for each country when it draws the map:
+    // the name as a tooltip for all countries, and a click handler for the visited ones
+    function prepareCountry(country: Country, layer: Layer) {
+        addCountryName(country, layer)
+
+        // A few areas have no code (null); they can never be visited
+        const code = country.properties.code
+        if (code && visitedCodes.includes(code)) {
+            layer.on('click', () => onVisitedCountryClick(code))
+        }
+    }
+
+    // react-leaflet draws a GeoJSON layer only once. The key changes when the codes or the chosen country change,
+    // so React builds the layer again with the new colors and click handlers.
+    const colorKey = `${visitedCodes.join(',')}|${wishlistCodes.join(',')}|${selectedCode ?? ''}`
 
     return (
         <MapContainer
@@ -65,7 +91,7 @@ export default function WorldMap({countries, visitedCodes, wishlistCodes}: Reado
                 key={colorKey}
                 data={countries}
                 style={styleCountry}
-                onEachFeature={addCountryName}
+                onEachFeature={prepareCountry}
                 attribution="Grenzen: Natural Earth"
             />
         </MapContainer>
