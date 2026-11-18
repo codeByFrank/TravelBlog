@@ -38,7 +38,8 @@ class StopControllerTest {
               "longitude": 11.2558,
               "countryCode": "IT",
               "date": "2024-05-15",
-              "note": "Bestes Eis der Reise"
+              "note": "Bestes Eis der Reise",
+              "overnight": true
             }
             """;
 
@@ -64,11 +65,11 @@ class StopControllerTest {
     }
 
     private static Stop rome() {
-        return new Stop("rome", "Rom", new GeoJsonPoint(12.4964, 41.9028), "IT", LocalDate.of(2024, 5, 12), null);
+        return new Stop("rome", "Rom", new GeoJsonPoint(12.4964, 41.9028), "IT", LocalDate.of(2024, 5, 12), null, true);
     }
 
     private static Stop venice() {
-        return new Stop("venice", "Venedig", new GeoJsonPoint(12.3155, 45.4408), "IT", LocalDate.of(2024, 5, 18), null);
+        return new Stop("venice", "Venedig", new GeoJsonPoint(12.3155, 45.4408), "IT", LocalDate.of(2024, 5, 18), null, null);
     }
 
     @Test
@@ -87,6 +88,7 @@ class StopControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].longitude").value(11.2558))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].countryCode").value("IT"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].note").value("Bestes Eis der Reise"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].overnight").value(true))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.routeLengthKm").value(0));
 
         Stop saved = tripRepo.findById(TRIP_ID).orElseThrow().stops().getFirst();
@@ -158,6 +160,32 @@ class StopControllerTest {
     }
 
     @Test
+    void addStop_isNoOvernightStay_whenFieldIsMissing() throws Exception {
+        saveTrip(USER_ID, List.of());
+
+        mockMvc.perform(MockMvcRequestBuilders.post(STOPS_URL)
+                        .header(HttpHeaders.AUTHORIZATION, bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Pisa", "latitude": 43.72, "longitude": 10.40, "countryCode": "IT", "date": "2024-05-16"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isCreated())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].overnight").value(false));
+    }
+
+    @Test
+    void getTrip_returnsOvernightFalse_forStopSavedWithoutTheField() throws Exception {
+        // venice() has overnight = null, like stops saved before the field existed
+        saveTrip(USER_ID, List.of(rome(), venice()));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/1")
+                        .header(HttpHeaders.AUTHORIZATION, bearer()))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].overnight").value(true))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[1].overnight").value(false));
+    }
+
+    @Test
     void addStop_returnsUnauthorized_withoutToken() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post(STOPS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -218,6 +246,19 @@ class StopControllerTest {
 
         assertEquals(List.of("venice"),
                 tripRepo.findById(TRIP_ID).orElseThrow().stops().stream().map(Stop::id).toList());
+    }
+
+    @Test
+    void deleteStop_returnsBadRequest_whenItIsTheLastStop() throws Exception {
+        saveTrip(USER_ID, List.of(rome()));
+
+        mockMvc.perform(MockMvcRequestBuilders.delete(STOPS_URL + "/rome")
+                        .header(HttpHeaders.AUTHORIZATION, bearer()))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.detail")
+                        .value("Eine Reise braucht mindestens einen Ort. Ändere ihn stattdessen."));
+
+        assertEquals(1, tripRepo.findById(TRIP_ID).orElseThrow().stops().size());
     }
 
     @Test

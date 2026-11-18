@@ -5,6 +5,7 @@ import {getErrorMessage} from '../api/client'
 import {getTrip, deleteTrip} from '../api/trips'
 import TagBadges from '../components/TagBadges'
 import TripDialog from '../components/TripDialog'
+import TripStops from '../components/TripStops'
 import type {Trip} from '../types/trip'
 import {formatDateRange} from '../utils/dates'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -115,6 +116,8 @@ export default function TripDetailPage() {
             {error && (
                 <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
             )}
+
+            <TripStops trip={trip} onTripChange={setTrip}/>
 
             <TripDialog
                 open={editOpen}

@@ -29,13 +29,15 @@ their own data only; it is a personal travel diary, not a social network.
 * Search and filter by year, country or city, and free text
 * Place search by name when adding a stop
 * Statistics: countries, stops, distance, breakdown by year
-* Tags for trips ("Berge", "Meer", "Städtetrip", "Essen") and filtering by them
+* Tags for trips ("Berge", "Meer", "Städtetrip", "Essen", "Freunde & Familie") and filtering by them
 
 ## 4. Trips
 
 Trips are the main objects of the application. A trip belongs to exactly one user.
 
-A trip must have a title and a date range. It may have a description, a cover image, and tags.
+A trip must have a date range and at least one stop; the first stop is chosen when the trip is created. It may have
+a title, a description, a cover image, and tags. Without a title of its own, the trip is named after the places where
+the user stayed overnight, e.g. "Rom – Florenz – Venedig", or after all its stops if there were none.
 
 The overview page must display at least:
 
@@ -64,7 +66,7 @@ Users must be able to:
 
 * add a stop by clicking on the map
 * add a stop by searching for a place by name; coordinates and country are then filled in automatically
-* edit and delete a stop
+* edit and delete a stop; the last stop of a trip can be changed but not deleted
 
 The order of the stops defines the course of the trip.
 
@@ -230,3 +232,5 @@ Future ideas should not be implemented unless explicitly requested.
 * Where are uploaded photos stored (server disk, Cloudinary, MongoDB GridFS), and which limits apply (file size,
   number per stop)?
 * Where is the application deployed?
+* Should the route length include the way from home and back? Then a trip to one place would have a length too.
+  It needs a home place per user (e.g. in a profile) and a rule for trips that do not start at home.

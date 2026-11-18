@@ -11,8 +11,10 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -25,6 +27,8 @@ public class PlaceService {
 
     static final String USER_AGENT = "TravelBlog/1.0 (Java + React course project)";
     private static final int MAX_RESULTS = 5;
+    // Nominatim often returns the same place twice (e.g. the town and its boundary), so more are requested
+    private static final int REQUESTED_RESULTS = 10;
     private static final int MAX_QUERY_LENGTH = 100;
 
     private final RestClient nominatimRestClient;
@@ -49,7 +53,7 @@ public class PlaceService {
                             .queryParam("q", text)
                             .queryParam("format", "jsonv2")
                             .queryParam("addressdetails", 1)
-                            .queryParam("limit", MAX_RESULTS)
+                            .queryParam("limit", REQUESTED_RESULTS)
                             .queryParam("accept-language", "de")
                             .build())
                     .header(HttpHeaders.USER_AGENT, USER_AGENT)
@@ -63,9 +67,14 @@ public class PlaceService {
         if (places == null) {
             return List.of();
         }
-        return Arrays.stream(places)
+        // Same full name = same place for the user; the first one is kept, because Nominatim sorts by importance
+        Map<String, PlaceResponse> byDisplayName = new LinkedHashMap<>();
+        Arrays.stream(places)
                 .map(PlaceService::toResponse)
                 .filter(Objects::nonNull)
+                .forEach(place -> byDisplayName.putIfAbsent(place.displayName(), place));
+        return byDisplayName.values().stream()
+                .limit(MAX_RESULTS)
                 .toList();
     }
 

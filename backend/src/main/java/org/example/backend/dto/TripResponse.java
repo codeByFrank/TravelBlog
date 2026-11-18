@@ -6,7 +6,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record TripResponse(String id,
-                           String title,
+                           String title, // the title of the user or, without one, built from the stops
+                           String customTitle, // the title of the user; null if the title is built from the stops
                            String description,
                            LocalDate startDate,
                            LocalDate endDate,

@@ -53,6 +53,10 @@ public class StopService {
         Trip trip = tripService.findTripOfUser(userId, tripId);
         List<Stop> stops = TripService.stopsOf(trip);
         checkStopExists(stops, stopId);
+        if (stops.size() == 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Eine Reise braucht mindestens einen Ort. Ändere ihn stattdessen.");
+        }
         List<Stop> remaining = stops.stream()
                 .filter(stop -> !stop.id().equals(stopId))
                 .toList();
@@ -74,7 +78,8 @@ public class StopService {
                 new GeoJsonPoint(request.longitude(), request.latitude()),
                 request.countryCode(),
                 request.date(),
-                note);
+                note,
+                Boolean.TRUE.equals(request.overnight()));
     }
 
     private static void checkDateWithinTrip(Trip trip, StopRequest request) {

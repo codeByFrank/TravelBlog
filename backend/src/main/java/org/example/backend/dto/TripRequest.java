@@ -1,6 +1,6 @@
 package org.example.backend.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record TripRequest(
-        @NotBlank(message = "Bitte einen Titel eingeben.")
+        // Optional; without a title the trip is named after its places (see TripTitles)
         @Size(max = 100, message = "Der Titel darf höchstens 100 Zeichen lang sein.")
         String title,
 
@@ -28,5 +28,9 @@ public record TripRequest(
         String coverColor,
 
         // Optional; unknown values are rejected when the JSON is read
-        List<TripTag> tags) {
+        List<TripTag> tags,
+
+        // Required when a trip is created, ignored when it is changed: every trip has at least one place
+        @Valid
+        FirstStopRequest firstStop) {
 }

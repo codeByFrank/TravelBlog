@@ -36,5 +36,10 @@ public record StopRequest(
         LocalDate date,
 
         @Size(max = 2000, message = "Die Notiz darf höchstens 2000 Zeichen lang sein.")
-        String note) {
+        String note,
+
+        // Stayed overnight here. Boolean, not boolean: Jackson 3 rejects a missing
+        // primitive field, so an old client without this field would get a 400.
+        // The service treats null as false.
+        Boolean overnight) {
 }

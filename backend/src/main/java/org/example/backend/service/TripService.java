@@ -1,5 +1,6 @@
 package org.example.backend.service;
 
+import org.example.backend.dto.FirstStopRequest;
 import org.example.backend.dto.StopResponse;
 import org.example.backend.dto.TripRequest;
 import org.example.backend.dto.TripResponse;
@@ -16,6 +17,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 public class TripService {
@@ -35,15 +37,26 @@ public class TripService {
 
     public TripResponse createTrip(String userId, TripRequest request) {
         checkDateRange(request);
+        FirstStopRequest firstStop = request.firstStop();
+        if (firstStop == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte einen Ort auswählen.");
+        }
+        Stop stop = new Stop(UUID.randomUUID().toString(),
+                firstStop.name().trim(),
+                new GeoJsonPoint(firstStop.longitude(), firstStop.latitude()),
+                firstStop.countryCode(),
+                request.startDate(),
+                null,
+                Boolean.TRUE.equals(firstStop.overnight()));
         Trip trip = new Trip(
                 null,
-                request.title().trim(),
+                customTitle(request.title()),
                 request.description(),
                 request.startDate(),
                 request.endDate(),
                 request.coverColor(),
                 normalizeTags(request.tags()),
-                List.of(),
+                List.of(stop),
                 userId);
         return toResponse(tripRepo.save(trip));
     }
@@ -51,9 +64,14 @@ public class TripService {
     static TripResponse toResponse(Trip trip) {
         List<Stop> stops = stopsOf(trip);
         List<GeoJsonPoint> route = stops.stream().map(Stop::location).toList();
-        return new TripResponse(trip.id(), trip.title(), trip.description(),
+        return new TripResponse(trip.id(), TripTitles.of(trip.title(), stops), trip.title(), trip.description(),
                 trip.startDate(), trip.endDate(), trip.coverColor(), normalizeTags(trip.tags()),
                 toStopResponses(stops), RouteLengthCalculator.totalKm(route));
+    }
+
+    // An empty title is stored as null: the trip is then named after its stops
+    private static String customTitle(String title) {
+        return title == null || title.isBlank() ? null : title.trim();
     }
 
     // Trips saved before stops existed have no stops field
@@ -69,7 +87,7 @@ public class TripService {
                     ? null
                     : Math.round(RouteLengthCalculator.distanceKm(previous.location(), stop.location()));
             responses.add(new StopResponse(stop.id(), stop.name(), stop.location().getY(), stop.location().getX(),
-                    stop.countryCode(), stop.date(), stop.note(), distance));
+                    stop.countryCode(), stop.date(), stop.note(), Boolean.TRUE.equals(stop.overnight()), distance));
             previous = stop;
         }
         return responses;
@@ -112,7 +130,7 @@ public class TripService {
                     "Einige Orte liegen außerhalb des neuen Zeitraums. Ändere zuerst ihr Datum.");
         }
         Trip updated = trip
-                .withTitle(request.title().trim())
+                .withTitle(customTitle(request.title()))
                 .withDescription(request.description())
                 .withStartDate(request.startDate())
                 .withEndDate(request.endDate())

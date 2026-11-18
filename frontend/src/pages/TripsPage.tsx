@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react'
+import {useNavigate} from 'react-router-dom'
 import {getErrorMessage} from '../api/client'
 import {getTrips} from '../api/trips'
 import TripDialog from '../components/TripDialog'
@@ -8,12 +9,8 @@ import TripStats from '../components/TripStats'
 import type {Trip, TripTag} from '../types/trip'
 import {ALL_YEARS, filterTrips, getTripDays, getYears} from '../utils/tripFilters'
 
-// Newest trip first, like the order from the backend
-function byStartDateDesc(a: Trip, b: Trip): number {
-    return b.startDate.localeCompare(a.startDate)
-}
-
 export default function TripsPage() {
+    const navigate = useNavigate()
     const [trips, setTrips] = useState<Trip[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -53,10 +50,10 @@ export default function TripsPage() {
         setSelectedTags([])
     }
 
-    // A new trip is added to the list in date order without reloading the page
+    // After creating a trip the user usually adds its places next, so its detail page opens
     function handleCreated(trip: Trip) {
-        setTrips((current) => [trip, ...current].sort(byStartDateDesc))
         setDialogOpen(false)
+        void navigate(`/trips/${trip.id}`)
     }
 
     return (

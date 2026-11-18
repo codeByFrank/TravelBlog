@@ -5,6 +5,7 @@ import java.time.LocalDate;
 /**
  * A stop as the frontend gets it: plain latitude and longitude instead of the GeoJSON point.
  *
+ * @param overnight              true if the user stayed overnight here
  * @param distanceFromPreviousKm straight-line distance from the previous stop in km; null for the first stop
  */
 public record StopResponse(String id,
@@ -14,5 +15,6 @@ public record StopResponse(String id,
                            String countryCode,
                            LocalDate date,
                            String note,
+                           boolean overnight,
                            Long distanceFromPreviousKm) {
 }

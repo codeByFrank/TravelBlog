@@ -84,6 +84,29 @@ class PlaceServiceTest {
     }
 
     @Test
+    void search_returnsEachPlaceOnlyOnce_whenNominatimFindsItTwice() {
+        // e.g. the town as a point and as an administrative boundary, with slightly different coordinates
+        server.expect(requestTo(startsWith(SEARCH_URL)))
+                .andExpect(queryParam("limit", "10"))
+                .andRespond(withSuccess("""
+                        [
+                          {"name": "Straßburg", "display_name": "Straßburg, Grand Est, Frankreich",
+                           "lat": "48.5846", "lon": "7.7507", "address": {"country_code": "fr"}},
+                          {"name": "Strasburg", "display_name": "Strasburg, Mecklenburg-Vorpommern, Deutschland",
+                           "lat": "53.5106", "lon": "13.7442", "address": {"country_code": "de"}},
+                          {"name": "Straßburg", "display_name": "Straßburg, Grand Est, Frankreich",
+                           "lat": "48.5734", "lon": "7.7521", "address": {"country_code": "fr"}}
+                        ]
+                        """, MediaType.APPLICATION_JSON));
+
+        List<PlaceResponse> places = placeService.search("Strasburg");
+
+        assertEquals(List.of("Straßburg, Grand Est, Frankreich", "Strasburg, Mecklenburg-Vorpommern, Deutschland"),
+                places.stream().map(PlaceResponse::displayName).toList());
+        assertEquals(48.5846, places.getFirst().latitude());
+    }
+
+    @Test
     void search_returnsEmptyList_whenNothingIsFound() {
         server.expect(requestTo(startsWith(SEARCH_URL)))
                 .andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));

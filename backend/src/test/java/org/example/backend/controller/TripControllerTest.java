@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
@@ -133,29 +134,69 @@ class TripControllerTest {
                                   "description": "Rom, Florenz, Venedig",
                                   "startDate": "2024-05-12",
                                   "endDate": "2024-05-20",
-                                  "coverColor": "#E3F0FC"
+                                  "coverColor": "#E3F0FC",
+                                  "firstStop": {"name": "Rom", "latitude": 41.9028, "longitude": 12.4964, "countryCode": "IT", "overnight": true}
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").isNotEmpty())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Italien 2024"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Italien 2024"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.customTitle").value("Italien 2024"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops.length()").value(1))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].name").value("Rom"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].date").value("2024-05-12"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].overnight").value(true));
         assertEquals(1, tripRepo.findAllByUserIdOrderByStartDateDesc(USER_ID).size());
     }
 
     @Test
-    void createTrip_returnsBadRequest_whenTitleIsMissing() throws Exception {
+    void createTrip_namesTripAfterFirstStop_whenTitleIsEmpty() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/trips")
                         .header("Authorization", bearer())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "title": "",
+                                  "title": "  ",
                                   "startDate": "2024-05-12",
-                                  "endDate": "2024-05-20"
+                                  "endDate": "2024-05-20",
+                                  "firstStop": {"name": "Rom", "latitude": 41.9028, "longitude": 12.4964, "countryCode": "IT", "overnight": true}
+                                }
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isCreated())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Rom"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.customTitle").doesNotExist());
+
+        assertNull(tripRepo.findAllByUserIdOrderByStartDateDesc(USER_ID).getFirst().title());
+    }
+
+    @Test
+    void createTrip_returnsBadRequest_whenFirstStopIsMissing() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/trips")
+                        .header("Authorization", bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title": "Italien", "startDate": "2024-05-12", "endDate": "2024-05-20"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.detail").value("Bitte einen Ort auswählen."));
+
+        assertEquals(0, tripRepo.count());
+    }
+
+    @Test
+    void createTrip_returnsFieldErrors_whenFirstStopIsInvalid() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/trips")
+                        .header("Authorization", bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "startDate": "2024-05-12",
+                                  "endDate": "2024-05-20",
+                                  "firstStop": {"name": "Rom", "latitude": 91, "longitude": 12.4964, "countryCode": "IT"}
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.title").value("Bitte einen Titel eingeben."));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.errors['firstStop.latitude']").value("Ungültige Koordinaten."));
 
         assertEquals(0, tripRepo.count());
     }
@@ -255,7 +296,7 @@ class TripControllerTest {
     }
 
     @Test
-    void updateTrip_returnsBadRequest_whenTitleIsMissing() throws Exception {
+    void updateTrip_removesOwnTitle_whenTitleIsEmpty() throws Exception {
         saveTrip(USER_ID);
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1")
@@ -264,8 +305,11 @@ class TripControllerTest {
                         .content("""
                                 {"title": "", "startDate": "2024-05-12", "endDate": "2024-05-20"}
                                 """))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.title").exists());
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Neue Reise"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.customTitle").doesNotExist());
+
+        assertNull(tripRepo.findById("1").orElseThrow().title());
     }
 
     @Test
@@ -300,7 +344,8 @@ class TripControllerTest {
                                   "title": "Lissabon",
                                   "startDate": "2024-10-05",
                                   "endDate": "2024-10-11",
-                                  "tags": ["FOOD", "SEA", "FOOD"]
+                                  "tags": ["FOOD", "SEA", "FOOD"],
+                                  "firstStop": {"name": "Lissabon", "latitude": 38.7223, "longitude": -9.1393, "countryCode": "PT", "overnight": true}
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isCreated())

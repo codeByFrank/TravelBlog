@@ -9,5 +9,6 @@ public enum TripTag {
     MOUNTAINS,
     SEA,
     CITY_TRIP,
-    FOOD
+    FOOD,
+    FRIENDS_AND_FAMILY
 }
