@@ -201,6 +201,18 @@ export function getCountryName(code: string): string {
     return findCountry(code)?.name ?? code
 }
 
+// The continents of some countries, each only once, e.g. ["AR", "CL"] → ["Südamerika"]
+export function getContinents(codes: string[]): string[] {
+    const continents: string[] = []
+    for (const code of codes) {
+        const continent = findCountry(code)?.continent
+        if (continent && !continents.includes(continent)) {
+            continents.push(continent)
+        }
+    }
+    return continents
+}
+
 // Short text for a wishlist card, as in the mockup:
 // ["AR", "CL"] → "Argentinien, Chile · Südamerika", ["NZ"] → "Neuseeland · Ozeanien", [] → ""
 export function describeCountries(codes: string[]): string {
@@ -209,15 +221,7 @@ export function describeCountries(codes: string[]): string {
     }
 
     const names = codes.map((code) => getCountryName(code))
-
-    // Each continent only once, even when several countries lie on it
-    const continents: string[] = []
-    for (const code of codes) {
-        const continent = findCountry(code)?.continent
-        if (continent && !continents.includes(continent)) {
-            continents.push(continent)
-        }
-    }
+    const continents = getContinents(codes)
 
     if (continents.length === 0) {
         return names.join(', ')
