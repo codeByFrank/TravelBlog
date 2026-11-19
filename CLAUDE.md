@@ -11,16 +11,15 @@ course.
 - `/frontend` — React frontend application
 - `/backend` — Spring Boot backend application
 - `/docs` — project requirements and documentation
-- `/project-templates` — the template for `docs/deployment.md`, to be filled in once the deployment target is decided
+- `/project-templates` — the template from which `docs/deployment.md` was made
 - `TravelBlog – Seitenentwürfe.html` — page mockups (trip overview, trip detail, world map, wishlist)
 
 ## Documentation
 
 - `docs/requirements.md` — what the application should do. Read the relevant sections before implementing a feature.
 - `docs/architecture.md` — architecture decisions and their reasons. Update it when a decision changes.
+- `docs/deployment.md` — how the application is deployed on Render, with the secrets and environment variables.
 - `docs/memory.md` — local only (gitignored). Working agreements and a short, dated history of decisions.
-
-There is no `docs/deployment.md` yet; the deployment target is not decided.
 
 If a requested change conflicts with these documents, point out the conflict before implementing it.
 
@@ -53,11 +52,13 @@ If a requested change conflicts with these documents, point out the conflict bef
 - MongoDB
 - GitHub Actions (`.github/workflows/`): pushes to branches other than `main` build and test the backend
   (`maven.yml`); on every pull request and push to `main` the backend is built, tested, and analyzed with SonarQube
-  Cloud (`build_backend.yml`), and the frontend is analyzed (`build_frontend.yml`). Details in
+  Cloud (`build_backend.yml`), the frontend is analyzed (`build_frontend.yml`), and pushes to `main` are deployed
+  (`deploy.yml`). Details in
   `docs/architecture.md` → CI and Code Quality
 - The frontend has no automated tests (not part of the course); its checks are lint, type check, and build
 - External services, all free and without an API key: OpenStreetMap tiles, Nominatim (place search)
-- Deployment target: not decided
+- Deployment: on every push to `main`, `deploy.yml` builds one Docker image (backend with the frontend inside),
+  pushes it to Docker Hub, and starts a deploy on Render. Details in `docs/deployment.md`
 
 ## Commands
 

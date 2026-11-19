@@ -236,6 +236,5 @@ Future ideas should not be implemented unless explicitly requested.
 
 * Where are uploaded photos stored (server disk, Cloudinary, MongoDB GridFS), and which limits apply (file size,
   number per stop)?
-* Where is the application deployed?
 * Should the route length include the way from home and back? Then a trip to one place would have a length too.
   It needs a home place per user (e.g. in a profile) and a rule for trips that do not start at home.

@@ -4,13 +4,20 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 
 ## Deployment
 
-- The deployment target is not decided (see `requirements.md` → Open Questions).
+- The application is deployed on Render as one Docker container; the steps are in `deployment.md`.
+- One container instead of two: the frontend build is copied into the backend's `static` folder, so the backend
+  delivers the frontend and the API from the same address. This needs no CORS setup and no second service.
+- The image is built by GitHub Actions (`deploy.yml`) on every push to `main` and stored on Docker Hub; Render only
+  runs it. The image is built from the finished jar, so the Dockerfile stays short.
+- Spring Security requires a login only for `/api/**`; all other paths are the frontend's files and are public.
+- `FrontendController` forwards the React Router paths to `index.html`, so pages can be opened directly and reloaded.
 - During local development, the Vite dev server proxies `/api` to the backend on `http://localhost:8080`.
 - Continuous integration and code analysis: see CI and Code Quality.
 
 ## CI and Code Quality
 
-- GitHub Actions runs three workflows (`.github/workflows/`):
+- GitHub Actions runs three check workflows (`.github/workflows/`); the fourth, `deploy.yml`, deploys every push to
+  `main` (see Deployment):
   - `maven.yml` (Java CI with Maven): builds and tests the backend with `mvn -B clean verify` on every push to a branch
     other than `main`.
   - `build_backend.yml` (SonarQube_backend): on every pull request and push to `main`, builds and tests the backend
