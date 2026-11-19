@@ -45,6 +45,14 @@ export function collectVisitedCountries(trips: Trip[]): VisitedCountry[] {
     })
 }
 
+// The trips with at least one stop in a country, newest first, e.g. all trips to "IT".
+// Shown when the user clicks a visited country (requirements, section 8).
+export function getTripsToCountry(trips: Trip[], code: string): Trip[] {
+    const tripsToCountry = trips.filter((trip) => getCountryCodes(trip).includes(code))
+    // ISO dates like "2024-05-12" can be compared as text
+    return tripsToCountry.toSorted((a, b) => b.startDate.localeCompare(a.startDate))
+}
+
 // Year of the latest stop of a trip in one country, e.g. "2024".
 // The dates are ISO dates like "2024-05-15", so the first four characters are the year.
 function getLastYearInCountry(trip: Trip, code: string): string {

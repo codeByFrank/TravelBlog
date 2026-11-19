@@ -19,6 +19,7 @@
     --color-cover-4: #EAE6F5;
     --color-chip: #F0F5FA;         /* small badges on cards, e.g. "9 Tage" */
     --color-wish: #F0A23B;         /* wishlist destinations on the world map */
+    --color-wish-dark: #C47A16;    /* the chosen wishlist country on the world map */
     --color-land: #D3DFEA;         /* countries on the world map that are neither visited nor wished */
     --radius-card: 20px;
     --shadow-card: 0 8px 30px rgba(31, 80, 130, 0.08);
