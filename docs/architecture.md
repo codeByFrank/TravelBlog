@@ -73,9 +73,10 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - Every trip and wishlist entry stores the id of its owner (`userId`); every query filters by the logged-in user.
 - A wishlist entry stores its countries as a list of ISO 3166-1 alpha-2 codes (`countryCodes`, 1 to 10). The user
   picks them from a fixed list in the frontend (`utils/countries.ts`, generated from the same Natural Earth data as the
-  world map, with German names and continents), so no place search is needed for the wishlist. When the destination
-  is itself a country name (e.g. "Island"), the form chooses that country automatically. Entries stored before
-  countries existed are returned with an empty list.
+  world map, with German names and continents), so no place search is needed for the wishlist. The form asks for the
+  countries first; the place or region is optional. Without one, the frontend sends the country names as the
+  destination (e.g. "Island", "Argentinien, Chile"), so the backend still always gets a destination and did not change.
+  Entries stored before countries existed are returned with an empty list.
 - The API returns DTOs (e.g. `TripResponse`, `WishlistEntryResponse`), not the documents: the owner id stays on the
   server.
 - `GET /api/trips` returns the user's trips sorted by start date, newest first.

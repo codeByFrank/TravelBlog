@@ -2,7 +2,7 @@ import {useState, type SubmitEvent} from 'react'
 import {getErrorMessage, getFieldErrors} from '../api/client'
 import FormField from './FormField'
 import {PRIORITY_LABELS, type Priority, type WishlistEntry, type WishlistEntryRequest} from '../types/WishlistEntry'
-import {COUNTRIES, findCountryByName, getCountryName} from '../utils/countries'
+import {COUNTRIES, getCountryName, getCountryNames} from '../utils/countries'
 
 // Same limit as in the backend (WishlistEntryRequest)
 const MAX_COUNTRIES = 10
@@ -19,9 +19,23 @@ type WishlistFormProps = {
 // Field errors as the backend sends them: field name → message
 type FieldErrors = Record<string, string>
 
-// Form for creating and editing a wishlist entry
+// The text for the field "Ort oder Region" when an entry is edited.
+// If the entry is only named after its countries (e.g. "Island"), the field stays empty:
+// that name was made automatically, and it should follow when the user changes the countries.
+function getOwnDestination(entry: WishlistEntry | undefined): string {
+    if (!entry) {
+        return ''
+    }
+    if (entry.destination === getCountryNames(entry.countryCodes)) {
+        return ''
+    }
+    return entry.destination
+}
+
+// Form for creating and editing a wishlist entry.
+// The countries come first; the place or region is optional, without it the entry is named after its countries.
 export default function WishlistForm({entry, onSave, onCancel}: Readonly<WishlistFormProps>) {
-    const [destination, setDestination] = useState(entry?.destination ?? '')
+    const [destination, setDestination] = useState(getOwnDestination(entry))
     const [reason, setReason] = useState(entry?.reason ?? '')
     const [priority, setPriority] = useState<Priority>(entry?.priority ?? 'MEDIUM')
     const [bestTravelTime, setBestTravelTime] = useState(entry?.bestTravelTime ?? '')
@@ -39,15 +53,6 @@ export default function WishlistForm({entry, onSave, onCancel}: Readonly<Wishlis
 
     function removeCountry(code: string) {
         setCountryCodes(countryCodes.filter((existingCode) => existingCode !== code))
-    }
-
-    // When the destination is itself a country, e.g. "Island", that country is chosen automatically,
-    // so the user does not have to pick it again. This only happens while no country is chosen yet.
-    function chooseCountryFromDestination() {
-        const matchingCountry = findCountryByName(destination)
-        if (matchingCountry && countryCodes.length === 0) {
-            setCountryCodes([matchingCountry.code])
-        }
     }
 
     // The select box offers only the countries that are not chosen yet
@@ -70,9 +75,14 @@ export default function WishlistForm({entry, onSave, onCancel}: Readonly<Wishlis
             return
         }
 
+        // Without a place or region, the entry is named after its countries, e.g. "Argentinien, Chile".
+        // The backend always gets a destination, so it does not need to know about this rule.
+        const ownDestination = destination.trim()
+        const destinationToSave = ownDestination === '' ? getCountryNames(countryCodes) : ownDestination
+
         setSubmitting(true)
         try {
-            await onSave({destination, reason, priority, bestTravelTime, countryCodes})
+            await onSave({destination: destinationToSave, reason, priority, bestTravelTime, countryCodes})
             // After creating an entry the form stays open, so empty it for the next one
             if (!entry) {
                 setDestination('')
@@ -100,17 +110,6 @@ export default function WishlistForm({entry, onSave, onCancel}: Readonly<Wishlis
             <h2 className="text-xl font-bold tracking-tight">
                 {entry ? 'Wunschziel bearbeiten' : 'Neues Wunschziel'}
             </h2>
-
-            <FormField
-                id="destination"
-                label="Ort oder Land"
-                placeholder="z. B. Island"
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-                onBlur={chooseCountryFromDestination}
-                required
-                error={fieldErrors.destination}
-            />
 
             {/* Countries (at least one): chosen one by one from a list, shown below as small badges with a remove button */}
             <div className="flex flex-col gap-2">
@@ -159,6 +158,16 @@ export default function WishlistForm({entry, onSave, onCancel}: Readonly<Wishlis
                     <p role="alert" className="text-sm text-red-700">{countryError}</p>
                 )}
             </div>
+
+            {/* Optional: a place or region inside the countries, e.g. "Patagonien" or "Machu Picchu" */}
+            <FormField
+                id="destination"
+                label={<>Ort oder Region <span className="font-normal text-muted">(optional)</span></>}
+                placeholder="z. B. Patagonien oder Machu Picchu"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                error={fieldErrors.destination}
+            />
 
             <div className="flex flex-col gap-2">
                 <label htmlFor="reason" className="text-sm font-semibold text-ink-soft">

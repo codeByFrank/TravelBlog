@@ -190,12 +190,6 @@ export function findCountry(code: string): CountryInfo | undefined {
     return COUNTRIES.find((country) => country.code === code)
 }
 
-// Finds a country by its German name, ignoring upper and lower case, e.g. "island" → Island; undefined if none fits
-export function findCountryByName(name: string): CountryInfo | undefined {
-    const searchedName = name.trim().toLowerCase()
-    return COUNTRIES.find((country) => country.name.toLowerCase() === searchedName)
-}
-
 // The browser knows the German names of all countries, also of small ones like Malta or Andorra
 const browserCountryNames = new Intl.DisplayNames(['de'], {type: 'region'})
 
@@ -214,6 +208,13 @@ export function getCountryName(code: string): string {
         // of() throws for codes that are not two letters
         return code
     }
+}
+
+// The German names of some countries in one text, e.g. ["AR", "CL"] → "Argentinien, Chile", ["IS"] → "Island".
+// A wishlist entry without its own place or region is named like this.
+export function getCountryNames(codes: string[]): string {
+    const names = codes.map((code) => getCountryName(code))
+    return names.join(', ')
 }
 
 // The continents of some countries, each only once, e.g. ["AR", "CL"] → ["Südamerika"]
@@ -235,11 +236,11 @@ export function describeCountries(codes: string[]): string {
         return ''
     }
 
-    const names = codes.map((code) => getCountryName(code))
+    const names = getCountryNames(codes)
     const continents = getContinents(codes)
 
     if (continents.length === 0) {
-        return names.join(', ')
+        return names
     }
-    return `${names.join(', ')} · ${continents.join(', ')}`
+    return `${names} · ${continents.join(', ')}`
 }
