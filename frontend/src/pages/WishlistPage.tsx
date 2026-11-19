@@ -4,7 +4,7 @@ import {addWishlistEntry, deleteWishlistEntry, getWishlistEntries, updateWishlis
 import ConfirmDialog from '../components/ConfirmDialog'
 import WishlistForm from '../components/WishlistForm'
 import {PRIORITY_LABELS, type Priority, type WishlistEntry, type WishlistEntryRequest} from '../types/WishlistEntry'
-import {describeCountries} from '../utils/countries'
+import {describeCountries, getContinents, getCountryNames} from '../utils/countries'
 
 // Colors of the priority badge
 const PRIORITY_STYLES: Record<Priority, string> = {
@@ -18,6 +18,17 @@ const PRIORITY_ORDER: Record<Priority, number> = {
     HIGH: 0,
     MEDIUM: 1,
     LOW: 2,
+}
+
+// The small text next to the name of an entry, as in the mockup:
+// "Machu Picchu" → "Peru · Südamerika", "Patagonien" → "Argentinien, Chile · Südamerika".
+// An entry that is only named after its countries shows just the continent, so the name does not appear twice:
+// "Island" → "Europa".
+function describeWishCountries(entry: WishlistEntry): string {
+    if (entry.destination === getCountryNames(entry.countryCodes)) {
+        return getContinents(entry.countryCodes).join(', ')
+    }
+    return describeCountries(entry.countryCodes)
 }
 
 export default function WishlistPage() {
@@ -104,9 +115,9 @@ export default function WishlistPage() {
                                     {/* As in the mockup: the countries and continent in small letters next to the name */}
                                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                                         <h2 className="text-xl font-bold tracking-tight">{entry.destination}</h2>
-                                        {entry.countryCodes.length > 0 && (
+                                        {describeWishCountries(entry) && (
                                             <span className="text-sm text-muted">
-                                                {describeCountries(entry.countryCodes)}
+                                                {describeWishCountries(entry)}
                                             </span>
                                         )}
                                     </div>
