@@ -61,6 +61,8 @@ added on Render before the pull request that needs it is merged.
   these paths with `index.html`, so reloading a page works. A new page in the frontend needs its path there too.
 - Only `/api/**` requires a login; the frontend files are public and contain no user data.
 - The container runs as its own user `travelblog`, not as root.
+- The job `build-backend` runs on `ubuntu-24.04`, not `ubuntu-latest`: the backend tests start an embedded MongoDB
+  (7.0.4), and there is no download of it for Ubuntu 26.04.
 - On Render's free plan the service sleeps after a while without visitors; the first request afterwards takes about
   a minute.
 - Changing `JWT_SECRET` logs out all users.
