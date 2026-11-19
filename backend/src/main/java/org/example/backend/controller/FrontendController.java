@@ -10,8 +10,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class FrontendController {
 
-    // The same paths as in frontend/src/App.tsx and navigation.tsx; a new page there needs its path here too
-    @GetMapping({"/", "/login", "/register", "/trips", "/trips/{id}", "/map", "/wishlist"})
+    // The same paths as in frontend/src/App.tsx and navigation.tsx; a new page there needs its path here too.
+    // "/trips/*" stands for the detail page of any trip, e.g. /trips/123; the id itself is only read by React.
+    @GetMapping({"/", "/login", "/register", "/trips", "/trips/*", "/map", "/wishlist"})
     public String showFrontend() {
         return "forward:/index.html";
     }
