@@ -1,4 +1,4 @@
-import {GeoJSON, MapContainer} from 'react-leaflet'
+import {GeoJSON, MapContainer, useMapEvents} from 'react-leaflet'
 import type {Layer, PathOptions} from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type {Country, CountryCollection} from '../types/country'
@@ -20,6 +20,22 @@ type WorldMapProps = {
 // Outside the component, because it does not use props or state.
 function addCountryName(country: Country, layer: Layer) {
     layer.bindTooltip(country.properties.name, {sticky: true})
+}
+
+// Zooming with the mouse wheel is off at first, so that the page scrolls normally when the mouse passes the map.
+// After a click into the map the mouse wheel zooms; when the mouse leaves the map, it is switched off again.
+// It has to be a component inside MapContainer, because only there useMapEvents knows the map.
+function ScrollZoomOnClick() {
+    const map = useMapEvents({
+        click() {
+            map.scrollWheelZoom.enable()
+        },
+        mouseout() {
+            map.scrollWheelZoom.disable()
+        },
+    })
+    // Draws nothing; it only listens to the map
+    return null
 }
 
 // Shows the world as colored countries, without a street map below:
@@ -81,7 +97,8 @@ export default function WorldMap({
             minZoom={0}
             maxZoom={6}
             maxBounds={[[-90, -200], [90, 200]]}
-            // The page scrolls with the mouse wheel; zooming works with the buttons or a double click
+            // The page scrolls with the mouse wheel; zooming works with the buttons, a double click,
+            // or the mouse wheel after a click into the map (ScrollZoomOnClick below)
             scrollWheelZoom={false}
             // Inline style, because leaflet.css would otherwise paint the background grey
             style={{background: 'transparent'}}
@@ -94,6 +111,7 @@ export default function WorldMap({
                 onEachFeature={prepareCountry}
                 attribution="Grenzen: Natural Earth"
             />
+            <ScrollZoomOnClick/>
         </MapContainer>
     )
 }
