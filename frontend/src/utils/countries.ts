@@ -196,9 +196,24 @@ export function findCountryByName(name: string): CountryInfo | undefined {
     return COUNTRIES.find((country) => country.name.toLowerCase() === searchedName)
 }
 
-// German name of a country, e.g. "IS" → "Island"; an unknown code is shown as it is
+// The browser knows the German names of all countries, also of small ones like Malta or Andorra
+const browserCountryNames = new Intl.DisplayNames(['de'], {type: 'region'})
+
+// German name of a country, e.g. "IS" → "Island".
+// Countries that are not in the list above (too small for the world map, e.g. "MT") get the name from the browser;
+// a code the browser does not know either is shown as it is.
 export function getCountryName(code: string): string {
-    return findCountry(code)?.name ?? code
+    const country = findCountry(code)
+    if (country) {
+        return country.name
+    }
+
+    try {
+        return browserCountryNames.of(code) ?? code
+    } catch {
+        // of() throws for codes that are not two letters
+        return code
+    }
 }
 
 // The continents of some countries, each only once, e.g. ["AR", "CL"] → ["Südamerika"]
