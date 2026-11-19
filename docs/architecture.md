@@ -123,7 +123,8 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
   collects them from `GET /api/trips` (`utils/visitedCountries.ts`); there is no separate endpoint.
 - Countries too small for the 1:110m borders (e.g. Malta) still count as visited and appear in the list, with the
   German name from the browser (`Intl.DisplayNames`), but they are not colored on the map and have no continent.
-- Clicking a visited country shows its trips below the map. The entries of the list "Besuchte Länder" are buttons that
+- Clicking a visited country shows its trips below the map; clicking a wishlist country shows its wishlist
+  destinations there (both parts for a country that is both). The entries of the list "Besuchte Länder" are buttons that
   do the same, because the countries on the Leaflet map cannot be reached with the keyboard.
 
 ## Place Search

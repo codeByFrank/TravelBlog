@@ -6,7 +6,7 @@ import TripStats, {type TripStat} from '../components/TripStats'
 import WorldMap from '../components/WorldMap'
 import type {CountryCollection} from '../types/country'
 import type {Trip} from '../types/trip'
-import type {WishlistEntry} from '../types/WishlistEntry'
+import {PRIORITY_LABELS, type WishlistEntry} from '../types/WishlistEntry'
 import {getContinents, getCountryName} from '../utils/countries'
 import {loadCountryBorders} from '../utils/countryBorders'
 import {formatDateRange} from '../utils/dates'
@@ -24,6 +24,17 @@ function collectWishlistCodes(entries: WishlistEntry[]): string[] {
         }
     }
     return codes
+}
+
+// The wishlist entries that have a country, e.g. all entries with "IS"
+function getWishlistEntriesForCountry(entries: WishlistEntry[], code: string): WishlistEntry[] {
+    return entries.filter((entry) => entry.countryCodes.includes(code))
+}
+
+// Short text next to a wishlist destination, e.g. "Priorität: hoch · Februar"
+function describeWish(entry: WishlistEntry): string {
+    const priority = `Priorität: ${PRIORITY_LABELS[entry.priority].toLowerCase()}`
+    return entry.bestTravelTime ? `${priority} · ${entry.bestTravelTime}` : priority
 }
 
 export default function WorldMapPage() {
@@ -56,8 +67,9 @@ export default function WorldMapPage() {
     const visitedCodes = visitedCountries.map((country) => country.code)
     const wishlistCodes = collectWishlistCodes(wishlistEntries)
     const selectedTrips = selectedCode ? getTripsToCountry(trips, selectedCode) : []
+    const selectedWishlistEntries = selectedCode ? getWishlistEntriesForCountry(wishlistEntries, selectedCode) : []
 
-    // A click on a country (on the map or in the list) shows its trips; a second click on the same country hides them.
+    // A click on a country (on the map or in the list) shows its trips and wishes; a second click hides them again.
     // The function form of setSelectedCode always gets the current value, also inside the Leaflet click handler.
     function toggleCountry(code: string) {
         setSelectedCode((currentCode) => (currentCode === code ? null : code))
@@ -108,7 +120,7 @@ export default function WorldMapPage() {
                             visitedCodes={visitedCodes}
                             wishlistCodes={wishlistCodes}
                             selectedCode={selectedCode}
-                            onVisitedCountryClick={toggleCountry}
+                            onCountryClick={toggleCountry}
                         />
                     ) : (
                         <p className="flex h-56 items-center justify-center text-muted md:h-[28rem]">
@@ -136,13 +148,12 @@ export default function WorldMapPage() {
                 </div>
             )}
 
-            {/* The trips to the chosen country, directly below the map so that the user sees them after the click */}
+            {/* The trips and wishlist destinations of the chosen country, directly below the map
+                so that the user sees them after the click. Each part is only shown when it has entries. */}
             {selectedCode && (
                 <div className="flex flex-col gap-4 rounded-card bg-surface p-6 shadow-card">
                     <div className="flex items-center justify-between gap-4">
-                        <h2 className="text-lg font-bold tracking-tight">
-                            Deine Reisen nach {getCountryName(selectedCode)}
-                        </h2>
+                        <h2 className="text-lg font-bold tracking-tight">{getCountryName(selectedCode)}</h2>
                         <button
                             type="button"
                             onClick={() => setSelectedCode(null)}
@@ -152,21 +163,49 @@ export default function WorldMapPage() {
                         </button>
                     </div>
 
-                    <ul className="flex flex-col">
-                        {selectedTrips.map((trip) => (
-                            <li key={trip.id} className="border-t border-line">
-                                <Link
-                                    to={`/trips/${trip.id}`}
-                                    className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3 text-[15px] hover:text-accent"
-                                >
-                                    <span className="font-semibold">{trip.title}</span>
-                                    <span className="text-sm text-muted">
-                                        {formatDateRange(trip.startDate, trip.endDate)}
-                                    </span>
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
+                    {selectedTrips.length > 0 && (
+                        <div className="flex flex-col gap-1">
+                            <h3 className="text-sm font-semibold text-muted">Deine Reisen</h3>
+                            <ul className="flex flex-col">
+                                {selectedTrips.map((trip) => (
+                                    <li key={trip.id} className="border-t border-line">
+                                        <Link
+                                            to={`/trips/${trip.id}`}
+                                            className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3 text-[15px] hover:text-accent"
+                                        >
+                                            <span className="font-semibold">{trip.title}</span>
+                                            <span className="text-sm text-muted">
+                                                {formatDateRange(trip.startDate, trip.endDate)}
+                                            </span>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {selectedWishlistEntries.length > 0 && (
+                        <div className="flex flex-col gap-1">
+                            <h3 className="text-sm font-semibold text-muted">Deine Wunschziele</h3>
+                            <ul className="flex flex-col">
+                                {selectedWishlistEntries.map((entry) => (
+                                    <li
+                                        key={entry.id}
+                                        className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-line py-3 text-[15px]"
+                                    >
+                                        <span className="font-semibold">{entry.destination}</span>
+                                        <span className="text-sm text-muted">{describeWish(entry)}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                            <Link
+                                to="/wishlist"
+                                className="text-sm font-semibold text-accent underline hover:text-accent-dark"
+                            >
+                                Zur Wunschliste
+                            </Link>
+                        </div>
+                    )}
                 </div>
             )}
 

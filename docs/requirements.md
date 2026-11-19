@@ -101,7 +101,8 @@ As in the mockup, the page also shows the number of continents, the share of the
 countries), and the number of wishlist destinations and wishlist countries. Below the map, a list shows each visited
 country with the year of the latest visit and the number of trips, e.g. "Italien · 2024 · 2 Reisen".
 
-Clicking a visited country must show the user's trips to that country.
+Clicking a visited country must show the user's trips to that country. Clicking a wishlist country shows the
+wishlist destinations in that country, with priority and best travel time.
 
 A country counts as visited when at least one stop of the user lies in it.
 

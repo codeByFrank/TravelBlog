@@ -12,8 +12,8 @@ type WorldMapProps = {
     wishlistCodes: string[]
     // The visited country whose trips are shown below the map, e.g. "IT"; null if none is chosen
     selectedCode: string | null
-    // Called when the user clicks a visited country; clicks on other countries do nothing
-    onVisitedCountryClick: (code: string) => void
+    // Called when the user clicks a visited or wished country; clicks on grey countries do nothing
+    onCountryClick: (code: string) => void
 }
 
 // Shows the German name when the mouse is over a country.
@@ -40,27 +40,28 @@ function ScrollZoomOnClick() {
 
 // Shows the world as colored countries, without a street map below:
 // visited countries in blue, wishlist destinations in orange, all others light grey (as in the mockup).
+// Blue and orange countries can be clicked; the chosen one gets a darker shade.
 export default function WorldMap({
     countries,
     visitedCodes,
     wishlistCodes,
     selectedCode,
-    onVisitedCountryClick,
+    onCountryClick,
 }: Readonly<WorldMapProps>) {
     // Leaflet asks this function for the look of each country.
     // The Tailwind classes work because Leaflet draws the countries as SVG paths.
     function styleCountry(country: Country | undefined): PathOptions {
         const code = country?.properties.code ?? ''
 
-        // Leaflet shows the hand cursor over every country, but only visited countries can be clicked.
+        // Blue wins when a country is visited and on the wishlist; the chosen country gets the darker shade.
+        // Leaflet shows the hand cursor over every country, but grey countries cannot be clicked.
         // The ! makes the Tailwind class stronger than the rule in leaflet.css.
+        const isSelected = code === selectedCode
         let fillClass = 'fill-land cursor-default!'
-        if (code === selectedCode) {
-            fillClass = 'fill-accent-dark'
-        } else if (visitedCodes.includes(code)) {
-            fillClass = 'fill-accent'
+        if (visitedCodes.includes(code)) {
+            fillClass = isSelected ? 'fill-accent-dark' : 'fill-accent'
         } else if (wishlistCodes.includes(code)) {
-            fillClass = 'fill-wish cursor-default!'
+            fillClass = isSelected ? 'fill-wish-dark' : 'fill-wish'
         }
 
         return {
@@ -72,14 +73,14 @@ export default function WorldMap({
     }
 
     // Leaflet calls this once for each country when it draws the map:
-    // the name as a tooltip for all countries, and a click handler for the visited ones
+    // the name as a tooltip for all countries, and a click handler for the visited and wished ones
     function prepareCountry(country: Country, layer: Layer) {
         addCountryName(country, layer)
 
-        // A few areas have no code (null); they can never be visited
+        // A few areas have no code (null); they can never be visited or wished
         const code = country.properties.code
-        if (code && visitedCodes.includes(code)) {
-            layer.on('click', () => onVisitedCountryClick(code))
+        if (code && (visitedCodes.includes(code) || wishlistCodes.includes(code))) {
+            layer.on('click', () => onCountryClick(code))
         }
     }
 
