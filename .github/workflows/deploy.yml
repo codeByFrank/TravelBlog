@@ -32,7 +32,9 @@ jobs:
 
   build-backend:
     needs: build-frontend
-    runs-on: ubuntu-latest
+    # Not ubuntu-latest: the backend tests use an embedded MongoDB 7.0.4, which has no download for Ubuntu 26.04.
+    # maven.yml and build_backend.yml use ubuntu-24.04 for the same reason.
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
