@@ -124,6 +124,8 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - The country borders are `frontend/public/countries.geojson`: a smaller copy of the Natural Earth countries
   (1:110m, public domain) with only the ISO code (`ISO_A2_EH`, because `ISO_A2` is `-99` for e.g. France and Norway),
   the German name, and the continent; Antarctica is left out. The file is loaded when the world map opens.
+- French Guiana is a separate area with the code `GF` in that file, although Natural Earth counts it as part of France.
+  Otherwise a wish or visit "Frankreich" would also color a piece of South America, which confuses users.
 - The world map has no tile layer: it shows only the countries, colored as in the mockup (visited, wishlist, other).
 - Leaflet is used through `react-leaflet`, so maps are written as React components.
 - The list of visited countries is the set of distinct country codes over all stops of the user. The frontend
