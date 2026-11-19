@@ -22,7 +22,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/error").permitAll()
-                        .anyRequest().authenticated())
+                        // All other API endpoints need a logged-in user
+                        .requestMatchers("/api/**").authenticated()
+                        // Everything else is the frontend (index.html, JavaScript, CSS), which the backend delivers
+                        // in production. It holds no user data; the data only comes from the API above.
+                        .anyRequest().permitAll())
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
