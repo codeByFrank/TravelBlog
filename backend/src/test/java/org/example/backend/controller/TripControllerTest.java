@@ -135,7 +135,7 @@ class TripControllerTest {
                                   "startDate": "2024-05-12",
                                   "endDate": "2024-05-20",
                                   "coverColor": "#E3F0FC",
-                                  "firstStop": {"name": "Rom", "latitude": 41.9028, "longitude": 12.4964, "countryCode": "IT", "overnight": true}
+                                  "firstStop": {"name": "Rom", "latitude": 41.9028, "longitude": 12.4964, "countryCode": "IT", "type": "OVERNIGHT"}
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
@@ -145,7 +145,9 @@ class TripControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.stops.length()").value(1))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].name").value("Rom"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].date").value("2024-05-12"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].overnight").value(true));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].type").value("OVERNIGHT"))
+                // The only place of a trip lasts the whole trip
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].departureDate").value("2024-05-20"));
         assertEquals(1, tripRepo.findAllByUserIdOrderByStartDateDesc(USER_ID).size());
     }
 
@@ -159,7 +161,7 @@ class TripControllerTest {
                                   "title": "  ",
                                   "startDate": "2024-05-12",
                                   "endDate": "2024-05-20",
-                                  "firstStop": {"name": "Rom", "latitude": 41.9028, "longitude": 12.4964, "countryCode": "IT", "overnight": true}
+                                  "firstStop": {"name": "Rom", "latitude": 41.9028, "longitude": 12.4964, "countryCode": "IT", "type": "OVERNIGHT"}
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
@@ -345,7 +347,7 @@ class TripControllerTest {
                                   "startDate": "2024-10-05",
                                   "endDate": "2024-10-11",
                                   "tags": ["FOOD", "SEA", "FOOD"],
-                                  "firstStop": {"name": "Lissabon", "latitude": 38.7223, "longitude": -9.1393, "countryCode": "PT", "overnight": true}
+                                  "firstStop": {"name": "Lissabon", "latitude": 38.7223, "longitude": -9.1393, "countryCode": "PT", "type": "OVERNIGHT"}
                                 }
                                 """))
                 .andExpect(MockMvcResultMatchers.status().isCreated())

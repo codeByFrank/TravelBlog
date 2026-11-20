@@ -62,6 +62,15 @@ A stop must have a name, coordinates, a country, and a date (the arrival date, w
 may have a personal note, e.g. "Florenz, 14. Mai –
 Sonnenuntergang am Piazzale Michelangelo, bestes Eis der Reise".
 
+A stop must also say how the user spent the time there:
+
+* Übernachtung: the user stayed overnight here. The stay lasts until the arrival at the next overnight stop, the
+  last one until the end of the trip, and is shown with its dates and nights, e.g. "12.–15. Mai · 3 Nächte".
+* Durchreise: a stop on the way to the next overnight stop, e.g. Siena between Rom and Florenz.
+* Tagesausflug: there and back on the same day from the last overnight stop (its base), e.g. Tivoli from Rom.
+
+The only stop of a trip lasts the whole trip, whatever its type.
+
 Users must be able to:
 
 * add a stop by clicking on the map
@@ -72,13 +81,19 @@ The order of the stops defines the course of the trip.
 
 ## 6. Trip Map
 
+The overnight stops and the stops passed on the way are the route of the trip; day trips are not part of it. A trip
+without any overnight stop (e.g. a single day) has no base, so all its stops are the route.
+
 The map of a trip must display:
 
-* all stops as markers; clicking a marker shows the stop's note and photos
-* a line between the stops in the order of the visit
+* all stops as markers, day trips in a different style; clicking a marker shows the stop's note and photos
+* a line between the stops on the route in the order of the visit
+* a line in a different style from its base to each day trip
 * the route length, e.g. "Rom → Florenz → Venedig: 490 km"
 
-The route length is the sum of the straight-line distances between consecutive stops.
+The route length is the sum of the straight-line distances between consecutive stops on the route. A day trip is
+shown with its distance from its base, e.g. "Tagesausflug ab Rom · 26 km", and does not count towards the route
+length.
 
 ## 7. Photos
 

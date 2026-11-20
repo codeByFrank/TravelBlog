@@ -1,6 +1,7 @@
 package org.example.backend.service;
 
 import org.example.backend.model.Stop;
+import org.example.backend.model.StopType;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -23,7 +24,8 @@ final class TripTitles {
             return customTitle;
         }
         // The places where the user stayed overnight describe the trip best; a day trip has none
-        List<String> overnight = distinctNames(stops.stream().filter(stop -> Boolean.TRUE.equals(stop.overnight())));
+        List<String> overnight = distinctNames(stops.stream()
+                .filter(stop -> stop.typeOrDefault() == StopType.OVERNIGHT));
         List<String> names = overnight.isEmpty() ? distinctNames(stops.stream()) : overnight;
         if (names.isEmpty()) {
             // Only trips saved before every trip needed a place

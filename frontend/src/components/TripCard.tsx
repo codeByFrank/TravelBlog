@@ -28,8 +28,10 @@ export default function TripCard({trip, index}: Readonly<TripCardProps>) {
     // The color chosen in "Neue Reise" wins; trips without a color get a pastel tone in turn
     const fallbackClass = trip.coverColor ? '' : fallbackCoverColors[index % fallbackCoverColors.length]
     const countries = getCountryCodes(trip).map((code) => getCountryName(code)).join(' · ')
-    // As on the detail page: with one place, "1 Ort" and "0 km" say nothing the title does not say
-    const hasRoute = trip.stops.length > 1
+    // As on the detail page: with one place, "1 Ort" and "0 km" say nothing the title does not say;
+    // a base with only day trips around it has several places but no route
+    const severalStops = trip.stops.length > 1
+    const hasRoute = trip.routeLengthKm > 0
 
     return (
         <Link
@@ -50,12 +52,8 @@ export default function TripCard({trip, index}: Readonly<TripCardProps>) {
                 {/* Photos join these badges once stops have them */}
                 <div className="mt-1 flex flex-wrap gap-2">
                     <Badge>{formatDays(getTripDays(trip))}</Badge>
-                    {hasRoute && (
-                        <>
-                            <Badge>{trip.stops.length} Orte</Badge>
-                            <Badge>{formatKm(trip.routeLengthKm)}</Badge>
-                        </>
-                    )}
+                    {severalStops && <Badge>{trip.stops.length} Orte</Badge>}
+                    {hasRoute && <Badge>{formatKm(trip.routeLengthKm)}</Badge>}
                 </div>
                 <TagBadges tags={trip.tags}/>
             </div>

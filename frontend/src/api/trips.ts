@@ -1,5 +1,5 @@
 import api from './client'
-import type {Trip, TripTag} from '../types/trip'
+import type {StopType, Trip, TripTag} from '../types/trip'
 
 // The first place of a new trip; its arrival date is the start date of the trip
 export type FirstStopRequest = {
@@ -7,7 +7,7 @@ export type FirstStopRequest = {
     latitude: number
     longitude: number
     countryCode: string
-    overnight: boolean
+    type: StopType
 }
 
 export type TripRequest = {

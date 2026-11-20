@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import org.example.backend.model.StopType;
 
 /**
  * The first place of a new trip, sent together with the trip.
@@ -30,6 +31,6 @@ public record FirstStopRequest(
         @Pattern(regexp = "^[A-Z]{2}$", message = "Ungültiger Ländercode.")
         String countryCode,
 
-        // Boolean, not boolean: a missing field means false (see StopRequest)
-        Boolean overnight) {
+        @NotNull(message = "Bitte auswählen, wie du hier warst.")
+        StopType type) {
 }
