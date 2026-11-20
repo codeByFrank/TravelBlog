@@ -34,7 +34,7 @@ If a requested change conflicts with these documents, point out the conflict bef
 - axios
 - oxlint
 - Tailwind CSS v4
-- Leaflet with OpenStreetMap tiles (decided, not installed yet)
+- Leaflet with OpenStreetMap tiles, through react-leaflet
 
 ### Backend
 

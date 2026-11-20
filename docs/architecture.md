@@ -129,6 +129,21 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
   Otherwise a wish or visit "Frankreich" would also color a piece of South America, which confuses users.
 - The world map has no tile layer: it shows only the countries, colored as in the mockup (visited, wishlist, other).
 - Leaflet is used through `react-leaflet`, so maps are written as React components.
+- The trip map (`TripMap`) is part of "Reiseverlauf" on the detail page, as in the mockup: the map card on the left,
+  the stops on the right; on narrow screens the map is above the list. On wide screens the card is sticky, so the map
+  stays in view while the user scrolls through the stops. It shows OpenStreetMap tiles, the stops as numbered markers
+  with their names, a dashed line between them in the order of the visit, and below the map the number of places and
+  the route length (`routeLengthKm`). A click on a marker opens a popup with the name, date, country, and note.
+  The markers are `divIcon`s styled with Tailwind, because Leaflet's default marker images are not found after the
+  Vite build. A trip without stops shows no map.
+- A single place gets a smaller map, zoomed out (at most zoom 5), so that it shows where in the country or the
+  region the place lies; with a route the map is higher and zooms in up to zoom 12.
+- The trip map fits itself to the stops when it opens and again when a stop is added, moved, or deleted, but not when
+  only a name or a note changes, so it stays where the user moved it.
+- On both maps a pinch on the touchpad or Ctrl (⌘) + mouse wheel zooms the map; plain scrolling scrolls the page and
+  shows a short hint (`MapWheelZoom`). Browsers report a pinch as a wheel event with `ctrlKey`, so Leaflet's wheel zoom
+  stays on and the component only keeps plain scrolling away from it. (Before, the wheel zoomed only after a click into
+  the map, and a pinch zoomed the whole page.)
 - The list of visited countries is the set of distinct country codes over all stops of the user. The frontend
   collects them from `GET /api/trips` (`utils/visitedCountries.ts`); there is no separate endpoint.
 - Countries too small for the 1:110m borders (e.g. Malta) still count as visited and appear in the list, with the
