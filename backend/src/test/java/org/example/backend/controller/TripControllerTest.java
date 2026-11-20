@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.example.backend.model.StopType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -419,7 +420,7 @@ class TripControllerTest {
 
     private void saveTripWithPhotos(String coverPhotoId) {
         Stop rome = new Stop("rome", "Rom", new GeoJsonPoint(12.4964, 41.9028), "IT",
-                LocalDate.of(2024, 5, 12), null, true, List.of("p1", "p2"));
+                LocalDate.of(2024, 5, 12), null, StopType.OVERNIGHT, null, List.of("p1", "p2"));
         tripRepo.save(new Trip("1", "Italien", null, LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20),
                 null, List.of(), List.of(rome), USER_ID, coverPhotoId));
     }

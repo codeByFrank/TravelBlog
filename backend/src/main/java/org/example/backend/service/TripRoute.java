@@ -51,7 +51,7 @@ final class TripRoute {
 
             responses.add(new StopResponse(stop.id(), stop.name(), stop.location().getY(), stop.location().getX(),
                     stop.countryCode(), stop.date(), departureDate(i), stop.note(), stop.typeOrDefault(), onRoute,
-                    distance, baseStopId));
+                    distance, baseStopId, TripService.photoIdsOf(stop)));
 
             if (onRoute) {
                 previousOnRoute = stop;

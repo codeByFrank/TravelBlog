@@ -17,6 +17,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.example.backend.model.StopType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -58,7 +59,7 @@ class PhotoControllerTest {
 
     private void saveTrip(String userId, List<String> photoIds) {
         Stop rome = new Stop("rome", "Rom", new GeoJsonPoint(12.4964, 41.9028), "IT",
-                LocalDate.of(2024, 5, 12), null, true, photoIds);
+                LocalDate.of(2024, 5, 12), null, StopType.OVERNIGHT, null, photoIds);
         tripRepo.save(new Trip(TRIP_ID, "Italien", null, LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20),
                 null, List.of(), List.of(rome), userId, null));
     }
@@ -80,9 +81,9 @@ class PhotoControllerTest {
 
     private void saveTripWithTwoStops() {
         Stop rome = new Stop("rome", "Rom", new GeoJsonPoint(12.4964, 41.9028), "IT",
-                LocalDate.of(2024, 5, 12), null, true, List.of());
+                LocalDate.of(2024, 5, 12), null, StopType.OVERNIGHT, null, List.of());
         Stop venice = new Stop("venice", "Venedig", new GeoJsonPoint(12.3155, 45.4408), "IT",
-                LocalDate.of(2024, 5, 18), null, true, List.of());
+                LocalDate.of(2024, 5, 18), null, StopType.OVERNIGHT, null, List.of());
         tripRepo.save(new Trip(TRIP_ID, "Italien", null, LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20),
                 null, List.of(), List.of(rome, venice), USER_ID, null));
     }
