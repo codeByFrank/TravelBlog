@@ -72,6 +72,13 @@ class PhotoControllerTest {
         return gridFsTemplate.find(new Query()).first() == null;
     }
 
+    private String uploadPhoto() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.multipart(PHOTOS_URL).file(jpeg())
+                        .header(HttpHeaders.AUTHORIZATION, bearer(USER_ID)))
+                .andExpect(MockMvcResultMatchers.status().isCreated());
+        return photoIdsOfRome().getLast();
+    }
+
     @Test
     void addPhoto_storesFileAndAddsItToStop() throws Exception {
         saveTrip(USER_ID, List.of());
@@ -135,5 +142,34 @@ class PhotoControllerTest {
 
         mockMvc.perform(MockMvcRequestBuilders.multipart(PHOTOS_URL).file(jpeg()))
                 .andExpect(MockMvcResultMatchers.status().isUnauthorized());
+    }
+
+    @Test
+    void getPhoto_returnsFileWithContentType() throws Exception {
+        saveTrip(USER_ID, List.of());
+        String photoId = uploadPhoto();
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/photos/" + photoId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(USER_ID)))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().contentType("image/jpeg"))
+                .andExpect(MockMvcResultMatchers.content().bytes(PHOTO_BYTES));
+    }
+
+    @Test
+    void getPhoto_returnsNotFound_forPhotoOfAnotherUser() throws Exception {
+        saveTrip(USER_ID, List.of());
+        String photoId = uploadPhoto();
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/photos/" + photoId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(OTHER_USER_ID)))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    void getPhoto_returnsNotFound_forInvalidId() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/photos/not-an-id")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(USER_ID)))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
     }
 }

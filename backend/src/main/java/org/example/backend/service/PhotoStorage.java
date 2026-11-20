@@ -1,6 +1,11 @@
 package org.example.backend.service;
 
+import com.mongodb.client.gridfs.model.GridFSFile;
 import org.bson.Document;
+import org.bson.types.ObjectId;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -8,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.util.Optional;
 
 @Component
 public class PhotoStorage {
@@ -26,5 +32,15 @@ public class PhotoStorage {
         } catch (IOException e) {
             throw new UncheckedIOException("Photo could not be stored", e);
         }
+    }
+
+    // The file only if it belongs to the given user; empty for unknown ids and for photos of other users
+    public Optional<GridFsResource> find(String photoId, String userId) {
+        if (!ObjectId.isValid(photoId)) {
+            return Optional.empty();
+        }
+        Query query = new Query(Criteria.where("_id").is(new ObjectId(photoId)).and("metadata.userId").is(userId));
+        GridFSFile file = gridFsTemplate.findOne(query);
+        return file == null ? Optional.empty() : Optional.of(gridFsTemplate.getResource(file));
     }
 }

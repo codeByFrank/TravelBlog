@@ -4,6 +4,7 @@ import org.example.backend.dto.TripResponse;
 import org.example.backend.model.Stop;
 import org.example.backend.model.Trip;
 import org.example.backend.repository.TripRepo;
+import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -69,5 +70,10 @@ public class PhotoService {
                 .map(stop -> stop.id().equals(changed.id()) ? changed : stop)
                 .toList();
         return trip.withStops(stops);
+    }
+
+    public GridFsResource getPhoto(String userId, String photoId) {
+        return photoStorage.find(photoId, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Foto nicht gefunden."));
     }
 }
