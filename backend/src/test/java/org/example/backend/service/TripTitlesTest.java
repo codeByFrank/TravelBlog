@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class TripTitlesTest {
 
     private static Stop stop(String name, Boolean overnight) {
-        return new Stop(name, name, new GeoJsonPoint(0, 0), "IT", LocalDate.of(2024, 5, 12), null, overnight);
+        return new Stop(name, name, new GeoJsonPoint(0, 0), "IT", LocalDate.of(2024, 5, 12), null, overnight, List.of());
     }
 
     @Test
