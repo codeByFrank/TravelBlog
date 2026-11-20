@@ -215,10 +215,29 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
   shown. "Alle" clears the selected tags. Tag, year, and search filters apply together.
 - Free-text search covers trip titles, descriptions, tag names, and the stops' names, countries (German names), and
   notes, so that "Florenz", "Frankreich" or "Eis" find a trip.
-- Statistics are calculated from the user's trips on request; nothing is stored redundantly. The overview totals
-  (`getTotals`: travel days, distinct countries, stops, sum of the route lengths) are computed in the frontend from
-  the trips it already loaded; they ignore search and filters. A trip card shows its countries in route order and,
-  from two stops on, the number of stops and the route length.
+- Statistics are calculated from the user's trips on request; nothing is stored redundantly. They have their own
+  page "Statistik" (`/stats`, `StatsPage`), so that the trip overview starts with the trips instead of a screen of
+  numbers (the mockup had the tiles above the trips). The totals (`getTotals`: trips, travel days, distinct
+  countries, stops, sum of the route lengths) are computed in the frontend from all trips of the user. A trip card
+  shows its countries in route order and, from two stops on, the number of stops and the route length.
+- The breakdown by year (`getTotalsByYear`, shown by `YearStats` under the tiles as "Nach Jahren") uses `getTotals`
+  for the trips of each year, so its rules are the same: a trip counts in the year it starts, a country visited on
+  two trips of a year counts once. Each row shows trips, travel days, countries, and distance, with a bar for the
+  distance relative to the year with the longest one (the numbers are in the text; the bar is hidden from screen
+  readers).
+  A row links to the trip overview filtered by that year (`/trips?year=2024`); `TripsPage` takes the start value of
+  its year filter from `?year`.
+- The other statistics are computed in `frontend/src/utils/tripStats.ts`, one function per block:
+  - Records (`getRecords`, `TripRecords`): most travel days, longest route, most stops. Trips that share a record are
+    all shown; a record nobody holds (e.g. no route yet) is left out.
+  - Countries by travel days (`getCountryTimes`, `CountryStats`): a stop covers the days from its arrival to its
+    `departureDate`, so the day of a move counts for both countries; within one trip each day counts once per
+    country. Sorted by days, then trips; the first eight are shown, the rest behind "Alle anzeigen".
+  - Travel days per month (`getDaysPerMonth`, `MonthStats`): every day of every trip, over all years, so a trip from
+    28 March to 10 April adds 4 days to March and 10 to April. The columns show a hint on hover; the busiest months
+    are named below the chart, so the main number is readable without hovering.
+  - Extreme points (`getExtremePoints`, `ExtremePoints`): the stops with the highest and lowest latitude and
+    longitude; the date line is not treated specially.
 
 ## Frontend Conventions
 

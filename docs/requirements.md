@@ -150,7 +150,14 @@ The application should display for the logged-in user:
 * number of visited countries
 * number of stops
 * total distance travelled
-* a breakdown by year, e.g. "2024: 3 Reisen, 5 Länder, 4.200 km"
+* a breakdown by year, e.g. "2024: 3 Reisen, 19 Tage, 5 Länder, 4.200 km"
+* records: the longest trip, the trip with the longest route, and the trip with the most places (all trips if
+  several share a record)
+* the countries by travel days, e.g. "Italien · 3 Reisen · 21 Tage"
+* the travel days per month over all years, and the busiest month
+* the northernmost, southernmost, westernmost, and easternmost place, each with its trip
+
+The statistics have their own page, so that the trip overview starts with the trips.
 
 ## 12. Authentication
 

@@ -1,22 +1,23 @@
 import {useEffect, useState} from 'react'
-import {useNavigate} from 'react-router-dom'
+import {useNavigate, useSearchParams} from 'react-router-dom'
 import {getErrorMessage} from '../api/client'
 import {getTrips} from '../api/trips'
 import TripDialog from '../components/TripDialog'
 import TripCard from '../components/TripCard'
 import TripFilters from '../components/TripFilters'
-import TripStats from '../components/TripStats'
 import type {Trip, TripTag} from '../types/trip'
-import {ALL_YEARS, filterTrips, formatKm, getTotals, getYears} from '../utils/tripFilters'
+import {ALL_YEARS, filterTrips, getYears} from '../utils/tripFilters'
 
 export default function TripsPage() {
     const navigate = useNavigate()
+    // The statistics page links here with ?year=2024 to show the trips of one year
+    const [searchParams] = useSearchParams()
     const [trips, setTrips] = useState<Trip[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [dialogOpen, setDialogOpen] = useState(false)
     const [query, setQuery] = useState('')
-    const [year, setYear] = useState(ALL_YEARS)
+    const [year, setYear] = useState(searchParams.get('year') ?? ALL_YEARS)
     const [selectedTags, setSelectedTags] = useState<TripTag[]>([])
 
     // Load the trips once when the page opens
@@ -38,15 +39,6 @@ export default function TripsPage() {
     }, [])
 
     const shownTrips = filterTrips(trips, query, year, selectedTags)
-    // Totals over all trips, independent of search and filters
-    const totals = getTotals(trips)
-    const stats = [
-        {label: 'Reisen', value: String(trips.length)},
-        {label: 'Reisetage', value: String(totals.days)},
-        {label: 'Länder', value: String(totals.countries)},
-        {label: 'Orte', value: String(totals.places)},
-        {label: 'Strecke gesamt', value: formatKm(totals.km)},
-    ]
 
     function resetFilters() {
         setQuery('')
@@ -96,7 +88,6 @@ export default function TripsPage() {
 
             {!loading && !error && trips.length > 0 && (
                 <>
-                    <TripStats stats={stats}/>
                     <TripFilters
                         query={query}
                         onQueryChange={setQuery}
