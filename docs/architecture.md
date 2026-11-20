@@ -182,8 +182,18 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 
 ## Photos
 
-- A stop stores references to its photos; the photo files are not stored inside the trip document.
-- Not decided: where the files are stored and which limits apply (see `requirements.md` → Open Questions).
+- Photo files are stored in MongoDB GridFS, in the same Atlas database: Render deletes its file system on every
+  deploy, and GridFS needs no further service or API key. A stop stores only the ids of its photos (`photoIds`).
+- At most 5 photos per stop; JPEG, PNG or WebP; at most 5 MB per file (`spring.servlet.multipart` and a check in
+  `PhotoService`).
+- The browser shrinks every photo to at most 2000 px on the long side (JPEG) before the upload, because the free
+  Atlas cluster has 512 MB in total.
+- Each GridFS file stores its owner (`metadata.userId`) and its trip (`metadata.tripId`). `GET /api/photos/{id}`
+  returns the file only to its owner, otherwise 404. The frontend loads photos through axios with the token, because
+  `<img>` cannot send the `Authorization` header.
+- Cover: `Trip.coverPhotoId` is the photo the user chose. The API returns the chosen photo if it still exists,
+  otherwise the first photo of the trip; without photos the card shows the cover color.
+- Deleting a photo, a stop or a trip deletes its files in GridFS as well.
 
 ## Tags
 

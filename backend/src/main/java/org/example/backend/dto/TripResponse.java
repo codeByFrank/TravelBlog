@@ -14,5 +14,6 @@ public record TripResponse(String id,
                            String coverColor,
                            List<TripTag> tags,
                            List<StopResponse> stops,
-                           long routeLengthKm) {
+                           long routeLengthKm,
+                           String coverPhotoId) {
 }

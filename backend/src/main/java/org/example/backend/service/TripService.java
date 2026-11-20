@@ -1,5 +1,6 @@
 package org.example.backend.service;
 
+import org.example.backend.dto.CoverRequest;
 import org.example.backend.dto.FirstStopRequest;
 import org.example.backend.dto.TripRequest;
 import org.example.backend.dto.TripResponse;
@@ -21,9 +22,11 @@ import java.util.UUID;
 public class TripService {
 
     private final TripRepo tripRepo;
+    private final PhotoStorage photoStorage;
 
-    public TripService(TripRepo tripRepo) {
+    public TripService(TripRepo tripRepo, PhotoStorage photoStorage) {
         this.tripRepo = tripRepo;
+        this.photoStorage = photoStorage;
     }
 
     // Trips of the user, newest first; the owner id is not sent to the client
@@ -46,7 +49,8 @@ public class TripService {
                 request.startDate(),
                 null,
                 firstStop.type(),
-                null);
+                null,
+                List.of());
         Trip trip = new Trip(
                 null,
                 customTitle(request.title()),
@@ -56,7 +60,8 @@ public class TripService {
                 request.coverColor(),
                 normalizeTags(request.tags()),
                 List.of(stop),
-                userId);
+                userId,
+                null);
         return toResponse(tripRepo.save(trip));
     }
 
@@ -65,7 +70,7 @@ public class TripService {
         TripRoute route = new TripRoute(stops, trip.endDate());
         return new TripResponse(trip.id(), TripTitles.of(trip.title(), stops), trip.title(), trip.description(),
                 trip.startDate(), trip.endDate(), trip.coverColor(), normalizeTags(trip.tags()),
-                route.toResponses(), route.lengthKm());
+                route.toResponses(), route.lengthKm(), coverPhotoIdOf(trip));
     }
 
     // An empty title is stored as null: the trip is then named after its stops
@@ -76,6 +81,26 @@ public class TripService {
     // Trips saved before stops existed have no stops field
     static List<Stop> stopsOf(Trip trip) {
         return trip.stops() == null ? List.of() : trip.stops();
+    }
+
+    // Stops saved before photos existed have no photoIds field
+    static List<String> photoIdsOf(Stop stop) {
+        return stop.photoIds() == null ? List.of() : stop.photoIds();
+    }
+
+    static List<String> allPhotoIdsOf(Trip trip) {
+        return stopsOf(trip).stream()
+                .flatMap(stop -> photoIdsOf(stop).stream())
+                .toList();
+    }
+
+    // The chosen cover if it still exists, otherwise the first photo; null: the card shows the cover color
+    static String coverPhotoIdOf(Trip trip) {
+        List<String> photoIds = allPhotoIdsOf(trip);
+        if (trip.coverPhotoId() != null && photoIds.contains(trip.coverPhotoId())) {
+            return trip.coverPhotoId();
+        }
+        return photoIds.isEmpty() ? null : photoIds.getFirst();
     }
 
     // A stop must lie within the dates of its trip
@@ -131,7 +156,19 @@ public class TripService {
         }
     }
 
+    // Delete the trip first: if that fails, its photos still exist
     public void deleteTrip(String userId, String id) {
-        tripRepo.delete(findTripOfUser(userId, id));
+        Trip trip = findTripOfUser(userId, id);
+        tripRepo.delete(trip);
+        photoStorage.deleteAllOfTrip(trip.id());
+    }
+
+    public TripResponse setCover(String userId, String id, CoverRequest request) {
+        Trip trip = findTripOfUser(userId, id);
+        String photoId = request.photoId();
+        if (photoId != null && !allPhotoIdsOf(trip).contains(photoId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dieses Foto gehört nicht zu dieser Reise.");
+        }
+        return toResponse(tripRepo.save(trip.withCoverPhotoId(photoId)));
     }
 }

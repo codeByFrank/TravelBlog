@@ -1,8 +1,10 @@
 package org.example.backend.model;
 
+import lombok.With;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * A place visited during a trip, stored inside the trip document.
@@ -17,6 +19,7 @@ import java.time.LocalDate;
  * @param overnight   only in stops saved before {@code type} existed: true if the user stayed overnight.
  *                    New stops store null here, so MongoDB leaves the field out. Read {@link #typeOrDefault()}.
  */
+@With
 public record Stop(String id,
                    String name,
                    GeoJsonPoint location,
@@ -24,7 +27,8 @@ public record Stop(String id,
                    LocalDate date,
                    String note,
                    StopType type,
-                   Boolean overnight) {
+                   Boolean overnight,
+                   List<String> photoIds) {
 
     // The type, also for stops saved before it existed: an overnight stay stays one, anything else was a day trip
     public StopType typeOrDefault() {

@@ -1,5 +1,6 @@
 package org.example.backend.controller;
 
+import org.example.backend.model.Stop;
 import org.example.backend.model.Trip;
 import org.example.backend.model.TripTag;
 import org.example.backend.repository.TripRepo;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -48,12 +50,12 @@ class TripControllerTest {
     // Saves the trip with id "1" for the given owner
     private void saveTrip(String userId) {
         tripRepo.save(new Trip("1", "Italien", "Rom und Florenz",
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", List.of(), List.of(), userId));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", List.of(), List.of(), userId, null));
     }
 
     @Test
     void getAllTrips_returnsSavedTrip() throws Exception {
-        Trip trip = new Trip("1", "TestTrip", "Test", LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC",List.of(), List.of(), USER_ID);
+        Trip trip = new Trip("1", "TestTrip", "Test", LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC",List.of(), List.of(), USER_ID, null);
         tripRepo.save(trip);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
@@ -77,11 +79,11 @@ class TripControllerTest {
     @Test
     void getAllTrips_returnsNewestTripFirst() throws Exception {
         tripRepo.save(new Trip("old", "OldTrip", "Test",
-                LocalDate.of(2023, 8, 1), LocalDate.of(2023, 8, 10), "#DCEAF7", List.of(), List.of(), USER_ID));
+                LocalDate.of(2023, 8, 1), LocalDate.of(2023, 8, 10), "#DCEAF7", List.of(), List.of(), USER_ID, null));
         tripRepo.save(new Trip("new", "NewTrip", "Test",
-                LocalDate.of(2025, 2, 3), LocalDate.of(2025, 2, 9), "#DCEAF7", List.of(), List.of(), USER_ID));
+                LocalDate.of(2025, 2, 3), LocalDate.of(2025, 2, 9), "#DCEAF7", List.of(), List.of(), USER_ID, null));
         tripRepo.save(new Trip("middle", "MiddleTrip", "Test",
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", List.of(), List.of(), USER_ID));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7", List.of(), List.of(), USER_ID, null));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
                         .header("Authorization", bearer()))
@@ -115,7 +117,7 @@ class TripControllerTest {
     @Test
     void getAllTrips_doesNotReturnTripsOfOtherUsers() throws Exception {
         tripRepo.save(new Trip("2", "OtherTrip", "Test",
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC",List.of(), List.of(), OTHER_USER_ID));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#E3F0FC",List.of(), List.of(), OTHER_USER_ID, null));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips")
                         .header("Authorization", bearer()))
@@ -382,7 +384,7 @@ class TripControllerTest {
     void updateTrip_replacesTags() throws Exception {
         tripRepo.save(new Trip("1", "Italien", "Rom und Florenz",
                 LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), "#DCEAF7",
-                List.of(TripTag.CITY_TRIP), List.of(), USER_ID));
+                List.of(TripTag.CITY_TRIP), List.of(), USER_ID, null));
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1")
                         .header("Authorization", bearer())
@@ -406,12 +408,109 @@ class TripControllerTest {
     void getTrip_returnsEmptyTags_forTripSavedWithoutTags() throws Exception {
         // Trips saved before tags existed have no tags field in MongoDB
         tripRepo.save(new Trip("1", "Italien", null,
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), null, null, null, USER_ID));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), null, null, null, USER_ID, null));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/1")
                         .header("Authorization", bearer()))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.tags").isArray())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.tags").isEmpty());
+    }
+
+    private void saveTripWithPhotos(String coverPhotoId) {
+        Stop rome = new Stop("rome", "Rom", new GeoJsonPoint(12.4964, 41.9028), "IT",
+                LocalDate.of(2024, 5, 12), null, true, List.of("p1", "p2"));
+        tripRepo.save(new Trip("1", "Italien", null, LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20),
+                null, List.of(), List.of(rome), USER_ID, coverPhotoId));
+    }
+
+    @Test
+    void getTrip_returnsFirstPhotoAsCover_whenNoCoverIsChosen() throws Exception {
+        saveTripWithPhotos(null);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/1")
+                        .header("Authorization", bearer()))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.coverPhotoId").value("p1"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].photoIds[1]").value("p2"));
+    }
+
+    @Test
+    void getTrip_returnsChosenCover() throws Exception {
+        saveTripWithPhotos("p2");
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/1")
+                        .header("Authorization", bearer()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.coverPhotoId").value("p2"));
+    }
+
+    @Test
+    void getTrip_returnsFirstPhotoAsCover_whenChosenCoverNoLongerExists() throws Exception {
+        saveTripWithPhotos("deleted");
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/1")
+                        .header("Authorization", bearer()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.coverPhotoId").value("p1"));
+    }
+
+    @Test
+    void setCover_savesChosenPhoto() throws Exception {
+        saveTripWithPhotos(null);
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1/cover")
+                        .header("Authorization", bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"photoId": "p2"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.coverPhotoId").value("p2"));
+
+        assertEquals("p2", tripRepo.findById("1").orElseThrow().coverPhotoId());
+    }
+
+    @Test
+    void setCover_withoutPhoto_makesFirstPhotoTheCover() throws Exception {
+        saveTripWithPhotos("p2");
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1/cover")
+                        .header("Authorization", bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"photoId": null}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.coverPhotoId").value("p1"));
+
+        assertNull(tripRepo.findById("1").orElseThrow().coverPhotoId());
+    }
+
+    @Test
+    void setCover_returnsBadRequest_forPhotoOfAnotherTrip() throws Exception {
+        saveTripWithPhotos(null);
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1/cover")
+                        .header("Authorization", bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"photoId": "foreign"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.detail").value("Dieses Foto gehört nicht zu dieser Reise."));
+
+        assertNull(tripRepo.findById("1").orElseThrow().coverPhotoId());
+    }
+
+    @Test
+    void setCover_returnsNotFound_forTripOfAnotherUser() throws Exception {
+        saveTripWithPhotos(null);
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1/cover")
+                        .header("Authorization", "Bearer " + jwtService.createToken(OTHER_USER_ID))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"photoId": "p2"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
     }
 }
