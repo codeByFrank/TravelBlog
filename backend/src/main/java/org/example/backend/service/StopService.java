@@ -44,7 +44,7 @@ public class StopService {
         checkStopExists(stops, stopId);
         checkDateWithinTrip(trip, request);
         List<Stop> updated = stops.stream()
-                .map(stop -> stop.id().equals(stopId) ? toStop(stopId, request) : stop)
+                .map(stop -> stop.id().equals(stopId) ? toStop(stopId, request).withPhotoIds(TripService.photoIdsOf(stop)) : stop)
                 .toList();
         return saveWithStops(trip, updated);
     }
@@ -79,7 +79,7 @@ public class StopService {
                 request.countryCode(),
                 request.date(),
                 note,
-                Boolean.TRUE.equals(request.overnight()));
+                Boolean.TRUE.equals(request.overnight()), List.of());
     }
 
     private static void checkDateWithinTrip(Trip trip, StopRequest request) {

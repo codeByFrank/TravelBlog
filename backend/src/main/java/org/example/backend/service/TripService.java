@@ -47,7 +47,8 @@ public class TripService {
                 firstStop.countryCode(),
                 request.startDate(),
                 null,
-                Boolean.TRUE.equals(firstStop.overnight()));
+                Boolean.TRUE.equals(firstStop.overnight()),
+                List.of());
         Trip trip = new Trip(
                 null,
                 customTitle(request.title()),
@@ -57,7 +58,8 @@ public class TripService {
                 request.coverColor(),
                 normalizeTags(request.tags()),
                 List.of(stop),
-                userId);
+                userId,
+                null);
         return toResponse(tripRepo.save(trip));
     }
 
@@ -66,7 +68,7 @@ public class TripService {
         List<GeoJsonPoint> route = stops.stream().map(Stop::location).toList();
         return new TripResponse(trip.id(), TripTitles.of(trip.title(), stops), trip.title(), trip.description(),
                 trip.startDate(), trip.endDate(), trip.coverColor(), normalizeTags(trip.tags()),
-                toStopResponses(stops), RouteLengthCalculator.totalKm(route));
+                toStopResponses(stops), RouteLengthCalculator.totalKm(route), coverPhotoIdOf(trip));
     }
 
     // An empty title is stored as null: the trip is then named after its stops
@@ -79,6 +81,24 @@ public class TripService {
         return trip.stops() == null ? List.of() : trip.stops();
     }
 
+    static List<String> photoIdsOf(Stop stop) {
+        return stop.photoIds() == null ? List.of() : stop.photoIds();
+    }
+
+    static List<String> allPhotoIdsOf(Trip trip) {
+        return stopsOf(trip).stream()
+                .flatMap(stop -> photoIdsOf(stop).stream())
+                .toList();
+    }
+
+    static String coverPhotoIdOf(Trip trip) {
+        List<String> photoIds = allPhotoIdsOf(trip);
+        if (trip.coverPhotoId() != null && photoIds.contains(trip.coverPhotoId())) {
+            return trip.coverPhotoId();
+        }
+        return photoIds.isEmpty() ? null : photoIds.getFirst();
+    }
+
     private static List<StopResponse> toStopResponses(List<Stop> stops) {
         List<StopResponse> responses = new ArrayList<>();
         Stop previous = null;
@@ -87,7 +107,7 @@ public class TripService {
                     ? null
                     : Math.round(RouteLengthCalculator.distanceKm(previous.location(), stop.location()));
             responses.add(new StopResponse(stop.id(), stop.name(), stop.location().getY(), stop.location().getX(),
-                    stop.countryCode(), stop.date(), stop.note(), Boolean.TRUE.equals(stop.overnight()), distance));
+                    stop.countryCode(), stop.date(), stop.note(), Boolean.TRUE.equals(stop.overnight()), distance, photoIdsOf(stop)));
             previous = stop;
         }
         return responses;

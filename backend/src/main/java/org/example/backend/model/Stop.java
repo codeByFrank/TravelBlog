@@ -1,8 +1,10 @@
 package org.example.backend.model;
 
+import lombok.With;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * A place visited during a trip, stored inside the trip document.
@@ -16,11 +18,13 @@ import java.time.LocalDate;
  * @param overnight   true if the user stayed overnight here, false for a day visit or passing through;
  *                    null for stops saved before this field existed (treated as false)
  */
+@With
 public record Stop(String id,
                    String name,
                    GeoJsonPoint location,
                    String countryCode,
                    LocalDate date,
                    String note,
-                   Boolean overnight) {
+                   Boolean overnight,
+                   List<String> photoIds) {
 }

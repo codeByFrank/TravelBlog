@@ -61,15 +61,15 @@ class StopControllerTest {
 
     private void saveTrip(String userId, List<Stop> stops) {
         tripRepo.save(new Trip(TRIP_ID, "Italien", null,
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), null, List.of(), stops, userId));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), null, List.of(), stops, userId, null));
     }
 
     private static Stop rome() {
-        return new Stop("rome", "Rom", new GeoJsonPoint(12.4964, 41.9028), "IT", LocalDate.of(2024, 5, 12), null, true);
+        return new Stop("rome", "Rom", new GeoJsonPoint(12.4964, 41.9028), "IT", LocalDate.of(2024, 5, 12), null, true, List.of());
     }
 
     private static Stop venice() {
-        return new Stop("venice", "Venedig", new GeoJsonPoint(12.3155, 45.4408), "IT", LocalDate.of(2024, 5, 18), null, null);
+        return new Stop("venice", "Venedig", new GeoJsonPoint(12.3155, 45.4408), "IT", LocalDate.of(2024, 5, 18), null, null, List.of());
     }
 
     @Test
@@ -300,5 +300,17 @@ class StopControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].name").value("Rom"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].distanceFromPreviousKm").isEmpty())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.routeLengthKm").value(0));
+    }
+
+    @Test
+    void updateStop_keepsPhotos() throws Exception {
+        saveTrip(USER_ID, List.of(rome().withPhotoIds(List.of("p1"))));
+
+        mockMvc.perform(MockMvcRequestBuilders.put(STOPS_URL + "/rome")
+                        .header(HttpHeaders.AUTHORIZATION, bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(FLORENCE_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].photoIds[0]").value("p1"));
     }
 }

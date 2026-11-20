@@ -1,6 +1,7 @@
 package org.example.backend.dto;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * A stop as the frontend gets it: plain latitude and longitude instead of the GeoJSON point.
@@ -16,5 +17,6 @@ public record StopResponse(String id,
                            LocalDate date,
                            String note,
                            boolean overnight,
-                           Long distanceFromPreviousKm) {
+                           Long distanceFromPreviousKm,
+                           List<String> photoIds) {
 }
