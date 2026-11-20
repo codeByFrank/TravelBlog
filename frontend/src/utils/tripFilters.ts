@@ -89,6 +89,30 @@ export function getTotals(trips: FilterableTrip[]): TripTotals {
     }
 }
 
+export type YearTotals = TripTotals & {
+    year: string // e.g. "2024"
+    trips: number
+}
+
+// The totals of each year that has trips, newest first, e.g. "2024: 3 Reisen, 5 Länder, 4.200 km".
+// A trip counts in the year in which it starts; a country visited on two trips of a year counts once.
+export function getTotalsByYear(trips: FilterableTrip[]): YearTotals[] {
+    return getYears(trips).map((year) => {
+        const tripsOfYear = trips.filter((trip) => getTripYear(trip) === year)
+        return {year, trips: tripsOfYear.length, ...getTotals(tripsOfYear)}
+    })
+}
+
+// "1 Tag", "12 Tage"
+export function formatDays(days: number): string {
+    return days === 1 ? '1 Tag' : `${days} Tage`
+}
+
+// "1 Land", "5 Länder"
+export function formatCountryCount(count: number): string {
+    return count === 1 ? '1 Land' : `${count} Länder`
+}
+
 // "1.234 km"
 export function formatKm(km: number): string {
     return `${km.toLocaleString('de-DE')} km`

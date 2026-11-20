@@ -1,4 +1,5 @@
 import type {ReactElement} from 'react'
+import StatsPage from './pages/StatsPage'
 import TripsPage from './pages/TripsPage'
 import WishlistPage from './pages/WishlistPage'
 import WorldMapPage from './pages/WorldMapPage'
@@ -17,5 +18,6 @@ type NavPage = {
 export const navPages: NavPage[] = [
     {path: HOME_PATH, label: 'Reisen', element: <TripsPage/>},
     {path: '/map', label: 'Weltkarte', element: <WorldMapPage/>},
+    {path: '/stats', label: 'Statistik', element: <StatsPage/>},
     {path: '/wishlist', label: 'Wunschliste', element: <WishlistPage/>},
 ]

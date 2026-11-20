@@ -3,7 +3,7 @@ import {Link} from 'react-router-dom'
 import type {Trip} from '../types/trip'
 import {getCountryName} from '../utils/countries'
 import {formatDateRange} from '../utils/dates'
-import {formatKm, getCountryCodes, getTripDays} from '../utils/tripFilters'
+import {formatDays, formatKm, getCountryCodes, getTripDays} from '../utils/tripFilters'
 import TagBadges from './TagBadges'
 
 // Pastel placeholder covers from the mockup, used in turn for trips without a chosen color
@@ -12,11 +12,6 @@ const fallbackCoverColors = ['bg-cover-1', 'bg-cover-2', 'bg-cover-3', 'bg-cover
 type TripCardProps = {
     trip: Trip
     index: number
-}
-
-// "1 Tag", "9 Tage"
-function formatDays(days: number): string {
-    return days === 1 ? '1 Tag' : `${days} Tage`
 }
 
 function Badge({children}: Readonly<{ children: ReactNode }>) {
