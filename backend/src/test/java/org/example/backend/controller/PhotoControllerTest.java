@@ -21,8 +21,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -171,5 +170,57 @@ class PhotoControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/photos/not-an-id")
                         .header(HttpHeaders.AUTHORIZATION, bearer(USER_ID)))
                 .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    void deletePhoto_removesFileAndIdFromStop() throws Exception {
+        saveTrip(USER_ID, List.of());
+        String photoId = uploadPhoto();
+
+        mockMvc.perform(MockMvcRequestBuilders.delete(PHOTOS_URL + "/" + photoId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(USER_ID)))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].photoIds").isEmpty())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.coverPhotoId").doesNotExist());
+
+        assertTrue(photoIdsOfRome().isEmpty());
+        assertTrue(noFilesStored());
+    }
+
+    @Test
+    void deletePhoto_makesFirstPhotoTheCover_whenChosenCoverIsDeleted() throws Exception {
+        saveTrip(USER_ID, List.of());
+        String first = uploadPhoto();
+        String second = uploadPhoto();
+        Trip trip = tripRepo.findById(TRIP_ID).orElseThrow();
+        tripRepo.save(trip.withCoverPhotoId(second));
+
+        mockMvc.perform(MockMvcRequestBuilders.delete(PHOTOS_URL + "/" + second)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(USER_ID)))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.coverPhotoId").value(first));
+
+        assertNull(tripRepo.findById(TRIP_ID).orElseThrow().coverPhotoId());
+    }
+
+    @Test
+    void deletePhoto_returnsNotFound_whenPhotoIsNotInStop() throws Exception {
+        saveTrip(USER_ID, List.of());
+
+        mockMvc.perform(MockMvcRequestBuilders.delete(PHOTOS_URL + "/unknown")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(USER_ID)))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    void deletePhoto_returnsNotFound_forTripOfAnotherUser() throws Exception {
+        saveTrip(USER_ID, List.of());
+        String photoId = uploadPhoto();
+
+        mockMvc.perform(MockMvcRequestBuilders.delete(PHOTOS_URL + "/" + photoId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(OTHER_USER_ID)))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+
+        assertEquals(List.of(photoId), photoIdsOfRome());
     }
 }

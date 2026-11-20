@@ -76,4 +76,24 @@ public class PhotoService {
         return photoStorage.find(photoId, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Foto nicht gefunden."));
     }
+
+    public TripResponse deletePhoto(String userId, String tripId, String stopId, String photoId) {
+        Trip trip = tripService.findTripOfUser(userId, tripId);
+        Stop stop = findStop(trip, stopId);
+        List<String> photoIds = TripService.photoIdsOf(stop);
+        if (!photoIds.contains(photoId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Foto nicht gefunden.");
+        }
+
+        List<String> remaining = photoIds.stream()
+                .filter(id -> !id.equals(photoId))
+                .toList();
+        Trip updated = withStop(trip, stop.withPhotoIds(remaining));
+        if (photoId.equals(trip.coverPhotoId())) {
+            updated = updated.withCoverPhotoId(null);
+        }
+        Trip saved = tripRepo.save(updated);
+        photoStorage.delete(List.of(photoId));
+        return TripService.toResponse(saved);
+    }
 }

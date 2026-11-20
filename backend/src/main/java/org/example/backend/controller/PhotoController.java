@@ -42,4 +42,12 @@ public class PhotoController {
                 .cacheControl(CacheControl.maxAge(Duration.ofDays(30)).cachePrivate())
                 .body(photo);
     }
+
+    @DeleteMapping("/api/trips/{tripId}/stops/{stopId}/photos/{photoId}")
+    public TripResponse deletePhoto(@AuthenticationPrincipal String userId,
+                                    @PathVariable String tripId,
+                                    @PathVariable String stopId,
+                                    @PathVariable String photoId) {
+        return photoService.deletePhoto(userId, tripId, stopId, photoId);
+    }
 }

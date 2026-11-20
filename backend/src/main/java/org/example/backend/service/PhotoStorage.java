@@ -13,6 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -34,7 +36,6 @@ public class PhotoStorage {
         }
     }
 
-    // The file only if it belongs to the given user; empty for unknown ids and for photos of other users
     public Optional<GridFsResource> find(String photoId, String userId) {
         if (!ObjectId.isValid(photoId)) {
             return Optional.empty();
@@ -42,5 +43,15 @@ public class PhotoStorage {
         Query query = new Query(Criteria.where("_id").is(new ObjectId(photoId)).and("metadata.userId").is(userId));
         GridFSFile file = gridFsTemplate.findOne(query);
         return file == null ? Optional.empty() : Optional.of(gridFsTemplate.getResource(file));
+    }
+
+    public void delete(Collection<String> photoIds) {
+        List<ObjectId> ids = photoIds.stream()
+                .filter(ObjectId::isValid)
+                .map(ObjectId::new)
+                .toList();
+        if (!ids.isEmpty()) {
+            gridFsTemplate.delete(new Query(Criteria.where("_id").in(ids)));
+        }
     }
 }
