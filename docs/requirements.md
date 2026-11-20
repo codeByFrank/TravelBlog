@@ -88,6 +88,7 @@ The map of a trip must display:
 
 * all stops as markers, day trips in a different style; clicking a marker shows the stop's note and photos
 * a line between the stops on the route in the order of the visit
+* a line in a different style from its base to each day trip
 * the route length, e.g. "Rom → Florenz → Venedig: 490 km"
 
 The route length is the sum of the straight-line distances between consecutive stops on the route. A day trip is

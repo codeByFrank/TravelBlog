@@ -61,14 +61,23 @@ function FitToStops({positionsKey}: Readonly<{ positionsKey: string }>) {
 }
 
 // The map card in "Reiseverlauf" (as in the mockup): the stops as numbered markers with their names, a line between
-// the stops on the route (overnight stays and places on the way) in the order of the visit, day trips as markers
-// without a line, and below the map the number of places and the route length.
+// the stops on the route (overnight stays and places on the way) in the order of the visit, a thin dotted line from
+// the base to each day trip, and below the map the number of places and the route length.
 // A click on a marker shows the place, its dates and the note.
 export default function TripMap({stops, routeLengthKm, className = ''}: Readonly<TripMapProps>) {
     const positions: LatLngTuple[] = stops.map((stop) => [stop.latitude, stop.longitude])
     const routePositions: LatLngTuple[] = stops
         .filter((stop) => stop.onRoute)
         .map((stop) => [stop.latitude, stop.longitude])
+    // A line from the base to each day trip; day trips before the first overnight stop have no base and no line
+    const dayTripLines = stops.flatMap((stop) => {
+        const base = stops.find((candidate) => candidate.id === stop.baseStopId)
+        if (!base) {
+            return []
+        }
+        const line: LatLngTuple[] = [[base.latitude, base.longitude], [stop.latitude, stop.longitude]]
+        return [{id: stop.id, line}]
+    })
     const severalStops = stops.length > 1
     const hasRoute = routePositions.length > 1
 
@@ -89,6 +98,18 @@ export default function TripMap({stops, routeLengthKm, className = ''}: Readonly
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                         maxZoom={19}
                     />
+                    {/* Day trips first, so the route line is drawn above them; thinner and dotted, not part of the route */}
+                    {dayTripLines.map(({id, line}) => (
+                        <Polyline
+                            key={id}
+                            positions={line}
+                            className="stroke-accent"
+                            weight={3}
+                            opacity={0.7}
+                            // Short dashes with round ends look like dots
+                            dashArray="1 7"
+                        />
+                    ))}
                     {hasRoute && (
                         // The options as props, not as pathOptions: Leaflet reads className only when it creates the line
                         <Polyline

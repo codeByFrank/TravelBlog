@@ -144,7 +144,9 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
   the stops on the right; on narrow screens the map is above the list. On wide screens the card is sticky, so the map
   stays in view while the user scrolls through the stops. It shows OpenStreetMap tiles, the stops as numbered markers
   with their names (blue on the route, white with a blue ring for day trips), a dashed line between the stops on the
-  route in the order of the visit, and below the map the number of places and the route length (`routeLengthKm`).
+  route in the order of the visit, a thinner dotted line from its base to each day trip (not counted in the route
+  length; day trips without a base have none), and below the map the number of places and the route length
+  (`routeLengthKm`, shown only when there is a route).
   A click on a marker opens a popup with the name, dates, country, and note. In the list, a day trip shows its base
   and distance in its badge ("Tagesausflug ab Rom · 26 km") and gets no distance arrow; the arrow before the next stop
   on the route names where it is measured from when day trips lie in between ("186 km ab Rom").
