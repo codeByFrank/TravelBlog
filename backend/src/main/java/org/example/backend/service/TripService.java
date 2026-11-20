@@ -23,9 +23,11 @@ import java.util.UUID;
 public class TripService {
 
     private final TripRepo tripRepo;
+    private final PhotoStorage photoStorage;
 
-    public TripService(TripRepo tripRepo) {
+    public TripService(TripRepo tripRepo, PhotoStorage photoStorage) {
         this.tripRepo = tripRepo;
+        this.photoStorage = photoStorage;
     }
 
     // Trips of the user, newest first; the owner id is not sent to the client
@@ -167,6 +169,8 @@ public class TripService {
     }
 
     public void deleteTrip(String userId, String id) {
-        tripRepo.delete(findTripOfUser(userId, id));
+        Trip trip = findTripOfUser(userId, id);
+        tripRepo.delete(trip);
+        photoStorage.deleteAllOfTrip(trip.id());
     }
 }

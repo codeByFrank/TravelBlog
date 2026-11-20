@@ -78,6 +78,15 @@ class PhotoControllerTest {
         return photoIdsOfRome().getLast();
     }
 
+    private void saveTripWithTwoStops() {
+        Stop rome = new Stop("rome", "Rom", new GeoJsonPoint(12.4964, 41.9028), "IT",
+                LocalDate.of(2024, 5, 12), null, true, List.of());
+        Stop venice = new Stop("venice", "Venedig", new GeoJsonPoint(12.3155, 45.4408), "IT",
+                LocalDate.of(2024, 5, 18), null, true, List.of());
+        tripRepo.save(new Trip(TRIP_ID, "Italien", null, LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20),
+                null, List.of(), List.of(rome, venice), USER_ID, null));
+    }
+
     @Test
     void addPhoto_storesFileAndAddsItToStop() throws Exception {
         saveTrip(USER_ID, List.of());
@@ -222,5 +231,29 @@ class PhotoControllerTest {
                 .andExpect(MockMvcResultMatchers.status().isNotFound());
 
         assertEquals(List.of(photoId), photoIdsOfRome());
+    }
+
+    @Test
+    void deleteStop_deletesItsPhotos() throws Exception {
+        saveTripWithTwoStops();
+        uploadPhoto();
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/trips/1/stops/rome")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(USER_ID)))
+                .andExpect(MockMvcResultMatchers.status().isOk());
+
+        assertTrue(noFilesStored());
+    }
+
+    @Test
+    void deleteTrip_deletesItsPhotos() throws Exception {
+        saveTrip(USER_ID, List.of());
+        uploadPhoto();
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/trips/1")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(USER_ID)))
+                .andExpect(MockMvcResultMatchers.status().isNoContent());
+
+        assertTrue(noFilesStored());
     }
 }

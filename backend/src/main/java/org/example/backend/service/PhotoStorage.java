@@ -54,4 +54,8 @@ public class PhotoStorage {
             gridFsTemplate.delete(new Query(Criteria.where("_id").in(ids)));
         }
     }
+
+    public void deleteAllOfTrip(String tripId) {
+        gridFsTemplate.delete(new Query(Criteria.where("metadata.tripId").is(tripId)));
+    }
 }

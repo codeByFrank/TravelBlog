@@ -24,10 +24,12 @@ public class StopService {
 
     private final TripRepo tripRepo;
     private final TripService tripService;
+    private final PhotoStorage photoStorage;
 
-    public StopService(TripRepo tripRepo, TripService tripService) {
+    public StopService(TripRepo tripRepo, TripService tripService, PhotoStorage photoStorage) {
         this.tripRepo = tripRepo;
         this.tripService = tripService;
+        this.photoStorage = photoStorage;
     }
 
     public TripResponse addStop(String userId, String tripId, StopRequest request) {
@@ -52,7 +54,10 @@ public class StopService {
     public TripResponse deleteStop(String userId, String tripId, String stopId) {
         Trip trip = tripService.findTripOfUser(userId, tripId);
         List<Stop> stops = TripService.stopsOf(trip);
-        checkStopExists(stops, stopId);
+        Stop deleted = stops.stream()
+                .filter(stop -> stop.id().equals(stopId))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ort nicht gefunden."));
         if (stops.size() == 1) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Eine Reise braucht mindestens einen Ort. Ändere ihn stattdessen.");
@@ -60,7 +65,12 @@ public class StopService {
         List<Stop> remaining = stops.stream()
                 .filter(stop -> !stop.id().equals(stopId))
                 .toList();
-        return saveWithStops(trip, remaining);
+        List<String> deletedPhotoIds = TripService.photoIdsOf(deleted);
+        Trip changed = deletedPhotoIds.contains(trip.coverPhotoId()) ? trip.withCoverPhotoId(null) : trip;
+
+        TripResponse response = saveWithStops(changed, remaining);
+        photoStorage.delete(deletedPhotoIds);
+        return response;
     }
 
     // The order of the stops is the order of the visit: by date, stops with the same date in the order they were added
