@@ -7,7 +7,7 @@ import {formatDayMonth} from '../utils/dates'
 import {formatKm} from '../utils/tripFilters'
 import ConfirmDialog from './ConfirmDialog'
 import StopDialog from './StopDialog'
-import TripStats from './TripStats'
+import TripMap from './TripMap'
 
 type TripStopsProps = {
     trip: Trip
@@ -16,7 +16,8 @@ type TripStopsProps = {
 
 const smallButton = 'min-h-11 cursor-pointer rounded-full px-4 text-sm font-semibold'
 
-// "Reiseverlauf" on the trip detail page: the stops in the order of the visit, the distances between them,
+// "Reiseverlauf" on the trip detail page, as in the mockup: the map on the left and the stops on the right
+// (one below the other on narrow screens), in the order of the visit with the distances between them,
 // and adding, changing and deleting stops
 export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>) {
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -70,16 +71,9 @@ export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>
                     </p>
                 </div>
             ) : (
-                <>
-                    {/* With one place the tiles would only say "1 Ort" and "0 km" */}
-                    {trip.stops.length > 1 && (
-                        <TripStats
-                            stats={[
-                                {label: 'Orte', value: String(trip.stops.length)},
-                                {label: 'Strecke (Luftlinie)', value: formatKm(trip.routeLengthKm)},
-                            ]}
-                        />
-                    )}
+                <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+                    {/* Sticky, so the map stays in view while the user scrolls through a long list of places */}
+                    <TripMap stops={trip.stops} routeLengthKm={trip.routeLengthKm} className="lg:sticky lg:top-6"/>
                     <ol className="flex flex-col gap-3">
                         {trip.stops.map((stop, position) => (
                             <Fragment key={stop.id}>
@@ -133,7 +127,7 @@ export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>
                             </Fragment>
                         ))}
                     </ol>
-                </>
+                </div>
             )}
 
             <StopDialog
