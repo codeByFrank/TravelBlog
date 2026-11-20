@@ -1,9 +1,6 @@
 package org.example.backend.service;
 
-import org.example.backend.dto.FirstStopRequest;
-import org.example.backend.dto.StopResponse;
-import org.example.backend.dto.TripRequest;
-import org.example.backend.dto.TripResponse;
+import org.example.backend.dto.*;
 import org.example.backend.model.Stop;
 import org.example.backend.model.Trip;
 import org.example.backend.model.TripTag;
@@ -172,5 +169,14 @@ public class TripService {
         Trip trip = findTripOfUser(userId, id);
         tripRepo.delete(trip);
         photoStorage.deleteAllOfTrip(trip.id());
+    }
+
+    public TripResponse setCover(String userId, String id, CoverRequest request) {
+        Trip trip = findTripOfUser(userId, id);
+        String photoId = request.photoId();
+        if (photoId != null && !allPhotoIdsOf(trip).contains(photoId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dieses Foto gehört nicht zu dieser Reise.");
+        }
+        return toResponse(tripRepo.save(trip.withCoverPhotoId(photoId)));
     }
 }

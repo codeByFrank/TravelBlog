@@ -450,4 +450,65 @@ class TripControllerTest {
                         .header("Authorization", bearer()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.coverPhotoId").value("p1"));
     }
+
+    @Test
+    void setCover_savesChosenPhoto() throws Exception {
+        saveTripWithPhotos(null);
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1/cover")
+                        .header("Authorization", bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"photoId": "p2"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.coverPhotoId").value("p2"));
+
+        assertEquals("p2", tripRepo.findById("1").orElseThrow().coverPhotoId());
+    }
+
+    @Test
+    void setCover_withoutPhoto_makesFirstPhotoTheCover() throws Exception {
+        saveTripWithPhotos("p2");
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1/cover")
+                        .header("Authorization", bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"photoId": null}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.coverPhotoId").value("p1"));
+
+        assertNull(tripRepo.findById("1").orElseThrow().coverPhotoId());
+    }
+
+    @Test
+    void setCover_returnsBadRequest_forPhotoOfAnotherTrip() throws Exception {
+        saveTripWithPhotos(null);
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1/cover")
+                        .header("Authorization", bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"photoId": "foreign"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.detail").value("Dieses Foto gehört nicht zu dieser Reise."));
+
+        assertNull(tripRepo.findById("1").orElseThrow().coverPhotoId());
+    }
+
+    @Test
+    void setCover_returnsNotFound_forTripOfAnotherUser() throws Exception {
+        saveTripWithPhotos(null);
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/trips/1/cover")
+                        .header("Authorization", "Bearer " + jwtService.createToken(OTHER_USER_ID))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"photoId": "p2"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
 }
