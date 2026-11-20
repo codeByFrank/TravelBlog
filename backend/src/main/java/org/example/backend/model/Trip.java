@@ -17,5 +17,6 @@ public record Trip(@Id String id,
                    String coverColor,
                    List<TripTag> tags,
                    List<Stop> stops, // in the order of the visit, i.e. by date
-                   String userId) {
+                   String userId,
+                   String coverPhotoId) {
 }

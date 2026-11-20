@@ -63,23 +63,23 @@ class StopControllerTest {
 
     private void saveTrip(String userId, List<Stop> stops) {
         tripRepo.save(new Trip(TRIP_ID, "Italien", null,
-                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), null, List.of(), stops, userId));
+                LocalDate.of(2024, 5, 12), LocalDate.of(2024, 5, 20), null, List.of(), stops, userId, null));
     }
 
     private static Stop rome() {
         return new Stop("rome", "Rom", new GeoJsonPoint(12.4964, 41.9028), "IT", LocalDate.of(2024, 5, 12), null,
-                StopType.OVERNIGHT, null);
+                StopType.OVERNIGHT, null, List.of());
     }
 
     private static Stop venice() {
         return new Stop("venice", "Venedig", new GeoJsonPoint(12.3155, 45.4408), "IT", LocalDate.of(2024, 5, 18), null,
-                StopType.OVERNIGHT, null);
+                StopType.OVERNIGHT, null, List.of());
     }
 
     // Tivoli: a day trip from Rome
     private static Stop tivoli() {
         return new Stop("tivoli", "Tivoli", new GeoJsonPoint(12.7979, 41.9638), "IT", LocalDate.of(2024, 5, 13), null,
-                StopType.DAY_TRIP, null);
+                StopType.DAY_TRIP, null, List.of());
     }
 
     @Test
@@ -191,9 +191,9 @@ class StopControllerTest {
         GeoJsonPoint anywhere = new GeoJsonPoint(12.4964, 41.9028);
         LocalDate date = LocalDate.of(2024, 5, 12);
         saveTrip(USER_ID, List.of(
-                new Stop("a", "Rom", anywhere, "IT", date, null, null, true),
-                new Stop("b", "Pisa", anywhere, "IT", date, null, null, false),
-                new Stop("c", "Siena", anywhere, "IT", date, null, null, null)));
+                new Stop("a", "Rom", anywhere, "IT", date, null, null, true, List.of()),
+                new Stop("b", "Pisa", anywhere, "IT", date, null, null, false, List.of()),
+                new Stop("c", "Siena", anywhere, "IT", date, null, null, null, List.of())));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/1")
                         .header(HttpHeaders.AUTHORIZATION, bearer()))
@@ -336,5 +336,17 @@ class StopControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].name").value("Rom"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].distanceFromPreviousKm").isEmpty())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.routeLengthKm").value(0));
+    }
+
+    @Test
+    void updateStop_keepsPhotos() throws Exception {
+        saveTrip(USER_ID, List.of(rome().withPhotoIds(List.of("p1"))));
+
+        mockMvc.perform(MockMvcRequestBuilders.put(STOPS_URL + "/rome")
+                        .header(HttpHeaders.AUTHORIZATION, bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(FLORENCE_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].photoIds[0]").value("p1"));
     }
 }

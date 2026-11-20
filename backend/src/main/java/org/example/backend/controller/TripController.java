@@ -1,6 +1,7 @@
 package org.example.backend.controller;
 
 import jakarta.validation.Valid;
+import org.example.backend.dto.CoverRequest;
 import org.example.backend.dto.TripRequest;
 import org.example.backend.dto.TripResponse;
 import org.example.backend.service.TripService;
@@ -48,5 +49,12 @@ public class TripController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteTrip(@AuthenticationPrincipal String userId, @PathVariable String id) {
         tripService.deleteTrip(userId, id);
+    }
+
+    @PutMapping("/{id}/cover")
+    public TripResponse setCover(@AuthenticationPrincipal String userId,
+                                 @PathVariable String id,
+                                 @RequestBody CoverRequest request) {
+        return tripService.setCover(userId, id, request);
     }
 }

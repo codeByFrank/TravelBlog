@@ -3,6 +3,8 @@ package org.example.backend.dto;
 import org.example.backend.model.StopType;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.List;
 
 /**
  * A stop as the frontend gets it: plain latitude and longitude instead of the GeoJSON point.
@@ -28,5 +30,6 @@ public record StopResponse(String id,
                            StopType type,
                            boolean onRoute,
                            Long distanceFromPreviousKm,
-                           String baseStopId) {
+                           String baseStopId,
+                           List<String> photoIds) {
 }

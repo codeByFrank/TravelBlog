@@ -21,7 +21,7 @@ class TripRouteTest {
 
     private static Stop stop(String name, double longitude, double latitude, int dayOfMay, StopType type) {
         return new Stop(name, name, new GeoJsonPoint(longitude, latitude), "IT", LocalDate.of(2024, 5, dayOfMay),
-                null, type, null);
+                null, type, null, List.of());
     }
 
     private static Stop rome(StopType type) {
@@ -48,8 +48,8 @@ class TripRouteTest {
 
         assertTrue(stops.get(1).onRoute());
         assertNull(stops.get(1).baseStopId());
-        assertEquals(stops.get(1).distanceFromPreviousKm() + stops.get(2).distanceFromPreviousKm(), route.lengthKm(),
-                1);
+        long sumOfDistances = stops.get(1).distanceFromPreviousKm() + stops.get(2).distanceFromPreviousKm();
+        assertTrue(Math.abs(sumOfDistances - route.lengthKm()) <= 1);
     }
 
     @Test
