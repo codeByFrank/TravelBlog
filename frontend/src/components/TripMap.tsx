@@ -4,7 +4,7 @@ import {divIcon, latLngBounds, type LatLngTuple} from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type {Stop} from '../types/trip'
 import {getCountryName} from '../utils/countries'
-import {formatDayMonth} from '../utils/dates'
+import {formatStay} from '../utils/dates'
 import {formatKm} from '../utils/tripFilters'
 import MapWheelZoom from './MapWheelZoom'
 
@@ -20,12 +20,17 @@ const FIT_OPTIONS = {padding: [48, 48] as [number, number], maxZoom: 12}
 // A single place is shown from far away, so that the map tells where in the country or the region it lies
 const SINGLE_STOP_FIT_OPTIONS = {...FIT_OPTIONS, maxZoom: 5}
 
-// A round marker in the accent color; with several stops it shows the number of the stop in the order of the visit.
+// Marker colors: blue for the stops on the route, white with a blue ring for day trips
+const ROUTE_MARKER_CLASSES = 'border-white bg-accent text-white'
+const DAY_TRIP_MARKER_CLASSES = 'border-accent bg-white text-accent'
+
+// A round marker; with several stops it shows the number of the stop in the order of the visit.
 // A divIcon instead of Leaflet's default marker, because the default marker images are not found after the Vite build.
-function stopIcon(label: string) {
+function stopIcon(label: string, onRoute: boolean) {
+    const colors = onRoute ? ROUTE_MARKER_CLASSES : DAY_TRIP_MARKER_CLASSES
     return divIcon({
         className: '',
-        html: `<span class="flex size-8 items-center justify-center rounded-full border-2 border-white bg-accent text-sm font-bold text-white shadow-card">${label}</span>`,
+        html: `<span class="flex size-8 items-center justify-center rounded-full border-2 text-sm font-bold shadow-card ${colors}">${label}</span>`,
         iconSize: [32, 32],
         iconAnchor: [16, 16],
         popupAnchor: [0, -18],
@@ -56,18 +61,23 @@ function FitToStops({positionsKey}: Readonly<{ positionsKey: string }>) {
 }
 
 // The map card in "Reiseverlauf" (as in the mockup): the stops as numbered markers with their names, a line between
-// them in the order of the visit, and below the map the number of places and the route length.
-// A click on a marker shows the place, its date and the note.
+// the stops on the route (overnight stays and places on the way) in the order of the visit, day trips as markers
+// without a line, and below the map the number of places and the route length.
+// A click on a marker shows the place, its dates and the note.
 export default function TripMap({stops, routeLengthKm, className = ''}: Readonly<TripMapProps>) {
     const positions: LatLngTuple[] = stops.map((stop) => [stop.latitude, stop.longitude])
-    const hasRoute = stops.length > 1
+    const routePositions: LatLngTuple[] = stops
+        .filter((stop) => stop.onRoute)
+        .map((stop) => [stop.latitude, stop.longitude])
+    const severalStops = stops.length > 1
+    const hasRoute = routePositions.length > 1
 
     return (
         <div className={`flex flex-col gap-4 rounded-card bg-surface p-4 shadow-card ${className}`}>
             {/* isolate: Leaflet's layers have a high z-index; this keeps them below the rest of the page.
                 The height is set here and not on MapContainer, because react-leaflet sets its class only once,
                 and a single place needs less room than a route. */}
-            <div className={`isolate overflow-hidden rounded-xl ${hasRoute ? 'h-80 lg:h-[30rem]' : 'h-64 lg:h-80'}`}>
+            <div className={`isolate overflow-hidden rounded-xl ${severalStops ? 'h-80 lg:h-[30rem]' : 'h-64 lg:h-80'}`}>
                 <MapContainer
                     bounds={latLngBounds(positions)}
                     boundsOptions={fitOptions(stops.length)}
@@ -82,7 +92,7 @@ export default function TripMap({stops, routeLengthKm, className = ''}: Readonly
                     {hasRoute && (
                         // The options as props, not as pathOptions: Leaflet reads className only when it creates the line
                         <Polyline
-                            positions={positions}
+                            positions={routePositions}
                             className="stroke-accent"
                             weight={3}
                             opacity={0.8}
@@ -94,7 +104,7 @@ export default function TripMap({stops, routeLengthKm, className = ''}: Readonly
                             key={stop.id}
                             position={[stop.latitude, stop.longitude]}
                             // A single place has no number, as in the list next to the map
-                            icon={stopIcon(hasRoute ? String(position + 1) : '')}
+                            icon={stopIcon(severalStops ? String(position + 1) : '', stop.onRoute)}
                             title={stop.name}
                             alt={stop.name}
                         >
@@ -111,7 +121,7 @@ export default function TripMap({stops, routeLengthKm, className = ''}: Readonly
                                 <div className="flex max-w-60 flex-col gap-1 font-sans">
                                     <strong className="text-base text-ink">{stop.name}</strong>
                                     <span className="text-[13px] font-semibold text-muted">
-                                        {formatDayMonth(stop.date)} · {getCountryName(stop.countryCode)}
+                                        {formatStay(stop.date, stop.departureDate)} · {getCountryName(stop.countryCode)}
                                     </span>
                                     {stop.note && <span className="text-sm text-ink-soft">{stop.note}</span>}
                                 </div>
@@ -122,17 +132,19 @@ export default function TripMap({stops, routeLengthKm, className = ''}: Readonly
                     <MapWheelZoom/>
                 </MapContainer>
             </div>
-            {/* With one place the numbers would only say "1 Ort" and "0 km" */}
-            {hasRoute && (
+            {/* With one place the numbers would only say "1 Ort"; without a route there is no distance */}
+            {severalStops && (
                 <dl className="grid grid-cols-2 gap-4 px-2 pb-1">
                     <div className="flex flex-col gap-1">
                         <dt className="text-[13px] font-semibold text-muted">Orte</dt>
                         <dd className="text-2xl font-bold">{stops.length}</dd>
                     </div>
-                    <div className="flex flex-col gap-1">
-                        <dt className="text-[13px] font-semibold text-muted">Strecke (Luftlinie)</dt>
-                        <dd className="text-2xl font-bold">{formatKm(routeLengthKm)}</dd>
-                    </div>
+                    {hasRoute && (
+                        <div className="flex flex-col gap-1">
+                            <dt className="text-[13px] font-semibold text-muted">Strecke (Luftlinie)</dt>
+                            <dd className="text-2xl font-bold">{formatKm(routeLengthKm)}</dd>
+                        </div>
+                    )}
                 </dl>
             )}
         </div>

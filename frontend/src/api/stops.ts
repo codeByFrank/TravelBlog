@@ -1,5 +1,5 @@
 import api from './client'
-import type {Trip} from '../types/trip'
+import type {StopType, Trip} from '../types/trip'
 
 export type StopRequest = {
     name: string
@@ -8,7 +8,7 @@ export type StopRequest = {
     countryCode: string
     date: string
     note: string
-    overnight: boolean
+    type: StopType
 }
 
 // Every call returns the whole trip: the order of the stops and the distances can change

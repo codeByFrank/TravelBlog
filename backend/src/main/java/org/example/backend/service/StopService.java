@@ -79,7 +79,8 @@ public class StopService {
                 request.countryCode(),
                 request.date(),
                 note,
-                Boolean.TRUE.equals(request.overnight()));
+                request.type(),
+                null);
     }
 
     private static void checkDateWithinTrip(Trip trip, StopRequest request) {

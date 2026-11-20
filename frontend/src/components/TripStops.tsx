@@ -1,9 +1,9 @@
 import {Fragment, useState} from 'react'
 import {getErrorMessage} from '../api/client'
 import {deleteStop} from '../api/stops'
-import type {Stop, Trip} from '../types/trip'
+import {STOP_TYPE_LABELS, type Stop, type Trip} from '../types/trip'
 import {getCountryName} from '../utils/countries'
-import {formatDayMonth} from '../utils/dates'
+import {formatStay} from '../utils/dates'
 import {formatKm} from '../utils/tripFilters'
 import ConfirmDialog from './ConfirmDialog'
 import StopDialog from './StopDialog'
@@ -15,6 +15,28 @@ type TripStopsProps = {
 }
 
 const smallButton = 'min-h-11 cursor-pointer rounded-full px-4 text-sm font-semibold'
+
+// The text on the arrow before a stop on the route: "394 km", or "394 km ab Rom" when day trips lie in between.
+// Day trips get no arrow; their distance from the base is in their badge.
+function routeDistanceLabel(stops: Stop[], position: number): string | null {
+    const stop = stops[position]
+    if (!stop.onRoute || stop.distanceFromPreviousKm === null) {
+        return null
+    }
+    const km = formatKm(stop.distanceFromPreviousKm)
+    const previousOnRoute = stops.slice(0, position).findLast((candidate) => candidate.onRoute)
+    return previousOnRoute && previousOnRoute !== stops[position - 1] ? `${km} ab ${previousOnRoute.name}` : km
+}
+
+// The badge of a stop: its type, for a day trip with its base and distance, e.g. "Tagesausflug ab Rom · 26 km"
+function typeLabel(stops: Stop[], stop: Stop): string {
+    const label = STOP_TYPE_LABELS[stop.type]
+    const base = stops.find((candidate) => candidate.id === stop.baseStopId)
+    if (!base || stop.distanceFromPreviousKm === null) {
+        return label
+    }
+    return `${label} ab ${base.name} · ${formatKm(stop.distanceFromPreviousKm)}`
+}
 
 // "Reiseverlauf" on the trip detail page, as in the mockup: the map on the left and the stops on the right
 // (one below the other on narrow screens), in the order of the visit with the distances between them,
@@ -75,57 +97,58 @@ export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>
                     {/* Sticky, so the map stays in view while the user scrolls through a long list of places */}
                     <TripMap stops={trip.stops} routeLengthKm={trip.routeLengthKm} className="lg:sticky lg:top-6"/>
                     <ol className="flex flex-col gap-3">
-                        {trip.stops.map((stop, position) => (
-                            <Fragment key={stop.id}>
-                                {stop.distanceFromPreviousKm !== null && (
-                                    <li aria-hidden="true" className="flex items-center gap-2 pl-6 text-sm font-semibold text-muted">
-                                        <span>↓</span>
-                                        <span>{formatKm(stop.distanceFromPreviousKm)}</span>
-                                    </li>
-                                )}
-                                <li>
-                                    <article className="flex flex-col gap-3 rounded-card bg-surface px-6 py-5 shadow-card">
-                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                            {/* The number shows the order of the visit, so a single place has none */}
-                                            {trip.stops.length > 1 && (
-                                                <span className="flex size-8 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent">
-                                                    {position + 1}
+                        {trip.stops.map((stop, position) => {
+                            const distanceLabel = routeDistanceLabel(trip.stops, position)
+                            return (
+                                <Fragment key={stop.id}>
+                                    {distanceLabel && (
+                                        <li aria-hidden="true" className="flex items-center gap-2 pl-6 text-sm font-semibold text-muted">
+                                            <span>↓</span>
+                                            <span>{distanceLabel}</span>
+                                        </li>
+                                    )}
+                                    <li>
+                                        <article className="flex flex-col gap-3 rounded-card bg-surface px-6 py-5 shadow-card">
+                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                {/* The number shows the order of the visit, so a single place has none */}
+                                                {trip.stops.length > 1 && (
+                                                    <span className="flex size-8 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent">
+                                                        {position + 1}
+                                                    </span>
+                                                )}
+                                                <h3 className="text-xl font-bold tracking-tight">{stop.name}</h3>
+                                                <span className="text-sm font-semibold text-muted">
+                                                    {formatStay(stop.date, stop.departureDate)} · {getCountryName(stop.countryCode)}
                                                 </span>
-                                            )}
-                                            <h3 className="text-xl font-bold tracking-tight">{stop.name}</h3>
-                                            <span className="text-sm font-semibold text-muted">
-                                                {formatDayMonth(stop.date)} · {getCountryName(stop.countryCode)}
-                                            </span>
-                                            {stop.overnight && (
                                                 <span className="rounded-full bg-chip px-3 py-1 text-[13px] font-semibold text-ink-soft">
-                                                    Übernachtung
+                                                    {typeLabel(trip.stops, stop)}
                                                 </span>
-                                            )}
-                                        </div>
-                                        {stop.note && <p className="text-ink-soft">{stop.note}</p>}
-                                        <div className="flex flex-wrap gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => openEdit(stop)}
-                                                className={`${smallButton} border border-line-strong text-ink hover:border-accent`}
-                                            >
-                                                Bearbeiten<span className="sr-only">: {stop.name}</span>
-                                            </button>
-                                            {/* A trip keeps at least one place; the last one can only be changed */}
-                                            {trip.stops.length > 1 && (
+                                            </div>
+                                            {stop.note && <p className="text-ink-soft">{stop.note}</p>}
+                                            <div className="flex flex-wrap gap-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => setStopToDelete(stop)}
-                                                    className={`${smallButton} text-red-700 hover:bg-red-50`}
+                                                    onClick={() => openEdit(stop)}
+                                                    className={`${smallButton} border border-line-strong text-ink hover:border-accent`}
                                                 >
-                                                    Löschen<span className="sr-only">: {stop.name}</span>
+                                                    Bearbeiten<span className="sr-only">: {stop.name}</span>
                                                 </button>
-                                            )}
-                                        </div>
-                                    </article>
-                                </li>
-                            </Fragment>
-                        ))}
+                                                {/* A trip keeps at least one place; the last one can only be changed */}
+                                                {trip.stops.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setStopToDelete(stop)}
+                                                        className={`${smallButton} text-red-700 hover:bg-red-50`}
+                                                    >
+                                                        Löschen<span className="sr-only">: {stop.name}</span>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </article>
+                                    </li>
+                                </Fragment>
+                            )
+                        })}
                     </ol>
                 </div>
             )}

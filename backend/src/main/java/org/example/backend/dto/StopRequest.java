@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import org.example.backend.model.StopType;
 
 import java.time.LocalDate;
 
@@ -38,8 +39,6 @@ public record StopRequest(
         @Size(max = 2000, message = "Die Notiz darf höchstens 2000 Zeichen lang sein.")
         String note,
 
-        // Stayed overnight here. Boolean, not boolean: Jackson 3 rejects a missing
-        // primitive field, so an old client without this field would get a 400.
-        // The service treats null as false.
-        Boolean overnight) {
+        @NotNull(message = "Bitte auswählen, wie du hier warst.")
+        StopType type) {
 }

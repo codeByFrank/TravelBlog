@@ -2,11 +2,12 @@ import {useEffect, useRef, useState, type SubmitEvent} from 'react'
 import {getErrorMessage, getFieldErrors} from '../api/client'
 import {addStop, updateStop} from '../api/stops'
 import type {Place} from '../types/place'
-import type {Stop, Trip} from '../types/trip'
+import type {Stop, StopType, Trip} from '../types/trip'
 import {getCountryName} from '../utils/countries'
 import {suggestStopDate} from '../utils/dates'
 import FormField from './FormField'
 import PlaceSearch from './PlaceSearch'
+import StopTypeField from './StopTypeField'
 
 type StopDialogProps = {
     open: boolean
@@ -34,7 +35,7 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
     const [name, setName] = useState('')
     const [date, setDate] = useState('')
     const [note, setNote] = useState('')
-    const [overnight, setOvernight] = useState(false)
+    const [type, setType] = useState<StopType>('OVERNIGHT')
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
     const [error, setError] = useState('')
     const [submitting, setSubmitting] = useState(false)
@@ -50,7 +51,7 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
             setName(stop?.name ?? '')
             setDate(stop?.date ?? suggestStopDate(trip))
             setNote(stop?.note ?? '')
-            setOvernight(stop?.overnight ?? false)
+            setType(stop?.type ?? 'OVERNIGHT')
             setFieldErrors({})
             setError('')
             setSearchKey((key) => key + 1)
@@ -86,7 +87,7 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
                 countryCode: place.countryCode,
                 date,
                 note,
-                overnight,
+                type,
             }
             const saved = stop
                 ? await updateStop(trip.id, stop.id, request)
@@ -138,19 +139,7 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
                             error={fieldErrors.date}
                             required
                         />
-                        <label htmlFor="stop-overnight" className="flex cursor-pointer items-center gap-3 text-[15px] text-ink">
-                            <input
-                                id="stop-overnight"
-                                type="checkbox"
-                                checked={overnight}
-                                onChange={(e) => setOvernight(e.target.checked)}
-                                className="size-5 accent-accent"
-                            />
-                            <span>
-                                Hier übernachtet{' '}
-                                <span className="text-muted">– nicht nur ein Tagesausflug oder auf der Durchreise</span>
-                            </span>
-                        </label>
+                        <StopTypeField name="stop-type" value={type} onChange={setType}/>
                         <div className="flex flex-col gap-2">
                             <label htmlFor="stop-note" className="text-sm font-semibold text-ink-soft">
                                 Notiz <span className="font-normal text-muted">(optional)</span>

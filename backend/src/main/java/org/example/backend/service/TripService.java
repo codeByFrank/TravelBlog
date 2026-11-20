@@ -1,7 +1,6 @@
 package org.example.backend.service;
 
 import org.example.backend.dto.FirstStopRequest;
-import org.example.backend.dto.StopResponse;
 import org.example.backend.dto.TripRequest;
 import org.example.backend.dto.TripResponse;
 import org.example.backend.model.Stop;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -47,7 +45,8 @@ public class TripService {
                 firstStop.countryCode(),
                 request.startDate(),
                 null,
-                Boolean.TRUE.equals(firstStop.overnight()));
+                firstStop.type(),
+                null);
         Trip trip = new Trip(
                 null,
                 customTitle(request.title()),
@@ -63,10 +62,10 @@ public class TripService {
 
     static TripResponse toResponse(Trip trip) {
         List<Stop> stops = stopsOf(trip);
-        List<GeoJsonPoint> route = stops.stream().map(Stop::location).toList();
+        TripRoute route = new TripRoute(stops, trip.endDate());
         return new TripResponse(trip.id(), TripTitles.of(trip.title(), stops), trip.title(), trip.description(),
                 trip.startDate(), trip.endDate(), trip.coverColor(), normalizeTags(trip.tags()),
-                toStopResponses(stops), RouteLengthCalculator.totalKm(route));
+                route.toResponses(), route.lengthKm());
     }
 
     // An empty title is stored as null: the trip is then named after its stops
@@ -77,20 +76,6 @@ public class TripService {
     // Trips saved before stops existed have no stops field
     static List<Stop> stopsOf(Trip trip) {
         return trip.stops() == null ? List.of() : trip.stops();
-    }
-
-    private static List<StopResponse> toStopResponses(List<Stop> stops) {
-        List<StopResponse> responses = new ArrayList<>();
-        Stop previous = null;
-        for (Stop stop : stops) {
-            Long distance = previous == null
-                    ? null
-                    : Math.round(RouteLengthCalculator.distanceKm(previous.location(), stop.location()));
-            responses.add(new StopResponse(stop.id(), stop.name(), stop.location().getY(), stop.location().getX(),
-                    stop.countryCode(), stop.date(), stop.note(), Boolean.TRUE.equals(stop.overnight()), distance));
-            previous = stop;
-        }
-        return responses;
     }
 
     // A stop must lie within the dates of its trip

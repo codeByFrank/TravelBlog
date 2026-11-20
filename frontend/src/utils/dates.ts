@@ -25,6 +25,16 @@ export function formatDateRange(start: string, end: string): string {
     return dateRangeFormat.formatRange(new Date(start), new Date(end))
 }
 
+// The days at a stop: "15. Mai" for a single day, "12.–15. Mai · 3 Nächte" for a stay
+export function formatStay(arrival: string, departure: string): string {
+    if (departure <= arrival) {
+        return formatDayMonth(arrival)
+    }
+    const nights = Math.round((new Date(departure).getTime() - new Date(arrival).getTime()) / 86_400_000)
+    const days = dayMonthFormat.formatRange(new Date(arrival), new Date(departure))
+    return `${days} · ${nights} ${nights === 1 ? 'Nacht' : 'Nächte'}`
+}
+
 // Suggested arrival date for a new stop: the day after the last stop, but not after the end of the trip;
 // the first stop gets the start of the trip. Dates are "YYYY-MM-DD" and compared as text.
 export function suggestStopDate(trip: Trip): string {

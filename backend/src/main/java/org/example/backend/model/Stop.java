@@ -13,8 +13,9 @@ import java.time.LocalDate;
  * @param countryCode ISO 3166-1 alpha-2 code, e.g. "IT", used by the world map and the statistics
  * @param date        arrival date, within the dates of the trip
  * @param note        personal note; optional
- * @param overnight   true if the user stayed overnight here, false for a day visit or passing through;
- *                    null for stops saved before this field existed (treated as false)
+ * @param type        how the user spent the time here; null for stops saved before this field existed
+ * @param overnight   only in stops saved before {@code type} existed: true if the user stayed overnight.
+ *                    New stops store null here, so MongoDB leaves the field out. Read {@link #typeOrDefault()}.
  */
 public record Stop(String id,
                    String name,
@@ -22,5 +23,14 @@ public record Stop(String id,
                    String countryCode,
                    LocalDate date,
                    String note,
+                   StopType type,
                    Boolean overnight) {
+
+    // The type, also for stops saved before it existed: an overnight stay stays one, anything else was a day trip
+    public StopType typeOrDefault() {
+        if (type != null) {
+            return type;
+        }
+        return Boolean.TRUE.equals(overnight) ? StopType.OVERNIGHT : StopType.DAY_TRIP;
+    }
 }

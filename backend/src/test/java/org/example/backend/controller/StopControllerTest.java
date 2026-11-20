@@ -1,6 +1,7 @@
 package org.example.backend.controller;
 
 import org.example.backend.model.Stop;
+import org.example.backend.model.StopType;
 import org.example.backend.model.Trip;
 import org.example.backend.repository.TripRepo;
 import org.example.backend.service.JwtService;
@@ -20,6 +21,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -39,7 +41,7 @@ class StopControllerTest {
               "countryCode": "IT",
               "date": "2024-05-15",
               "note": "Bestes Eis der Reise",
-              "overnight": true
+              "type": "OVERNIGHT"
             }
             """;
 
@@ -65,11 +67,19 @@ class StopControllerTest {
     }
 
     private static Stop rome() {
-        return new Stop("rome", "Rom", new GeoJsonPoint(12.4964, 41.9028), "IT", LocalDate.of(2024, 5, 12), null, true);
+        return new Stop("rome", "Rom", new GeoJsonPoint(12.4964, 41.9028), "IT", LocalDate.of(2024, 5, 12), null,
+                StopType.OVERNIGHT, null);
     }
 
     private static Stop venice() {
-        return new Stop("venice", "Venedig", new GeoJsonPoint(12.3155, 45.4408), "IT", LocalDate.of(2024, 5, 18), null, null);
+        return new Stop("venice", "Venedig", new GeoJsonPoint(12.3155, 45.4408), "IT", LocalDate.of(2024, 5, 18), null,
+                StopType.OVERNIGHT, null);
+    }
+
+    // Tivoli: a day trip from Rome
+    private static Stop tivoli() {
+        return new Stop("tivoli", "Tivoli", new GeoJsonPoint(12.7979, 41.9638), "IT", LocalDate.of(2024, 5, 13), null,
+                StopType.DAY_TRIP, null);
     }
 
     @Test
@@ -88,13 +98,16 @@ class StopControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].longitude").value(11.2558))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].countryCode").value("IT"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].note").value("Bestes Eis der Reise"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].overnight").value(true))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].type").value("OVERNIGHT"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].onRoute").value(true))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.routeLengthKm").value(0));
 
         Stop saved = tripRepo.findById(TRIP_ID).orElseThrow().stops().getFirst();
         // Stored as GeoJSON: x is the longitude, y the latitude
         assertEquals(11.2558, saved.location().getX());
         assertEquals(43.7696, saved.location().getY());
+        assertEquals(StopType.OVERNIGHT, saved.type());
+        assertNull(saved.overnight());
     }
 
     @Test
@@ -160,7 +173,7 @@ class StopControllerTest {
     }
 
     @Test
-    void addStop_isNoOvernightStay_whenFieldIsMissing() throws Exception {
+    void addStop_returnsFieldError_whenTypeIsMissing() throws Exception {
         saveTrip(USER_ID, List.of());
 
         mockMvc.perform(MockMvcRequestBuilders.post(STOPS_URL)
@@ -169,20 +182,43 @@ class StopControllerTest {
                         .content("""
                                 {"name": "Pisa", "latitude": 43.72, "longitude": 10.40, "countryCode": "IT", "date": "2024-05-16"}
                                 """))
-                .andExpect(MockMvcResultMatchers.status().isCreated())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].overnight").value(false));
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.type").value("Bitte auswählen, wie du hier warst."));
     }
 
     @Test
-    void getTrip_returnsOvernightFalse_forStopSavedWithoutTheField() throws Exception {
-        // venice() has overnight = null, like stops saved before the field existed
-        saveTrip(USER_ID, List.of(rome(), venice()));
+    void getTrip_takesTypeFromOldOvernightField_forStopsSavedBeforeTypesExisted() throws Exception {
+        GeoJsonPoint anywhere = new GeoJsonPoint(12.4964, 41.9028);
+        LocalDate date = LocalDate.of(2024, 5, 12);
+        saveTrip(USER_ID, List.of(
+                new Stop("a", "Rom", anywhere, "IT", date, null, null, true),
+                new Stop("b", "Pisa", anywhere, "IT", date, null, null, false),
+                new Stop("c", "Siena", anywhere, "IT", date, null, null, null)));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/1")
                         .header(HttpHeaders.AUTHORIZATION, bearer()))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].overnight").value(true))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[1].overnight").value(false));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].type").value("OVERNIGHT"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[1].type").value("DAY_TRIP"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[2].type").value("DAY_TRIP"));
+    }
+
+    @Test
+    void getTrip_leavesDayTripsOutOfTheRoute_andMeasuresThemFromTheirBase() throws Exception {
+        saveTrip(USER_ID, List.of(rome(), tivoli(), venice()));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/1")
+                        .header(HttpHeaders.AUTHORIZATION, bearer()))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].onRoute").value(true))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[0].departureDate").value("2024-05-18"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[1].onRoute").value(false))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[1].baseStopId").value("rome"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[1].distanceFromPreviousKm").value(26))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[1].departureDate").value("2024-05-13"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[2].distanceFromPreviousKm").value(394))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.stops[2].departureDate").value("2024-05-20"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.routeLengthKm").value(394));
     }
 
     @Test
