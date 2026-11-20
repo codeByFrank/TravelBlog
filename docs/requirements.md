@@ -84,7 +84,8 @@ The route length is the sum of the straight-line distances between consecutive s
 
 Users must be able to:
 
-* upload several photos per stop
+* upload up to 5 photos per stop, also for the first place when a trip is created
+* choose one photo of the trip as its cover image; without a choice the first photo is the cover
 * see the photos of a trip as a gallery on the detail page
 * open a photo in a large view by clicking it
 * delete a photo
@@ -236,7 +237,5 @@ Future ideas should not be implemented unless explicitly requested.
 
 ## 18. Open Questions
 
-* Where are uploaded photos stored (server disk, Cloudinary, MongoDB GridFS), and which limits apply (file size,
-  number per stop)?
 * Should the route length include the way from home and back? Then a trip to one place would have a length too.
   It needs a home place per user (e.g. in a profile) and a rule for trips that do not start at home.
