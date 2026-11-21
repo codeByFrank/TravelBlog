@@ -99,7 +99,6 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
             const saved = stop
                 ? await updateStop(trip.id, stop.id, request)
                 : await addStop(trip.id, request)
-            o
             const stopId = stop?.id ?? saved.stops.find((s) => !trip.stops.some((old) => old.id === s.id))?.id
             const removedPhotoIds = (stop?.photoIds ?? []).filter((id) => !keptPhotoIds.includes(id))
 

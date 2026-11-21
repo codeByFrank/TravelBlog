@@ -7,12 +7,14 @@ import {COVER_COLORS, DEFAULT_COVER_COLOR} from '../coverColors'
 import FormField from './FormField'
 import PlaceSearch from './PlaceSearch'
 import StopTypeField from './StopTypeField'
+import {photoWarning, savePhotos} from '../api/photos'
+import PhotoPicker from './PhotoPicker'
 
 type TripDialogProps = {
     open: boolean
     trip?: Trip | null
     onClose: () => void
-    onSaved: (trip: Trip) => void
+    onSaved: (trip: Trip, warning?: string) => void
 }
 
 type TripForm = {
@@ -50,6 +52,8 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
     const [error, setError] = useState('')
     const [submitting, setSubmitting] = useState(false)
+    const [uploading, setUploading] = useState(false)
+    const [files, setFiles] = useState<File[]>([])
     // Only for a new trip: its first place, because every trip has at least one
     const [place, setPlace] = useState<Place | null>(null)
     // null: not chosen yet, then the first place of a trip of several days counts as an overnight stay
@@ -67,6 +71,7 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
             setError('')
             setPlace(null)
             setTypeChoice(null)
+            setFiles([])
             setSearchKey((key) => key + 1)
             dialog.showModal()
         }
@@ -112,13 +117,24 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
                 }
                 : undefined
             const request = {...form, title: form.title.trim(), firstStop}
-            const saved = trip ? await updateTrip(trip.id, request) : await createTrip(request)
-            onSaved(saved)
+            if (trip) {
+                onSaved(await updateTrip(trip.id, request))
+                return
+            }
+            const created = await createTrip(request)
+            if (files.length === 0) {
+                onSaved(created)
+                return
+            }
+            setUploading(true)
+            const result = await savePhotos(created.id, created.stops[0].id, [], files)
+            onSaved(result.trip ?? created, photoWarning(result.failed))
         } catch (err) {
             setFieldErrors(getFieldErrors(err))
             setError(getErrorMessage(err, 'Die Reise konnte nicht gespeichert werden.'))
         } finally {
             setSubmitting(false)
+            setUploading(false)
         }
     }
 
@@ -134,6 +150,10 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
         ?? fieldErrors['firstStop.latitude']
         ?? fieldErrors['firstStop.longitude']
         ?? fieldErrors['firstStop.countryCode']
+
+    let submitLabel = 'Speichern'
+    if (uploading) submitLabel = 'Fotos werden hochgeladen …'
+    else if (submitting) submitLabel = 'Wird gespeichert …'
 
     return (
         <dialog
@@ -153,6 +173,7 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
                         {place && (
                             <StopTypeField name="trip-first-stop-type" value={firstStopType} onChange={setTypeChoice}/>
                         )}
+                        {place && <PhotoPicker files={files} onFilesChange={setFiles}/>}
                         <p className="-mt-2 text-sm text-muted">Weitere Orte fügst du danach auf der Seite der Reise hinzu.</p>
                     </>
                 )}
@@ -269,7 +290,7 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
                         disabled={submitting}
                         className="min-h-12 cursor-pointer rounded-full bg-accent px-6 text-[15px] font-semibold text-white shadow-[0_6px_18px_rgba(31,111,191,0.25)] hover:bg-accent-dark disabled:cursor-default disabled:opacity-60"
                     >
-                        {submitting ? 'Wird gespeichert …' : 'Speichern'}
+                        {submitLabel}
                     </button>
                 </div>
             </form>
