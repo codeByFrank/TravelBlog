@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState, type SubmitEvent} from 'react'
 import {getErrorMessage, getFieldErrors} from '../api/client'
-import {createTrip, updateTrip} from '../api/trips'
+import {createTrip, setCover, updateTrip} from '../api/trips'
 import {TRIP_TAG_LABELS, TRIP_TAGS, type StopType, type Trip, type TripTag} from '../types/trip'
 import type {Place} from '../types/place'
 import {COVER_COLORS, DEFAULT_COVER_COLOR} from '../coverColors'
@@ -9,6 +9,7 @@ import PlaceSearch from './PlaceSearch'
 import StopTypeField from './StopTypeField'
 import {photoWarning, savePhotos} from '../api/photos'
 import PhotoPicker from './PhotoPicker'
+import AuthImage from './AuthImage'
 
 type TripDialogProps = {
     open: boolean
@@ -60,6 +61,7 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
     const [typeChoice, setTypeChoice] = useState<StopType | null>(null)
     // Changes every time the dialog opens, so that the place search starts empty again
     const [searchKey, setSearchKey] = useState(0)
+    const [coverPhotoId, setCoverPhotoId] = useState<string | null>(null)
 
     // The native <dialog> handles focus, Esc and the backdrop
     useEffect(() => {
@@ -72,6 +74,7 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
             setPlace(null)
             setTypeChoice(null)
             setFiles([])
+            setCoverPhotoId(trip?.coverPhotoId ?? null)
             setSearchKey((key) => key + 1)
             dialog.showModal()
         }
@@ -118,7 +121,10 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
                 : undefined
             const request = {...form, title: form.title.trim(), firstStop}
             if (trip) {
-                onSaved(await updateTrip(trip.id, request))
+                const updated = await updateTrip(trip.id, request)
+                // The cover has its own endpoint; it is only called when the user chose another photo
+                const coverChanged = coverPhotoId !== null && coverPhotoId !== trip.coverPhotoId
+                onSaved(coverChanged ? await setCover(trip.id, coverPhotoId) : updated)
                 return
             }
             const created = await createTrip(request)
@@ -150,6 +156,8 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
         ?? fieldErrors['firstStop.latitude']
         ?? fieldErrors['firstStop.longitude']
         ?? fieldErrors['firstStop.countryCode']
+
+    const tripPhotoIds = trip ? trip.stops.flatMap((stop) => stop.photoIds) : []
 
     let submitLabel = 'Speichern'
     if (uploading) submitLabel = 'Fotos werden hochgeladen …'
@@ -222,8 +230,37 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
                     />
                 </div>
 
+                {tripPhotoIds.length > 0 && (
+                    <fieldset className="flex flex-col gap-2">
+                        <legend className="mb-2 text-sm font-semibold text-ink-soft">Titelbild</legend>
+                        <div className="flex flex-wrap gap-3">
+                            {tripPhotoIds.map((photoId, index) => (
+                                <label key={photoId} className="cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="coverPhoto"
+                                        value={photoId}
+                                        checked={coverPhotoId === photoId}
+                                        onChange={() => setCoverPhotoId(photoId)}
+                                        className="peer sr-only"
+                                    />
+                                    <AuthImage
+                                        photoId={photoId}
+                                        alt={`Foto ${index + 1}`}
+                                        className="size-16 rounded-xl peer-checked:ring-4 peer-checked:ring-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-accent"
+                                    />
+                                </label>
+                            ))}
+                        </div>
+                    </fieldset>
+                )}
+
                 <fieldset className="flex flex-col gap-2">
-                    <legend className="mb-2 text-sm font-semibold text-ink-soft">Farbe der Titelkarte</legend>
+                    <legend className="mb-2 text-sm font-semibold text-ink-soft">
+                        Farbe der Titelkarte
+                        {tripPhotoIds.length > 0 && <span className="font-normal text-muted"> (nur für Reisen ohne Fotos)</span>}
+                    </legend>
+                    
                     <div className="flex flex-wrap gap-3">
                         {COVER_COLORS.map((color) => (
                             <label key={color.value} title={color.label} className="cursor-pointer">

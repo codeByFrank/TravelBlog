@@ -53,12 +53,12 @@ export default function TripCard({trip, index}: Readonly<TripCardProps>) {
                 <h2 className="text-xl font-bold tracking-tight text-ink group-hover:text-accent">{trip.title}</h2>
                 {countries && <span className="text-[15px] font-semibold text-ink-soft">{countries}</span>}
                 {trip.description && <p className="line-clamp-2 text-[15px] text-ink-soft">{trip.description}</p>}
-                {photoCount > 0 && <Badge>{photoCount === 1 ? '1 Foto' : `${photoCount} Fotos`}</Badge>}
 
                 <div className="mt-1 flex flex-wrap gap-2">
                     <Badge>{formatDays(getTripDays(trip))}</Badge>
                     {severalStops && <Badge>{trip.stops.length} Orte</Badge>}
                     {hasRoute && <Badge>{formatKm(trip.routeLengthKm)}</Badge>}
+                    {photoCount > 0 && <Badge>{photoCount === 1 ? '1 Foto' : `${photoCount} Fotos`}</Badge>}
                 </div>
                 <TagBadges tags={trip.tags}/>
             </div>
