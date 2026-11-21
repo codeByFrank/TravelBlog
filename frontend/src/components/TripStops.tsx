@@ -158,8 +158,9 @@ export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>
                 trip={trip}
                 stop={stopToEdit}
                 onClose={() => setDialogOpen(false)}
-                onSaved={(saved) => {
+                onSaved={(saved, warning) => {
                     onTripChange(saved)
+                    setError(warning ?? '')
                     setDialogOpen(false)
                 }}
             />
