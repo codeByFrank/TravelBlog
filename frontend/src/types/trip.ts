@@ -65,4 +65,10 @@ export type Trip = {
     tags: TripTag[] // empty if the trip has no tags
     stops: Stop[] // in the order of the visit (by date)
     routeLengthKm: number // sum of the straight-line distances between the stops on the route
+    coverPhotoId: string | null
+}
+
+export async function setCover(id: string, photoId: string | null): Promise<Trip> {
+    const response = await api.put<Trip>(`/api/trips/${id}/cover`, {photoId})
+    return response.data
 }
