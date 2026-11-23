@@ -56,7 +56,8 @@ If a requested change conflicts with these documents, point out the conflict bef
   (`deploy.yml`). Details in
   `docs/architecture.md` → CI and Code Quality
 - The frontend has no automated tests (not part of the course); its checks are lint, type check, and build
-- External services, all free and without an API key: OpenStreetMap tiles, Nominatim (place search)
+- External services, all free and without an API key: OpenStreetMap tiles, Nominatim (place search), Wikipedia
+  (first sentences of the article about a stop's place)
 - Deployment: on every push to `main`, `deploy.yml` builds one Docker image (backend with the frontend inside),
   pushes it to Docker Hub, and starts a deploy on Render. Details in `docs/deployment.md`
 
