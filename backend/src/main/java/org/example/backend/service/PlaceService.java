@@ -3,6 +3,7 @@ package org.example.backend.service;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.example.backend.dto.PlaceResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,7 +34,8 @@ public class PlaceService {
 
     private final RestClient nominatimRestClient;
 
-    public PlaceService(RestClient nominatimRestClient) {
+    // Named, because there is a second RestClient for Wikipedia
+    public PlaceService(@Qualifier("nominatimRestClient") RestClient nominatimRestClient) {
         this.nominatimRestClient = nominatimRestClient;
     }
 

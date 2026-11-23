@@ -183,6 +183,22 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - The Nominatim address is configured in `app.nominatim.base-url`; the tests use a fake address and
   `MockRestServiceServer`, so they never call the real service.
 
+## Wikipedia
+
+- A stop's card shows the first three sentences of the German Wikipedia article about its place (`WikipediaInfo`),
+  with a link to the article and "Text: Wikipedia, CC BY-SA 4.0", which the license asks for.
+- The frontend asks `GET /api/wikipedia?name=…&latitude=…&longitude=…`; the backend (`WikipediaService`) asks the
+  MediaWiki API of de.wikipedia.org (`action=query`, `prop=extracts|coordinates|pageprops|info`, redirects resolved)
+  with the same User-Agent as for Nominatim. No API key is needed. The address is configured in
+  `app.wikipedia.base-url`; the tests use a fake address and `MockRestServiceServer`.
+- The article is looked up by the stop's name and accepted only if it is no disambiguation page and its coordinates
+  lie within 50 km of the stop, so "Florenz" does not return a town of the same name in the USA. Without a matching
+  article the API answers 204 No Content and the card shows nothing. A stop renamed by the user (e.g. "Florenz
+  (Altstadt)") then has no article; storing the article title from the place search would fix that later.
+- Overnight stops load the article when the page opens; day trips and places on the way load it with a button, so
+  a trip with many stops does not send a request for each of them. The answer is not stored or cached.
+- If Wikipedia cannot be reached, the API answers 503; an overnight stop then shows nothing, a button shows a note.
+
 ## Photos
 
 - Photo files are stored in MongoDB GridFS, in the same Atlas database: Render deletes its file system on every

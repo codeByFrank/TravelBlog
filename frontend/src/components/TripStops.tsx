@@ -10,6 +10,7 @@ import ConfirmDialog from './ConfirmDialog'
 import PhotoLightbox from './PhotoLightbox'
 import StopDialog from './StopDialog'
 import TripMap from './TripMap'
+import WikipediaInfo from './WikipediaInfo'
 
 type TripStopsProps = {
     trip: Trip
@@ -152,6 +153,11 @@ export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>
                                                     ))}
                                                 </ul>
                                             )}
+                                            {/* A new component when the place or the type changes, so it loads again */}
+                                            <WikipediaInfo
+                                                key={`${stop.name}|${stop.latitude}|${stop.longitude}|${stop.type}`}
+                                                stop={stop}
+                                            />
                                             <div className="flex flex-wrap gap-2">
                                                 <button
                                                     type="button"

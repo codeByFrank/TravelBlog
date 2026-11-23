@@ -28,6 +28,7 @@ their own data only; it is a personal travel diary, not a social network.
 * Wishlist of places the user still wants to visit, with a reason and a priority
 * Search and filter by year, country or city, and free text
 * Place search by name when adding a stop
+* Short information about a stop's place from Wikipedia, with a link to the article
 * Statistics: countries, stops, distance, breakdown by year
 * Tags for trips ("Berge", "Meer", "Städtetrip", "Essen", "Freunde & Familie") and filtering by them
 
@@ -78,6 +79,11 @@ Users must be able to:
 * edit and delete a stop; the last stop of a trip can be changed but not deleted
 
 The order of the stops defines the course of the trip.
+
+A stop should show the first sentences of the German Wikipedia article about its place, with a link to the whole
+article and the source and license of the text (Wikipedia, CC BY-SA). Overnight stops show it right away; for day
+trips and places on the way the user loads it with a button. A stop without a matching article shows nothing (or,
+after the button, a short note).
 
 ## 6. Trip Map
 
@@ -249,7 +255,7 @@ Features outside of this scope should not be implemented unless explicitly reque
 
 Potential future functionality may include:
 
-* short information about cities and sights from Wikipedia
+* short information about sights from Wikipedia (the places of stops already have it)
 * tags for stops (once trips have stops), using the same list as the trip tags
 * public trips and a shared feed
 * routes along roads instead of straight lines, and the means of transport per section
