@@ -134,6 +134,9 @@ Februar". It may have a best travel time, e.g. "Februar".
 
 Users must be able to create, edit, and delete wishlist entries.
 
+Users may plan a trip from a wishlist entry ("Reise planen", as in the mockup): the dialog for a new trip opens
+with the destination as title and place search and the reason as description. The wishlist entry stays.
+
 ## 10. Search and Filter
 
 Users must be able to find their trips:
@@ -252,7 +255,6 @@ Potential future functionality may include:
 * routes along roads instead of straight lines, and the means of transport per section
 * historical weather for a stop's place and date
 * reading a photo's location from its EXIF data
-* turning a wishlist entry into a planned trip
 * a language switch, so that each user can choose the language of the user interface
 
 Future ideas should not be implemented unless explicitly requested.

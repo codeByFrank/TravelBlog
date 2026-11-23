@@ -1,7 +1,7 @@
 import {useEffect, useRef, useState, type SubmitEvent} from 'react'
 import {getErrorMessage, getFieldErrors} from '../api/client'
 import {createTrip, setCover, updateTrip} from '../api/trips'
-import {TRIP_TAG_LABELS, TRIP_TAGS, type StopType, type Trip, type TripTag} from '../types/trip'
+import {TRIP_TAG_LABELS, TRIP_TAGS, type StopType, type Trip, type TripDraft, type TripTag} from '../types/trip'
 import type {Place} from '../types/place'
 import {COVER_COLORS, DEFAULT_COVER_COLOR} from '../coverColors'
 import FormField from './FormField'
@@ -14,6 +14,8 @@ import AuthImage from './AuthImage'
 type TripDialogProps = {
     open: boolean
     trip?: Trip | null
+    // Only for a new trip: values to start with, e.g. from a wishlist entry; without it the form starts empty
+    draft?: TripDraft | null
     onClose: () => void
     onSaved: (trip: Trip, warning?: string) => void
 }
@@ -47,7 +49,15 @@ function toForm(trip: Trip): TripForm {
     }
 }
 
-export default function TripDialog({open, trip, onClose, onSaved}: Readonly<TripDialogProps>) {
+// The form of a new trip: empty, or with the title and description of the planned wish
+function toNewForm(draft: TripDraft | null | undefined): TripForm {
+    if (!draft) {
+        return EMPTY_FORM
+    }
+    return {...EMPTY_FORM, title: draft.title, description: draft.description}
+}
+
+export default function TripDialog({open, trip, draft, onClose, onSaved}: Readonly<TripDialogProps>) {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const [form, setForm] = useState(EMPTY_FORM)
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -68,7 +78,7 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
         const dialog = dialogRef.current
         if (!dialog) return
         if (open && !dialog.open) {
-            setForm(trip ? toForm(trip) : EMPTY_FORM)
+            setForm(trip ? toForm(trip) : toNewForm(draft))
             setFieldErrors({})
             setError('')
             setPlace(null)
@@ -81,7 +91,7 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
         if (!open && dialog.open) {
             dialog.close()
         }
-    }, [open, trip])
+    }, [open, trip, draft])
 
     function update(field: Exclude<keyof TripForm, 'tags'>, value: string) {
         setForm({...form, [field]: value})
@@ -177,7 +187,13 @@ export default function TripDialog({open, trip, onClose, onSaved}: Readonly<Trip
 
                 {!trip && (
                     <>
-                        <PlaceSearch key={searchKey} selected={place} onSelect={setPlace} error={placeError}/>
+                        <PlaceSearch
+                            key={searchKey}
+                            selected={place}
+                            onSelect={setPlace}
+                            error={placeError}
+                            initialQuery={draft?.placeQuery}
+                        />
                         {place && (
                             <StopTypeField name="trip-first-stop-type" value={firstStopType} onChange={setTypeChoice}/>
                         )}

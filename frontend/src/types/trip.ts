@@ -67,3 +67,11 @@ export type Trip = {
     routeLengthKm: number // sum of the straight-line distances between the stops on the route
     coverPhotoId: string | null
 }
+
+// Values for a new trip that is planned from a wishlist entry ("Reise planen" on the wishlist).
+// The trip dialog starts with them instead of empty fields; the user can still change everything.
+export type TripDraft = {
+    title: string // e.g. "Patagonien"
+    description: string // the reason of the wish, e.g. "Wandern im Torres del Paine"
+    placeQuery: string // the text the place search starts with, e.g. "Patagonien"
+}
