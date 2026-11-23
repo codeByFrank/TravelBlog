@@ -45,7 +45,8 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 ## Configuration & Secrets
 
 - Secrets are provided via environment variables: `MONGODB_URI` (database connection string) and `JWT_SECRET` (key
-  that signs login tokens, at least 32 characters). Setup is described in `README.md`.
+  that signs login tokens, at least 32 characters). Setup is described in `README.md`. Optional: `DEMO_PASSWORD`
+  (see Authentication → Demo user).
 - Tests use a fixed test-only secret from `backend/src/test/resources/application.properties`.
 - `.env` files and keys are never committed.
 
@@ -64,6 +65,19 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - `JwtFilter` reads the token; controllers get the logged-in user's id with `@AuthenticationPrincipal String userId`.
 - All users have the same rights; there are no roles.
 - Not supported: password reset by email.
+
+### Demo user
+
+- So that anyone can try the live application without registering (e.g. in a presentation or from the README),
+  the backend creates a user `demo` with sample data: four trips in different years and countries and five wishlist
+  entries, no photos (`DemoData`).
+- `DemoDataSeeder` runs once at every start, but only when the environment variable `DEMO_PASSWORD` is set (on
+  Render). Locally and in the tests there is no demo user.
+- Every start replaces the trips and the wishlist of `demo` with the sample data. Visitors may change or delete them;
+  Render restarts the service often (it sleeps without visitors), so the demo is soon clean again. Data of other
+  users is never touched.
+- The password comes from `DEMO_PASSWORD` instead of the source code: no password in the code, and changing the
+  variable on Render changes the password. It is a demo-only password and may be shown in the README.
 
 ## Data Model
 

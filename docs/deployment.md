@@ -46,6 +46,7 @@ Set in the Render service under Environment. They are the same variables as in l
 |---|---|
 | `MONGODB_URI` | Connection string of the production database, including the database name `/travelblog` |
 | `JWT_SECRET` | Key that signs the login tokens, at least 32 characters; a different value than locally |
+| `DEMO_PASSWORD` | Password of the demo user `demo`, a demo-only password. With it, every start creates the demo user and resets its sample data (`DemoDataSeeder`, see `architecture.md` → Demo user). Without it there is no demo user |
 
 The container listens on port 8080 (`EXPOSE 8080` in the `Dockerfile`). Render finds the port by itself; if it does
 not, set the environment variable `PORT` to `8080` on Render.
@@ -66,3 +67,5 @@ added on Render before the pull request that needs it is merged.
 - On Render's free plan the service sleeps after a while without visitors; the first request afterwards takes about
   a minute.
 - Changing `JWT_SECRET` logs out all users.
+- The demo user `demo` belongs to the application: do not register it as a normal user, because every start
+  replaces its trips and wishlist.
