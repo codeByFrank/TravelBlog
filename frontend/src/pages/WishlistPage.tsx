@@ -1,8 +1,10 @@
 import {useEffect, useState} from 'react'
+import {useNavigate} from 'react-router-dom'
 import {getErrorMessage} from '../api/client'
 import {addWishlistEntry, deleteWishlistEntry, getWishlistEntries, updateWishlistEntry} from '../api/wishlistApi'
 import ConfirmDialog from '../components/ConfirmDialog'
 import WishlistForm from '../components/WishlistForm'
+import type {TripDraft} from '../types/trip'
 import {PRIORITY_LABELS, type Priority, type WishlistEntry, type WishlistEntryRequest} from '../types/WishlistEntry'
 import {describeCountries, getContinents, getCountryNames} from '../utils/countries'
 
@@ -32,6 +34,7 @@ function describeWishCountries(entry: WishlistEntry): string {
 }
 
 export default function WishlistPage() {
+    const navigate = useNavigate()
     const [entries, setEntries] = useState<WishlistEntry[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -40,6 +43,18 @@ export default function WishlistPage() {
     const [entryToEdit, setEntryToEdit] = useState<WishlistEntry | null>(null)
     // The entry the user wants to delete; the confirmation dialog is open while this is set
     const [entryToDelete, setEntryToDelete] = useState<WishlistEntry | null>(null)
+
+    // "Reise planen": opens "Neue Reise" on the trips page, filled with the wish.
+    // The values go in the router state, not in the address, so the user's texts do not appear in the URL.
+    // The wish stays on the wishlist, because some places are worth more than one trip.
+    function planTrip(entry: WishlistEntry) {
+        const tripDraft: TripDraft = {
+            title: entry.destination,
+            description: entry.reason,
+            placeQuery: entry.destination,
+        }
+        void navigate('/trips', {state: {tripDraft}})
+    }
 
     // Load the wishlist once when the page opens
     useEffect(() => {
@@ -133,7 +148,14 @@ export default function WishlistPage() {
                                     <p className="text-sm text-muted">
                                         {entry.bestTravelTime && `Beste Reisezeit: ${entry.bestTravelTime}`}
                                     </p>
-                                    <div className="flex gap-3">
+                                    <div className="flex flex-wrap gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => planTrip(entry)}
+                                            className="min-h-10 cursor-pointer rounded-full bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-dark"
+                                        >
+                                            Reise planen
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={() => setEntryToEdit(entry)}

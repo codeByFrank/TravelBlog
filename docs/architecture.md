@@ -77,6 +77,9 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
   countries first; the place or region is optional. Without one, the frontend sends the country names as the
   destination (e.g. "Island", "Argentinien, Chile"), so the backend still always gets a destination and did not change.
   Entries stored before countries existed are returned with an empty list.
+- "Reise planen" on the wishlist passes the wish to the trips page in the React Router state (`tripDraft`), not in the
+  URL, so the user's texts do not appear in the address. The trips page removes it from the history after reading it,
+  so reloading does not open the dialog again.
 - The API returns DTOs (e.g. `TripResponse`, `WishlistEntryResponse`), not the documents: the owner id stays on the
   server.
 - `GET /api/trips` returns the user's trips sorted by start date, newest first.

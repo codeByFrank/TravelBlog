@@ -7,12 +7,13 @@ type PlaceSearchProps = {
     selected: Place | null
     onSelect: (place: Place) => void
     error?: string // e.g. "Bitte einen Ort suchen und auswählen."
+    initialQuery?: string // text in the search field at the start, e.g. "Island" when a trip is planned from a wish
 }
 
 // Search field for a place by name. The search runs on the button or Enter, not on every key,
 // because Nominatim allows only one request per second.
-export default function PlaceSearch({selected, onSelect, error}: Readonly<PlaceSearchProps>) {
-    const [query, setQuery] = useState('')
+export default function PlaceSearch({selected, onSelect, error, initialQuery}: Readonly<PlaceSearchProps>) {
+    const [query, setQuery] = useState(initialQuery ?? '')
     const [results, setResults] = useState<Place[] | null>(null) // null: not searched yet
     const [searching, setSearching] = useState(false)
     const [searchError, setSearchError] = useState('')
