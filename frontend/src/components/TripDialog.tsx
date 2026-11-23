@@ -4,6 +4,8 @@ import {createTrip, setCover, updateTrip} from '../api/trips'
 import {TRIP_TAG_LABELS, TRIP_TAGS, type StopType, type Trip, type TripDraft, type TripTag} from '../types/trip'
 import type {Place} from '../types/place'
 import {COVER_COLORS, DEFAULT_COVER_COLOR} from '../coverColors'
+import {todayIso} from '../utils/dates'
+import DialogHeader from './DialogHeader'
 import FormField from './FormField'
 import PlaceSearch from './PlaceSearch'
 import StopTypeField from './StopTypeField'
@@ -49,12 +51,16 @@ function toForm(trip: Trip): TripForm {
     }
 }
 
-// The form of a new trip: empty, or with the title and description of the planned wish
+// The form of a new trip: empty, or with the title and description of the planned wish.
+// Both dates start as today: an empty date field in Safari only shows today in grey, so after changing day and month
+// the year was still empty and had to be typed. With a real value the user changes only what differs.
 function toNewForm(draft: TripDraft | null | undefined): TripForm {
+    const today = todayIso()
+    const form = {...EMPTY_FORM, startDate: today, endDate: today}
     if (!draft) {
-        return EMPTY_FORM
+        return form
     }
-    return {...EMPTY_FORM, title: draft.title, description: draft.description}
+    return {...form, title: draft.title, description: draft.description}
 }
 
 export default function TripDialog({open, trip, draft, onClose, onSaved}: Readonly<TripDialogProps>) {
@@ -95,6 +101,13 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
 
     function update(field: Exclude<keyof TripForm, 'tags'>, value: string) {
         setForm({...form, [field]: value})
+    }
+
+    // The end date follows the start date while it is still the same day (e.g. not changed yet)
+    // or would otherwise lie before the start
+    function updateStartDate(startDate: string) {
+        const endFollows = form.endDate === form.startDate || (startDate !== '' && form.endDate < startDate)
+        setForm({...form, startDate, endDate: endFollows ? startDate : form.endDate})
     }
 
     // Clicking a tag selects it; clicking it again removes it
@@ -180,10 +193,12 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
             aria-labelledby="trip-dialog-title"
             className="m-auto w-[calc(100%-2rem)] max-w-lg rounded-card bg-surface p-0 text-ink shadow-card backdrop:bg-ink/40"
         >
-            <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5 p-6 sm:p-8">
-                <h2 id="trip-dialog-title" className="text-2xl font-bold tracking-tight">
-                    {trip ? 'Reise bearbeiten' : 'Neue Reise'}
-                </h2>
+            <DialogHeader
+                titleId="trip-dialog-title"
+                title={trip ? 'Reise bearbeiten' : 'Neue Reise'}
+                onClose={onClose}
+            />
+            <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5 px-6 pb-6 sm:px-8 sm:pb-8">
 
                 {!trip && (
                     <>
@@ -217,7 +232,7 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
                         label="Von"
                         type="date"
                         value={form.startDate}
-                        onChange={(e) => update('startDate', e.target.value)}
+                        onChange={(e) => updateStartDate(e.target.value)}
                         error={fieldErrors.startDate}
                         required
                     />
