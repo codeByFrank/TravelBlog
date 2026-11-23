@@ -5,6 +5,7 @@ import type {Place} from '../types/place'
 import type {Stop, StopType, Trip} from '../types/trip'
 import {getCountryName} from '../utils/countries'
 import {suggestStopDate} from '../utils/dates'
+import DialogHeader from './DialogHeader'
 import FormField from './FormField'
 import PlaceSearch from './PlaceSearch'
 import StopTypeField from './StopTypeField'
@@ -132,10 +133,12 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
             aria-labelledby="stop-dialog-title"
             className="m-auto w-[calc(100%-2rem)] max-w-lg rounded-card bg-surface p-0 text-ink shadow-card backdrop:bg-ink/40"
         >
-            <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5 p-6 sm:p-8">
-                <h2 id="stop-dialog-title" className="text-2xl font-bold tracking-tight">
-                    {stop ? 'Ort bearbeiten' : 'Ort hinzufügen'}
-                </h2>
+            <DialogHeader
+                titleId="stop-dialog-title"
+                title={stop ? 'Ort bearbeiten' : 'Ort hinzufügen'}
+                onClose={onClose}
+            />
+            <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5 px-6 pb-6 sm:px-8 sm:pb-8">
 
                 <PlaceSearch key={searchKey} selected={place} onSelect={handleSelect} error={placeError}/>
 
