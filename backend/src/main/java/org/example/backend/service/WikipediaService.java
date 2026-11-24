@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,8 +30,15 @@ public class WikipediaService {
     static final double MAX_DISTANCE_KM = 50;
     private static final int MAX_NAME_LENGTH = 100;
     private static final int SENTENCES = 3;
+    // At most this many answers are remembered; then the memory starts again empty
+    private static final int MAX_REMEMBERED = 1000;
 
     private final RestClient wikipediaRestClient;
+    // Answers already looked up, also "no article": the article about a place hardly changes, and every page view
+    // would otherwise ask Wikipedia again. Key: language, name and coordinates. Errors are not remembered.
+    // Kept in memory only, so a restart of the server starts empty. Only used inside synchronized (wikipediaLock).
+    private final Map<String, Optional<WikipediaResponse>> answers = new HashMap<>();
+    private final Object wikipediaLock = new Object();
 
     public WikipediaService(@Qualifier("wikipediaRestClient") RestClient wikipediaRestClient) {
         this.wikipediaRestClient = wikipediaRestClient;
@@ -47,8 +55,25 @@ public class WikipediaService {
         if (title.isEmpty() || title.length() > MAX_NAME_LENGTH) {
             throw new LocalizedException(HttpStatus.BAD_REQUEST, "error.wikipedia.invalidName");
         }
-        GeoJsonPoint place = new GeoJsonPoint(longitude, latitude);
+        String cacheKey = language + "|" + title + "|" + latitude + "|" + longitude;
 
+        // One question to Wikipedia at a time: a trip page loads the articles of several stops at once, and Wikipedia
+        // answers "too many requests" when one client sends many in parallel. The others wait here for their turn.
+        // A remembered answer needs no question at all, also when another request looked the place up meanwhile.
+        synchronized (wikipediaLock) {
+            if (answers.containsKey(cacheKey)) {
+                return answers.get(cacheKey);
+            }
+            Optional<WikipediaResponse> answer = askWikipedia(title, language, new GeoJsonPoint(longitude, latitude));
+            if (answers.size() >= MAX_REMEMBERED) {
+                answers.clear(); // a simple limit, so the memory cannot grow without end
+            }
+            answers.put(cacheKey, answer);
+            return answer;
+        }
+    }
+
+    private Optional<WikipediaResponse> askWikipedia(String title, String language, GeoJsonPoint place) {
         Optional<Page> article = findArticle(title, language, place);
         if (article.isEmpty()) {
             String otherLanguage = UserLanguage.ENGLISH.equals(language) ? UserLanguage.GERMAN : UserLanguage.ENGLISH;

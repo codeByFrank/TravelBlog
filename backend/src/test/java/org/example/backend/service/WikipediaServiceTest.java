@@ -33,6 +33,15 @@ class WikipediaServiceTest {
     // Florence
     private static final double LATITUDE = 43.77;
     private static final double LONGITUDE = 11.26;
+    // An article about Florence, near the place of the tests
+    private static final String FLORENCE_PAGE = """
+            {"query": {"pages": [{
+              "title": "Florenz",
+              "extract": "Florenz ist die Hauptstadt der Toskana.",
+              "coordinates": [{"lat": 43.7714, "lon": 11.2542}],
+              "fullurl": "https://de.wikipedia.org/wiki/Florenz"
+            }]}}
+            """;
 
     private MockRestServiceServer server;
     private WikipediaService wikipediaService;
@@ -186,5 +195,46 @@ class WikipediaServiceTest {
                 () -> wikipediaService.find("Florenz", LATITUDE, LONGITUDE, "de"));
 
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatusCode());
+    }
+
+    @Test
+    void find_asksWikipediaOnlyOnce_forTheSamePlace() {
+        // Only one request is expected: the second find must use the remembered answer
+        server.expect(requestTo(startsWith(API_URL)))
+                .andRespond(withSuccess(FLORENCE_PAGE, MediaType.APPLICATION_JSON));
+
+        Optional<WikipediaResponse> first = wikipediaService.find("Florenz", LATITUDE, LONGITUDE, "de");
+        Optional<WikipediaResponse> second = wikipediaService.find("Florenz", LATITUDE, LONGITUDE, "de");
+
+        server.verify();
+        assertEquals(first, second);
+        assertTrue(second.isPresent());
+    }
+
+    @Test
+    void find_remembersThatThereIsNoArticle() {
+        respondWith("""
+                {"title": "Florenz (Altstadt)", "missing": true}
+                """);
+
+        assertTrue(wikipediaService.find("Florenz (Altstadt)", LATITUDE, LONGITUDE, "de").isEmpty());
+        // No further request: MockRestServiceServer would fail on an unexpected one
+        assertTrue(wikipediaService.find("Florenz (Altstadt)", LATITUDE, LONGITUDE, "de").isEmpty());
+        server.verify();
+    }
+
+    @Test
+    void find_asksAgain_afterWikipediaFailed() {
+        // An error is not remembered, so the next page view gets the article
+        server.expect(requestTo(startsWith(API_URL))).andRespond(withServerError());
+        server.expect(requestTo(startsWith(API_URL)))
+                .andRespond(withSuccess(FLORENCE_PAGE, MediaType.APPLICATION_JSON));
+
+        assertThrows(ResponseStatusException.class,
+                () -> wikipediaService.find("Florenz", LATITUDE, LONGITUDE, "de"));
+        Optional<WikipediaResponse> article = wikipediaService.find("Florenz", LATITUDE, LONGITUDE, "de");
+
+        server.verify();
+        assertTrue(article.isPresent());
     }
 }
