@@ -1,5 +1,6 @@
 package org.example.backend.service;
 
+import org.example.backend.model.Stop;
 import org.example.backend.model.Trip;
 import org.example.backend.model.User;
 import org.example.backend.model.WishlistEntry;
@@ -11,13 +12,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Creates the demo user with sample trips and wishlist entries, so that anyone can try TravelBlog
+ * Creates the demo user with sample trips, photos and wishlist entries, so that anyone can try TravelBlog
  * without creating an account (e.g. in a presentation).
  * <p>
  * Runs once when the application starts, but only when the environment variable {@code DEMO_PASSWORD} is set
@@ -68,9 +73,44 @@ public class DemoDataSeeder implements ApplicationRunner {
         User demoUser = saveDemoUser();
         deleteDataOf(demoUser.id());
 
-        tripRepo.saveAll(DemoData.trips(demoUser.id()));
+        // The trips are saved first: the photos need the id of their trip
+        List<Trip> savedTrips = tripRepo.saveAll(DemoData.trips(demoUser.id()));
+        for (Trip trip : savedTrips) {
+            tripRepo.save(withPhotos(trip));
+        }
         wishlistRepo.saveAll(DemoData.wishlist(demoUser.id()));
         LOG.info("Demo data created for the user '{}'", DEMO_USERNAME);
+    }
+
+    // Stores the sample photo of each stop (see DemoData.PHOTO_OF_STOP) and sets the cover photo of the trip
+    private Trip withPhotos(Trip trip) {
+        List<Stop> stopsWithPhotos = new ArrayList<>();
+        String coverPhotoId = null;
+
+        for (Stop stop : trip.stops()) {
+            String fileName = DemoData.PHOTO_OF_STOP.get(stop.name());
+            String photoId = fileName == null ? null : savePhoto(fileName, trip);
+            if (photoId == null) {
+                stopsWithPhotos.add(stop);
+            } else {
+                stopsWithPhotos.add(stop.withPhotoIds(List.of(photoId)));
+                if (DemoData.COVER_STOPS.contains(stop.name())) {
+                    coverPhotoId = photoId;
+                }
+            }
+        }
+        return trip.withStops(stopsWithPhotos).withCoverPhotoId(coverPhotoId);
+    }
+
+    // Returns the id of the stored photo, or null if the file is missing: the demo then simply has fewer photos
+    private String savePhoto(String fileName, Trip trip) {
+        ClassPathResource photo = new ClassPathResource(DemoData.PHOTO_FOLDER + fileName);
+        try (InputStream content = photo.getInputStream()) {
+            return photoStorage.save(content, fileName, "image/jpeg", trip.userId(), trip.id());
+        } catch (IOException e) {
+            LOG.warn("Demo photo '{}' could not be stored", fileName, e);
+            return null;
+        }
     }
 
     // The password always comes from DEMO_PASSWORD, so changing the variable on Render changes the password

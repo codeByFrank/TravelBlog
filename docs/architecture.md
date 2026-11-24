@@ -70,10 +70,13 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 
 - So that anyone can try the live application without registering (e.g. in a presentation or from the README),
   the backend creates a user `demo` with sample data: four trips in different years and countries and five wishlist
-  entries, no photos (`DemoData`).
+  entries (`DemoData`).
+- The trips have sample photos with a cover photo each: eleven free photos from Unsplash (Unsplash License, free to
+  use without attribution) in `backend/src/main/resources/demo-photos/`, scaled down to at most 1200 px (about
+  2 MB together). The seeder stores them in GridFS like uploaded photos, so the app shows them the same way.
 - `DemoDataSeeder` runs once at every start, but only when the environment variable `DEMO_PASSWORD` is set (on
   Render). Locally and in the tests there is no demo user.
-- Every start replaces the trips and the wishlist of `demo` with the sample data. Visitors may change or delete them;
+- Every start replaces the trips (with their photos) and the wishlist of `demo` with the sample data. Visitors may change or delete them;
   Render restarts the service often (it sleeps without visitors), so the demo is soon clean again. Data of other
   users is never touched.
 - The password comes from `DEMO_PASSWORD` instead of the source code: no password in the code, and changing the

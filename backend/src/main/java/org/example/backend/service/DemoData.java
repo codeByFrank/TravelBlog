@@ -10,14 +10,36 @@ import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
- * The sample trips and wishlist entries of the demo user (see {@link DemoDataSeeder}).
+ * The sample trips, photos and wishlist entries of the demo user (see {@link DemoDataSeeder}).
  * The trips are in different years and countries, so that the world map, the statistics and the filters show
  * something. The texts are in German like the rest of the user interface.
  */
 final class DemoData {
+
+    // Folder of the sample photos in src/main/resources; free photos from Unsplash (Unsplash License)
+    static final String PHOTO_FOLDER = "demo-photos/";
+
+    // Which stop gets which sample photo: stop name → file in PHOTO_FOLDER
+    static final Map<String, String> PHOTO_OF_STOP = Map.ofEntries(
+            Map.entry("Florenz", "florenz.jpg"),
+            Map.entry("Venedig", "venedig.jpg"),
+            Map.entry("Rom", "rom.jpg"),
+            Map.entry("Lissabon", "lissabon.jpg"),
+            Map.entry("Porto", "porto.jpg"),
+            Map.entry("Reykjavík", "reykjavik.jpg"),
+            Map.entry("Seljalandsfoss", "seljalandsfoss.jpg"),
+            Map.entry("Jökulsárlón", "jokulsarlon.jpg"),
+            Map.entry("Tokio", "tokio.jpg"),
+            Map.entry("Hakone", "hakone.jpg"),
+            Map.entry("Kyoto", "kyoto.jpg"));
+
+    // The photo of these stops is the cover photo of their trip (one per trip)
+    static final Set<String> COVER_STOPS = Set.of("Venedig", "Lissabon", "Seljalandsfoss", "Kyoto");
 
     private DemoData() {
         // only static methods

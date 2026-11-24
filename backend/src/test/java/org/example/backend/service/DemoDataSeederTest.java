@@ -13,13 +13,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.DefaultApplicationArguments;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
@@ -38,16 +44,63 @@ class DemoDataSeederTest {
     private PhotoStorage photoStorage;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private GridFsTemplate gridFsTemplate;
 
     @BeforeEach
     void setUp() {
         userRepo.deleteAll();
         tripRepo.deleteAll();
         wishlistRepo.deleteAll();
+        gridFsTemplate.delete(new Query()); // all stored photos
     }
 
     private DemoDataSeeder seederWithPassword(String password) {
         return new DemoDataSeeder(userRepo, tripRepo, wishlistRepo, photoStorage, passwordEncoder, password);
+    }
+
+    // Number of photos stored in GridFS for one user
+    private int countPhotosOf(String userId) {
+        Query query = new Query(Criteria.where("metadata.userId").is(userId));
+        return gridFsTemplate.find(query).into(new ArrayList<>()).size();
+    }
+
+    @Test
+    void seedDemoData_storesThePhotosAndACoverPhotoForEveryTrip() {
+        seederWithPassword(TEST_DEMO_PASSWORD).seedDemoData();
+
+        String demoUserId = userRepo.findByUsername(DemoDataSeeder.DEMO_USERNAME).orElseThrow().id();
+        List<Trip> trips = tripRepo.findAllByUserIdOrderByStartDateDesc(demoUserId);
+        assertEquals(DemoData.PHOTO_OF_STOP.size(), countPhotosOf(demoUserId));
+        for (Trip trip : trips) {
+            assertNotNull(trip.coverPhotoId(), trip.title() + " has no cover photo");
+            // The cover photo can be loaded by the demo user like an uploaded photo
+            assertTrue(photoStorage.find(trip.coverPhotoId(), demoUserId).isPresent());
+        }
+    }
+
+    @Test
+    void seedDemoData_doesNotStoreThePhotosTwice_whenRunAgain() {
+        DemoDataSeeder seeder = seederWithPassword(TEST_DEMO_PASSWORD);
+        seeder.seedDemoData();
+        seeder.seedDemoData();
+
+        String demoUserId = userRepo.findByUsername(DemoDataSeeder.DEMO_USERNAME).orElseThrow().id();
+        assertEquals(DemoData.PHOTO_OF_STOP.size(), countPhotosOf(demoUserId));
+    }
+
+    @Test
+    void photos_existForStopsOfTheDemoTrips() {
+        // Catches a typo in a stop name or file name in DemoData
+        List<String> stopNames = DemoData.trips("demo-id").stream()
+                .flatMap(trip -> trip.stops().stream())
+                .map(Stop::name)
+                .toList();
+        DemoData.PHOTO_OF_STOP.forEach((stopName, fileName) -> {
+            assertTrue(stopNames.contains(stopName), "No demo stop called " + stopName);
+            assertTrue(new ClassPathResource(DemoData.PHOTO_FOLDER + fileName).exists(), "Missing photo " + fileName);
+        });
+        assertTrue(stopNames.containsAll(DemoData.COVER_STOPS));
     }
 
     @Test
