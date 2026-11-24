@@ -30,6 +30,13 @@ class FrontendControllerTest {
     }
 
     @Test
+    void statsPage_isForwardedToIndexHtml_withoutToken() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/stats"))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.forwardedUrl("/index.html"));
+    }
+
+    @Test
     void apiEndpoint_stillReturnsUnauthorized_withoutToken() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/trips"))
                 .andExpect(MockMvcResultMatchers.status().isUnauthorized());
