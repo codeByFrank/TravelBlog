@@ -16,7 +16,7 @@ TravelBlog is a full-stack group project of three developers, **built in 10 work
 bootcamp: a Spring Boot REST API with MongoDB, a React single-page app with interactive maps, and a CI/CD pipeline that
 tests, analyzes, and deploys every change.
 
-![Trip overview](docs/screenshots/trips.png)
+![Trip overview in the light and the dark design](docs/screenshots/light-dark.png)
 
 ## Try it live
 
@@ -37,30 +37,40 @@ lets you try it in the browser: log in with `POST /api/auth/login`, copy the tok
 > minute; after that it is fast. If the server falls asleep while the app is open, the app shows a note while it wakes
 > up.
 
-The user interface is in German and English: switch with **DE | EN** in the top right corner.
+The user interface is in German and English, in a light and a dark design: switch with **DE | EN** and the sun / moon
+button in the top right corner.
 
 ## Highlights
 
-- **10 working days, 3 developers, 40+ reviewed pull requests:** feature branches, code review by a teammate, and a
+- **10 working days, 3 developers, 45+ reviewed pull requests:** feature branches, code review by a teammate, and a
   protected `main` branch
 - **Continuous deployment:** every merge is tested, packaged as a Docker image, and live on Render within minutes
-- **140+ automated backend tests** with MockMvc and an embedded MongoDB; coverage measured with JaCoCo
+- **150+ automated backend tests** with MockMvc and an embedded MongoDB; coverage measured with JaCoCo
 - **SonarQube Quality Gate on every pull request**, for the backend and the frontend
 - **20 REST endpoints**, secured with Spring Security and JWT and documented with OpenAPI / Swagger UI; every user
   sees and changes only their own data
 - **Interactive maps** with Leaflet: the route of each trip and a world map of all visited and wished-for countries
 - **Three external services** integrated without API keys: OpenStreetMap, Nominatim place search, and Wikipedia
-- **Polished details:** photo upload with gallery and cover photo, skeleton loading, a demo account with sample data
+- **Two languages, two designs:** German and English (also error messages, place search, and Wikipedia), light and
+  dark mode
+- **Polished details:** photo upload with gallery and cover photo, skeleton loading, a note while the server wakes up,
+  link previews for LinkedIn and others, a demo account with sample data
 
 ## Screenshots
 
-| Trip with route map | Stops with photos and Wikipedia |
+The screenshots show the English interface of the demo account.
+
+| Trip overview | Trip with route map |
 |---|---|
-| ![Trip detail with the route on a map](docs/screenshots/trip-detail.png) | ![Stops with photos and a Wikipedia summary](docs/screenshots/trip-photos.png) |
-| **World map: visited countries and wishes** | **Statistics** |
-| ![World map with visited and wished-for countries](docs/screenshots/world-map.png) | ![Statistics with records and years](docs/screenshots/statistics.png) |
-| **Wishlist** | |
-| ![Wishlist with priorities and "plan a trip"](docs/screenshots/wishlist.png) | |
+| ![Trip overview with photos, filters, and tags](docs/screenshots/trips.png) | ![Trip detail with the route on a map](docs/screenshots/trip-detail.png) |
+| **Stops with photos and Wikipedia** | **World map: visited countries and wishes** |
+| ![Stops with photos and a Wikipedia summary](docs/screenshots/trip-photos.png) | ![World map with visited and wished-for countries](docs/screenshots/world-map.png) |
+| **Statistics** | **Wishlist** |
+| ![Statistics with records and years](docs/screenshots/statistics.png) | ![Wishlist with priorities and "plan a trip"](docs/screenshots/wishlist.png) |
+| **Dark mode** | **API documentation (Swagger UI)** |
+| ![Trip with route map in the dark design](docs/screenshots/dark-mode.png) | ![Swagger UI with all REST endpoints](docs/screenshots/swagger.png) |
+| **Note while the server wakes up** | |
+| ![A note at the bottom of the login page while the server wakes up](docs/screenshots/server-waking-up.png) | |
 
 ## Features
 
@@ -246,7 +256,8 @@ GridFS, the MongoDB storage for files, with the owner in their metadata.
 |---|---|
 | `pages/` | One component per route: trips, trip detail, world map, statistics, wishlist, login, registration |
 | `components/` | Reusable parts such as `TripMap`, `WorldMap`, `TripDialog`, `PhotoLightbox`, `WikipediaInfo` |
-| `api/` | axios calls per resource; `client.ts` adds the token and handles `401` |
+| `api/` | axios calls per resource; `client.ts` adds the token and the language, handles `401`, and notices slow answers |
+| `i18n/` | All texts of the user interface, German and English side by side (`texts.ts`), and the chosen language |
 | `utils/`, `types/` | Pure helper functions (filters, dates, countries) and TypeScript types of the API |
 
 The Vite dev server forwards `/api` to the backend, so the frontend uses the same relative URLs locally and in
@@ -291,7 +302,7 @@ documents were kept up to date with every pull request.
 TravelBlog/
 ├── backend/                 Spring Boot application
 │   └── src/main/java/org/example/backend/
-│       ├── config/          clients for Nominatim and Wikipedia
+│       ├── config/          clients for Nominatim and Wikipedia, API documentation
 │       ├── controller/      REST endpoints under /api
 │       ├── dto/             request and response records
 │       ├── exception/       uniform error answers
@@ -300,7 +311,7 @@ TravelBlog/
 │       ├── security/        Spring Security and the JWT filter
 │       └── service/         business logic
 ├── frontend/                React application (Vite)
-│   └── src/                 pages, components, api, utils, types
+│   └── src/                 pages, components, api, i18n, utils, types
 ├── docs/                    requirements, architecture, deployment, screenshots
 ├── .github/workflows/       CI, SonarQube analysis, deployment
 └── Dockerfile               one image with backend and frontend
@@ -435,5 +446,5 @@ The frontend has no automated tests (not part of the course); lint, type check, 
 - Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors; place search by
   [Nominatim](https://nominatim.org/)
 - Country borders from [Natural Earth](https://www.naturalearthdata.com/) (public domain)
-- Place summaries from [Wikipedia](https://de.wikipedia.org/) (CC BY-SA 4.0)
+- Place summaries from the German and English [Wikipedia](https://www.wikipedia.org/) (CC BY-SA 4.0)
 - Photos of the demo trips from [Unsplash](https://unsplash.com/) (Unsplash License)
