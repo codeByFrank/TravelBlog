@@ -118,7 +118,8 @@ The screenshots show the English interface of the demo account.
 
 The backend and the built frontend run together in **one Docker container**. The browser loads the React app and
 calls the REST API on the same address, so there is no CORS setup. Every endpoint under `/api` requires a JWT, except
-registration and login.
+registration and login. Every request also carries the language of the user interface. The API documentation
+(Swagger UI) and the health check for Render are public.
 
 ```mermaid
 flowchart LR
@@ -127,6 +128,7 @@ flowchart LR
     subgraph render["Render · Docker container"]
         direction TB
         static["Static frontend<br/>index.html, JS, CSS"]
+        docs["Swagger UI · /swagger-ui.html<br/>Health check · /actuator/health"]
         subgraph api["Spring Boot REST API · /api"]
             direction TB
             security["Spring Security<br/>JwtFilter"]
@@ -147,11 +149,12 @@ flowchart LR
         direction TB
         osm["OpenStreetMap<br/>map tiles"]
         nominatim["Nominatim<br/>place search"]
-        wikipedia["Wikipedia<br/>summaries"]
+        wikipedia["Wikipedia<br/>summaries, German and English"]
     end
 
     user -- "pages" --> static
-    user -- "JSON + JWT" --> security
+    user -- "JSON + JWT + language" --> security
+    user -- "API docs" --> docs
     user -- "tiles" --> osm
     repos --> collections
     repos --> gridfs
@@ -161,7 +164,8 @@ flowchart LR
 
 The backend calls Nominatim and Wikipedia itself instead of the browser. That keeps the frontend simple, lets the
 backend shape the answers, and keeps the external base URLs in configuration (`application.properties`), where the
-tests can replace them.
+tests can replace them. The backend remembers Wikipedia's answers in memory and sends one request at a time, because
+Wikipedia slows down clients that send many requests in parallel.
 
 ### Backend layers
 
@@ -175,7 +179,8 @@ Each feature follows the same path: **Controller → Service → Repository**.
 | Model / DTO | `model`, `dto` | Java records: documents in the database, requests and responses of the API |
 
 Errors are turned into a uniform JSON answer (`ProblemDetail`) in one place, `GlobalExceptionHandler`, so the
-frontend can show field errors next to the right input.
+frontend can show field errors next to the right input. The texts come from `messages.properties` (German) or
+`messages_en.properties` (English), depending on the language of the request.
 
 ### Login with JWT
 
@@ -200,6 +205,33 @@ sequenceDiagram
 
 The backend stays stateless: no sessions, no CSRF tokens. On a `401` answer the frontend removes the token and opens
 the login page.
+
+### Languages
+
+The user interface is in German and English. The chosen language travels with every request, so the backend answers
+in the same language and asks the external services in it.
+
+```mermaid
+flowchart LR
+    switch(["DE | EN switch<br/>saved in the browser"])
+    texts["Frontend texts<br/>i18n/texts.ts"]
+    switch --> texts
+    switch -- "Accept-Language: en" --> api["Spring Boot API"]
+    api --> messages["Error messages<br/>messages_en.properties"]
+    api --> nominatim["Nominatim<br/>accept-language=en"]
+    api --> wiki["en.wikipedia.org"]
+    wiki -.->|"no article named Venedig"| dewiki["de.wikipedia.org<br/>link to the English article"]
+    dewiki -.->|"Venice"| wiki
+```
+
+- **Frontend:** all texts are in one file, German and English side by side (`cancel: {de: 'Abbrechen', en: 'Cancel'}`);
+  TypeScript reports a text with only one language. Dates, numbers, and country names use the browser's `Intl` API.
+- **Backend:** validation and error messages are keys that Spring looks up in `messages.properties` or
+  `messages_en.properties`. Without the header, or for another language, everything stays German.
+- **External services:** the place search returns names in the chosen language. A stop keeps the name it was saved
+  with, so for a German name like "Venedig" the backend follows the language link of the German Wikipedia article to
+  the English one, "Venice".
+- The user's own content (titles, notes, the demo trips) is not translated.
 
 ### Data model
 
@@ -262,6 +294,11 @@ GridFS, the MongoDB storage for files, with the owner in their metadata.
 
 The Vite dev server forwards `/api` to the backend, so the frontend uses the same relative URLs locally and in
 production.
+
+Colors come from theme tokens in `index.css` (e.g. `surface`, `ink`, `accent`), each with a light and a dark value.
+The sun / moon button puts the class `dark` on `<html>`, and every component changes with it, without dark mode code
+of its own. A small script in `index.html` sets the design before the first paint, so a dark page does not flash
+white.
 
 ### CI/CD pipeline
 
