@@ -4,6 +4,7 @@ import {getErrorMessage} from '../api/client'
 import {addWishlistEntry, deleteWishlistEntry, getWishlistEntries, updateWishlistEntry} from '../api/wishlistApi'
 import ConfirmDialog from '../components/ConfirmDialog'
 import WishlistForm from '../components/WishlistForm'
+import WishlistSkeleton from '../components/skeletons/WishlistSkeleton'
 import type {TripDraft} from '../types/trip'
 import {PRIORITY_LABELS, type Priority, type WishlistEntry, type WishlistEntryRequest} from '../types/WishlistEntry'
 import {describeCountries, getContinents, getCountryNames} from '../utils/countries'
@@ -110,7 +111,7 @@ export default function WishlistPage() {
             {/* As in the mockup: the list on the left, the form next to it on the right */}
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
                 <div className="flex flex-col gap-4">
-                    {loading && <p className="text-muted">Wunschliste wird geladen …</p>}
+                    {loading && <WishlistSkeleton/>}
 
                     {!loading && !error && entries.length === 0 && (
                         <p className="rounded-card bg-surface p-8 text-center text-muted shadow-card">

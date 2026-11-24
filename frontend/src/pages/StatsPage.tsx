@@ -7,6 +7,7 @@ import MonthStats from '../components/MonthStats'
 import TripRecords from '../components/TripRecords'
 import TripStats from '../components/TripStats'
 import YearStats from '../components/YearStats'
+import StatsSkeleton from '../components/skeletons/StatsSkeleton'
 import type {Trip} from '../types/trip'
 import {formatKm, getTotals, getTotalsByYear} from '../utils/tripFilters'
 import {getCountryTimes, getDaysPerMonth, getExtremePoints, getRecords} from '../utils/tripStats'
@@ -56,7 +57,7 @@ export default function StatsPage() {
                 <p className="text-muted">Deine Reisen in Zahlen – Rekorde, Jahre, Länder und Monate.</p>
             </section>
 
-            {loading && <p className="text-muted">Statistik wird geladen …</p>}
+            {loading && <StatsSkeleton/>}
 
             {!loading && error && (
                 <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">

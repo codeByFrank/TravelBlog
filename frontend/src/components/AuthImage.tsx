@@ -27,9 +27,14 @@ export default function AuthImage({photoId, alt, className = ''}: Readonly<AuthI
     }, [photoId])
 
     if (!url) {
-        // Grey placeholder of the same size while loading or if the photo is missing
+        // Grey placeholder of the same size; it pulses while the photo loads (skeleton) and stays still if it is missing
+        const pulse = failed ? '' : 'motion-safe:animate-pulse'
         return (
-            <div role="img" aria-label={failed ? 'Foto nicht verfügbar' : alt} className={`bg-chip ${className}`}/>
+            <div
+                role="img"
+                aria-label={failed ? 'Foto nicht verfügbar' : alt}
+                className={`bg-chip ${pulse} ${className}`}
+            />
         )
     }
     return <img src={url} alt={alt} className={`object-cover ${className}`}/>
