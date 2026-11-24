@@ -1,3 +1,5 @@
+import {useLanguage} from '../i18n/useLanguage'
+
 type ConfirmDialogProps = {
     title: string
     message: string
@@ -8,6 +10,7 @@ type ConfirmDialogProps = {
 
 // Modal question before a destructive action, e.g. deleting an entry
 export default function ConfirmDialog({title, message, confirmLabel, onConfirm, onCancel}: Readonly<ConfirmDialogProps>) {
+    const {t} = useLanguage()
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-6">
             <div
@@ -31,7 +34,7 @@ export default function ConfirmDialog({title, message, confirmLabel, onConfirm, 
                         autoFocus
                         className="min-h-11 cursor-pointer rounded-full border border-line-strong bg-surface px-5 text-[15px] font-semibold text-ink-soft hover:bg-page"
                     >
-                        Abbrechen
+                        {t.common.cancel}
                     </button>
                     <button
                         type="button"

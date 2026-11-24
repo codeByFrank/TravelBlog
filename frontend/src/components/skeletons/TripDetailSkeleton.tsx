@@ -1,3 +1,4 @@
+import {useLanguage} from '../../i18n/useLanguage'
 import LoadingText from './LoadingText'
 import Skeleton from './Skeleton'
 
@@ -6,9 +7,10 @@ const STOPS = [1, 2, 3]
 // Placeholder for the trip detail page while the trip loads: back link, title and the "Reiseverlauf" with the map
 // on the left and the stops on the right, in the same grid as TripStops
 export default function TripDetailSkeleton() {
+    const {t} = useLanguage()
     return (
         <div className="flex flex-col gap-7">
-            <LoadingText text="Reise wird geladen …"/>
+            <LoadingText text={t.tripDetail.loading}/>
 
             <div aria-hidden="true" className="flex flex-col gap-7">
                 <Skeleton className="h-5 w-28"/>

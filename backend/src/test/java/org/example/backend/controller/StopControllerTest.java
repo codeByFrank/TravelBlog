@@ -160,6 +160,24 @@ class StopControllerTest {
     }
 
     @Test
+    void addStop_returnsEnglishFieldErrors_whenTheUserInterfaceIsEnglish() throws Exception {
+        saveTrip(USER_ID, List.of());
+
+        mockMvc.perform(MockMvcRequestBuilders.post(STOPS_URL)
+                        .header(HttpHeaders.AUTHORIZATION, bearer())
+                        .header(HttpHeaders.ACCEPT_LANGUAGE, "en")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "", "latitude": 91, "longitude": 11.2, "countryCode": "Italien", "date": "2024-05-15"}
+                                """))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.detail").value("The input is invalid."))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.name").value("Please enter a name."))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.latitude").value("Invalid coordinates."))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.errors.countryCode").value("Invalid country code."));
+    }
+
+    @Test
     void addStop_returnsNotFound_whenTripBelongsToAnotherUser() throws Exception {
         saveTrip(OTHER_USER_ID, List.of());
 

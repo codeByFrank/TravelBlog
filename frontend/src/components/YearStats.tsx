@@ -1,5 +1,6 @@
 import {Link} from 'react-router-dom'
-import {formatCountryCount, formatDays, formatKm, formatTripCount, type YearTotals} from '../utils/tripFilters'
+import {useLanguage} from '../i18n/useLanguage'
+import {formatKm, type YearTotals} from '../utils/tripFilters'
 
 type YearStatsProps = {
     years: YearTotals[] // newest first
@@ -9,11 +10,12 @@ type YearStatsProps = {
 // and a bar whose length shows the distance compared with the year with the longest distance.
 // A row opens the trip overview filtered by that year.
 export default function YearStats({years}: Readonly<YearStatsProps>) {
+    const {t, language} = useLanguage()
     const maxKm = Math.max(...years.map((year) => year.km))
 
     return (
         <section aria-labelledby="year-stats-title" className="flex flex-col gap-3 rounded-card bg-surface px-6 py-5 shadow-card">
-            <h2 id="year-stats-title" className="text-[13px] font-semibold text-muted">Nach Jahren</h2>
+            <h2 id="year-stats-title" className="text-[13px] font-semibold text-muted">{t.stats.byYear}</h2>
             <ul className="flex flex-col gap-1">
                 {years.map((year) => {
                     // A year without distance (only single places) gets no bar
@@ -28,13 +30,13 @@ export default function YearStats({years}: Readonly<YearStatsProps>) {
                                 <span className="text-lg font-bold text-ink">{year.year}</span>
                                 {/* Each number stays on one line with its unit, e.g. "1.500 km" */}
                                 <span className="flex flex-wrap gap-x-1.5 text-[15px] text-ink-soft">
-                                    <span className="whitespace-nowrap">{formatTripCount(year.trips)}</span>
+                                    <span className="whitespace-nowrap">{t.common.trips(year.trips)}</span>
                                     <span aria-hidden="true">·</span>
-                                    <span className="whitespace-nowrap">{formatDays(year.days)}</span>
+                                    <span className="whitespace-nowrap">{t.common.days(year.days)}</span>
                                     <span aria-hidden="true">·</span>
-                                    <span className="whitespace-nowrap">{formatCountryCount(year.countries)}</span>
+                                    <span className="whitespace-nowrap">{t.common.countries(year.countries)}</span>
                                     <span aria-hidden="true">·</span>
-                                    <span className="whitespace-nowrap">{formatKm(year.km)}</span>
+                                    <span className="whitespace-nowrap">{formatKm(year.km, language)}</span>
                                 </span>
                                 {/* The numbers are in the text; the bar only shows the proportions */}
                                 <span aria-hidden="true" className="col-span-2 flex h-2 max-w-md sm:col-span-1">

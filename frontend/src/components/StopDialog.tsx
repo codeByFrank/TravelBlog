@@ -1,6 +1,8 @@
 import {useEffect, useRef, useState, type SubmitEvent} from 'react'
 import {getErrorMessage, getFieldErrors} from '../api/client'
 import {addStop, updateStop} from '../api/stops'
+import type {Language} from '../i18n/language'
+import {useLanguage} from '../i18n/useLanguage'
 import type {Place} from '../types/place'
 import type {Stop, StopType, Trip} from '../types/trip'
 import {getCountryName} from '../utils/countries'
@@ -9,7 +11,7 @@ import DialogHeader from './DialogHeader'
 import FormField from './FormField'
 import PlaceSearch from './PlaceSearch'
 import StopTypeField from './StopTypeField'
-import {photoWarning, savePhotos} from '../api/photos'
+import {savePhotos} from '../api/photos'
 import PhotoPicker from './PhotoPicker'
 
 type StopDialogProps = {
@@ -21,10 +23,10 @@ type StopDialogProps = {
 }
 
 // The place of an existing stop, shown as selected until the user searches for another one
-function toPlace(stop: Stop): Place {
+function toPlace(stop: Stop, language: Language): Place {
     return {
         name: stop.name,
-        displayName: `${stop.name}, ${getCountryName(stop.countryCode)}`,
+        displayName: `${stop.name}, ${getCountryName(stop.countryCode, language)}`,
         latitude: stop.latitude,
         longitude: stop.longitude,
         countryCode: stop.countryCode,
@@ -33,6 +35,7 @@ function toPlace(stop: Stop): Place {
 
 // Dialog to add or change a stop: search the place, then name, arrival date and note
 export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonly<StopDialogProps>) {
+    const {t, language} = useLanguage()
     const dialogRef = useRef<HTMLDialogElement>(null)
     const [place, setPlace] = useState<Place | null>(null)
     const [name, setName] = useState('')
@@ -53,7 +56,7 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
         const dialog = dialogRef.current
         if (!dialog) return
         if (open && !dialog.open) {
-            setPlace(stop ? toPlace(stop) : null)
+            setPlace(stop ? toPlace(stop, language) : null)
             setName(stop?.name ?? '')
             setDate(stop?.date ?? suggestStopDate(trip))
             setNote(stop?.note ?? '')
@@ -68,7 +71,7 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
         if (!open && dialog.open) {
             dialog.close()
         }
-    }, [open, stop, trip])
+    }, [open, stop, trip, language])
 
     // A new place also sets the name; the user can still change it, e.g. "Florenz" → "Florenz (Altstadt)"
     function handleSelect(selected: Place) {
@@ -82,7 +85,7 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
         setError('')
 
         if (!place) {
-            setFieldErrors({place: 'Bitte einen Ort suchen und auswählen.'})
+            setFieldErrors({place: t.tripDialog.placeRequired})
             return
         }
 
@@ -109,10 +112,10 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
             }
             setUploading(true)
             const result = await savePhotos(trip.id, stopId, removedPhotoIds, newFiles)
-            onSaved(result.trip ?? saved, photoWarning(result.failed))
+            onSaved(result.trip ?? saved, result.failed > 0 ? t.photos.saveWarning(result.failed) : undefined)
         } catch (err) {
             setFieldErrors(getFieldErrors(err))
-            setError(getErrorMessage(err, 'Der Ort konnte nicht gespeichert werden.'))
+            setError(getErrorMessage(err, t.stopDialog.saveError))
         } finally {
             setSubmitting(false)
             setUploading(false)
@@ -122,9 +125,9 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
     // Errors of the coordinates or the country belong to the place search
     const placeError = fieldErrors.place ?? fieldErrors.latitude ?? fieldErrors.longitude ?? fieldErrors.countryCode
 
-    let submitLabel = 'Speichern'
-    if (uploading) submitLabel = 'Fotos werden hochgeladen …'
-    else if (submitting) submitLabel = 'Wird gespeichert …'
+    let submitLabel = t.common.save
+    if (uploading) submitLabel = t.common.uploadingPhotos
+    else if (submitting) submitLabel = t.common.saving
 
     return (
         <dialog
@@ -135,7 +138,7 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
         >
             <DialogHeader
                 titleId="stop-dialog-title"
-                title={stop ? 'Ort bearbeiten' : 'Ort hinzufügen'}
+                title={stop ? t.stopDialog.editTitle : t.stopDialog.newTitle}
                 onClose={onClose}
             />
             <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5 px-6 pb-6 sm:px-8 sm:pb-8">
@@ -146,7 +149,7 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
                     <>
                         <FormField
                             id="stop-name"
-                            label="Name"
+                            label={t.stopDialog.name}
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             error={fieldErrors.name}
@@ -154,7 +157,7 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
                         />
                         <FormField
                             id="stop-date"
-                            label="Ankunft"
+                            label={t.stopDialog.arrival}
                             type="date"
                             min={trip.startDate}
                             max={trip.endDate}
@@ -166,14 +169,15 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
                         <StopTypeField name="stop-type" value={type} onChange={setType}/>
                         <div className="flex flex-col gap-2">
                             <label htmlFor="stop-note" className="text-sm font-semibold text-ink-soft">
-                                Notiz <span className="font-normal text-muted">(optional)</span>
+                                <span>{t.stopDialog.note}</span>{' '}
+                                <span className="font-normal text-muted">{t.common.optional}</span>
                             </label>
                             <textarea
                                 id="stop-note"
                                 rows={3}
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
-                                placeholder="z. B. Sonnenuntergang am Piazzale Michelangelo"
+                                placeholder={t.stopDialog.notePlaceholder}
                                 className="rounded-xl border border-line-strong bg-surface px-4 py-3 text-[15px] text-ink outline-none placeholder:text-muted/70 focus:border-accent focus:ring-4 focus:ring-accent-soft"
                             />
                         </div>
@@ -198,7 +202,7 @@ export default function StopDialog({open, trip, stop, onClose, onSaved}: Readonl
                         onClick={onClose}
                         className="min-h-12 cursor-pointer rounded-full px-5 text-[15px] font-semibold text-muted hover:text-ink"
                     >
-                        Abbrechen
+                        {t.common.cancel}
                     </button>
                     <button
                         type="submit"

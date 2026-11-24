@@ -33,14 +33,6 @@ export function loadPhotoUrl(photoId: string): Promise<string> {
     return url
 }
 
-// Shown after the stop or trip was saved but some photos were not
-export function photoWarning(failed: number): string | undefined {
-    if (failed === 0) return undefined
-    return failed === 1
-        ? '1 Foto konnte nicht gespeichert werden. Bitte versuche es noch einmal.'
-        : `${failed} Fotos konnten nicht gespeichert werden. Bitte versuche es noch einmal.`
-}
-
 /**
  * Deletes the removed photos of a stop and uploads the new ones, one after the other.
  * Returns the trip after the last successful change (null if nothing changed) and the number of failed photos.

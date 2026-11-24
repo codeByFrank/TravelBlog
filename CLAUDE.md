@@ -85,7 +85,9 @@ If a requested change conflicts with these documents, point out the conflict bef
 - During local development, the Vite development proxy forwards `/api` to `http://localhost:8080`.
 - Every user sees and changes only their own data; the backend enforces this on every endpoint.
 - The application is called TravelBlog in every language; the name is not translated.
-- The user interface texts are in German for now; a language switch for the user is planned for a later version.
+- The user interface is in German (the default) and English; the user switches with "DE | EN" in the header. All
+  texts are in `frontend/src/i18n/de.ts` and `en.ts` (same keys) and in the backend's `messages.properties` and
+  `messages_en.properties`. A new text goes into both languages; no text is written directly into a component.
 - Code, comments, and documentation are in English.
 
 ## Development Principles

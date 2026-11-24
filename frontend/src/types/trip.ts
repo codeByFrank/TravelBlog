@@ -1,36 +1,16 @@
 // The same values as the TripTag enum in the backend
 export type TripTag = 'MOUNTAINS' | 'SEA' | 'CITY_TRIP' | 'FOOD' | 'FRIENDS_AND_FAMILY'
 
-// All tags in display order, with their German labels
+// All tags in display order; the labels are in the texts (i18n/de.ts → tags)
 export const TRIP_TAGS: TripTag[] = ['MOUNTAINS', 'SEA', 'CITY_TRIP', 'FOOD', 'FRIENDS_AND_FAMILY']
-
-export const TRIP_TAG_LABELS: Record<TripTag, string> = {
-    MOUNTAINS: 'Berge',
-    SEA: 'Meer',
-    CITY_TRIP: 'Städtetrip',
-    FOOD: 'Essen',
-    FRIENDS_AND_FAMILY: 'Freunde & Familie',
-}
 
 // How the user spent the time at a stop; the same values as the StopType enum in the backend.
 // Overnight stops and stops passed on the way are the route of the trip; a day trip goes there and back
 // from the last overnight stop (its base) and is not part of the route.
 export type StopType = 'OVERNIGHT' | 'PASSING_THROUGH' | 'DAY_TRIP'
 
-// All types in display order, with their German labels and a short explanation for the stop dialog
+// All types in display order; the labels and hints for the stop dialog are in the texts (i18n/de.ts → stopTypes)
 export const STOP_TYPES: StopType[] = ['OVERNIGHT', 'PASSING_THROUGH', 'DAY_TRIP']
-
-export const STOP_TYPE_LABELS: Record<StopType, string> = {
-    OVERNIGHT: 'Übernachtung',
-    PASSING_THROUGH: 'Durchreise',
-    DAY_TRIP: 'Tagesausflug',
-}
-
-export const STOP_TYPE_HINTS: Record<StopType, string> = {
-    OVERNIGHT: 'Hier übernachtet',
-    PASSING_THROUGH: 'Unterwegs zum nächsten Übernachtungsort',
-    DAY_TRIP: 'Hin und zurück am selben Tag',
-}
 
 // A place visited during a trip (StopResponse in the backend)
 export type Stop = {

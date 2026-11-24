@@ -13,24 +13,24 @@ import org.example.backend.model.StopType;
  * Like {@link StopRequest}, but without date and note: the arrival date is the start date of the trip.
  */
 public record FirstStopRequest(
-        @NotBlank(message = "Bitte einen Namen eingeben.")
-        @Size(max = 100, message = "Der Name darf höchstens 100 Zeichen lang sein.")
+        @NotBlank(message = "{validation.name.required}")
+        @Size(max = 100, message = "{validation.name.size}")
         String name,
 
-        @NotNull(message = "Bitte einen Ort auswählen.")
-        @DecimalMin(value = "-90", message = "Ungültige Koordinaten.")
-        @DecimalMax(value = "90", message = "Ungültige Koordinaten.")
+        @NotNull(message = "{validation.place.required}")
+        @DecimalMin(value = "-90", message = "{validation.coordinates.invalid}")
+        @DecimalMax(value = "90", message = "{validation.coordinates.invalid}")
         Double latitude,
 
-        @NotNull(message = "Bitte einen Ort auswählen.")
-        @DecimalMin(value = "-180", message = "Ungültige Koordinaten.")
-        @DecimalMax(value = "180", message = "Ungültige Koordinaten.")
+        @NotNull(message = "{validation.place.required}")
+        @DecimalMin(value = "-180", message = "{validation.coordinates.invalid}")
+        @DecimalMax(value = "180", message = "{validation.coordinates.invalid}")
         Double longitude,
 
-        @NotNull(message = "Bitte ein Land angeben.")
-        @Pattern(regexp = "^[A-Z]{2}$", message = "Ungültiger Ländercode.")
+        @NotNull(message = "{validation.country.required}")
+        @Pattern(regexp = "^[A-Z]{2}$", message = "{validation.countryCode.invalid}")
         String countryCode,
 
-        @NotNull(message = "Bitte auswählen, wie du hier warst.")
+        @NotNull(message = "{validation.stopType.required}")
         StopType type) {
 }

@@ -1,7 +1,10 @@
 import {Fragment, useState} from 'react'
 import {getErrorMessage} from '../api/client'
 import {deleteStop} from '../api/stops'
-import {STOP_TYPE_LABELS, type Stop, type Trip} from '../types/trip'
+import type {Language} from '../i18n/language'
+import {texts} from '../i18n/texts'
+import {useLanguage} from '../i18n/useLanguage'
+import type {Stop, Trip} from '../types/trip'
 import {getCountryName} from '../utils/countries'
 import {formatStay} from '../utils/dates'
 import {formatKm} from '../utils/tripFilters'
@@ -21,30 +24,33 @@ const smallButton = 'min-h-11 cursor-pointer rounded-full px-4 text-sm font-semi
 
 // The text on the arrow before a stop on the route: "394 km", or "394 km ab Rom" when day trips lie in between.
 // Day trips get no arrow; their distance from the base is in their badge.
-function routeDistanceLabel(stops: Stop[], position: number): string | null {
+function routeDistanceLabel(stops: Stop[], position: number, language: Language): string | null {
     const stop = stops[position]
     if (!stop.onRoute || stop.distanceFromPreviousKm === null) {
         return null
     }
-    const km = formatKm(stop.distanceFromPreviousKm)
+    const km = formatKm(stop.distanceFromPreviousKm, language)
     const previousOnRoute = stops.slice(0, position).findLast((candidate) => candidate.onRoute)
-    return previousOnRoute && previousOnRoute !== stops[position - 1] ? `${km} ab ${previousOnRoute.name}` : km
+    return previousOnRoute && previousOnRoute !== stops[position - 1]
+        ? texts[language].stops.distanceFrom(km, previousOnRoute.name)
+        : km
 }
 
 // The badge of a stop: its type, for a day trip with its base and distance, e.g. "Tagesausflug ab Rom · 26 km"
-function typeLabel(stops: Stop[], stop: Stop): string {
-    const label = STOP_TYPE_LABELS[stop.type]
+function typeLabel(stops: Stop[], stop: Stop, language: Language): string {
+    const label = texts[language].stopTypes.labels[stop.type]
     const base = stops.find((candidate) => candidate.id === stop.baseStopId)
     if (!base || stop.distanceFromPreviousKm === null) {
         return label
     }
-    return `${label} ab ${base.name} · ${formatKm(stop.distanceFromPreviousKm)}`
+    return texts[language].stops.dayTripFrom(label, base.name, formatKm(stop.distanceFromPreviousKm, language))
 }
 
 // "Reiseverlauf" on the trip detail page, as in the mockup: the map on the left and the stops on the right
 // (one below the other on narrow screens), in the order of the visit with the distances between them,
 // and adding, changing and deleting stops
 export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>) {
+    const {t, language} = useLanguage()
     const [dialogOpen, setDialogOpen] = useState(false)
     const [stopToEdit, setStopToEdit] = useState<Stop | null>(null)
     const [stopToDelete, setStopToDelete] = useState<Stop | null>(null)
@@ -67,21 +73,21 @@ export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>
         try {
             onTripChange(await deleteStop(trip.id, stop.id))
         } catch (err) {
-            setError(getErrorMessage(err, 'Der Ort konnte nicht gelöscht werden.'))
+            setError(getErrorMessage(err, t.stops.deleteError))
         }
     }
 
     return (
         <section aria-labelledby="stops-title" className="flex flex-col gap-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 id="stops-title" className="text-2xl font-bold tracking-tight">Reiseverlauf</h2>
+                <h2 id="stops-title" className="text-2xl font-bold tracking-tight">{t.stops.title}</h2>
                 <button
                     type="button"
                     onClick={openNew}
                     className="flex min-h-12 cursor-pointer items-center gap-2 rounded-full bg-accent px-6 text-[15px] font-semibold text-white shadow-[0_6px_18px_rgba(31,111,191,0.25)] hover:bg-accent-dark"
                 >
                     <span aria-hidden="true" className="text-xl leading-none">+</span>
-                    <span>Ort hinzufügen</span>
+                    <span>{t.stops.add}</span>
                 </button>
             </div>
 
@@ -91,10 +97,8 @@ export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>
 
             {trip.stops.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 rounded-card bg-surface px-6 py-12 text-center shadow-card">
-                    <h3 className="text-xl font-bold">Noch keine Orte</h3>
-                    <p className="max-w-md text-muted">
-                        Füge die Orte deiner Reise hinzu – sie erscheinen hier in der Reihenfolge deines Besuchs.
-                    </p>
+                    <h3 className="text-xl font-bold">{t.stops.emptyTitle}</h3>
+                    <p className="max-w-md text-muted">{t.stops.emptyText}</p>
                 </div>
             ) : (
                 <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
@@ -102,7 +106,7 @@ export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>
                     <TripMap stops={trip.stops} routeLengthKm={trip.routeLengthKm} className="lg:sticky lg:top-6"/>
                     <ol className="flex flex-col gap-3">
                         {trip.stops.map((stop, position) => {
-                            const distanceLabel = routeDistanceLabel(trip.stops, position)
+                            const distanceLabel = routeDistanceLabel(trip.stops, position, language)
                             return (
                                 <Fragment key={stop.id}>
                                     {distanceLabel && (
@@ -122,10 +126,10 @@ export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>
                                                 )}
                                                 <h3 className="text-xl font-bold tracking-tight">{stop.name}</h3>
                                                 <span className="text-sm font-semibold text-muted">
-                                                    {formatStay(stop.date, stop.departureDate)} · {getCountryName(stop.countryCode)}
+                                                    {formatStay(stop.date, stop.departureDate, language)} · {getCountryName(stop.countryCode, language)}
                                                 </span>
                                                 <span className="rounded-full bg-chip px-3 py-1 text-[13px] font-semibold text-ink-soft">
-                                                    {typeLabel(trip.stops, stop)}
+                                                    {typeLabel(trip.stops, stop, language)}
                                                 </span>
                                             </div>
                                             {stop.note && <p className="text-ink-soft">{stop.note}</p>}
@@ -140,22 +144,22 @@ export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>
                                                             >
                                                                 <AuthImage
                                                                     photoId={photoId}
-                                                                    alt={`${stop.name}, Foto ${index + 1} – groß anzeigen`}
+                                                                    alt={t.stops.photoAlt(stop.name, index + 1)}
                                                                     className="size-20 transition hover:scale-105"
                                                                 />
                                                             </button>
                                                             {photoId === trip.coverPhotoId && (
                                                                 <span className="pointer-events-none absolute bottom-1 left-1 rounded-full bg-ink/75 px-2 py-0.5 text-[11px] font-semibold text-white">
-                                                                    Titelbild
+                                                                    {t.stops.cover}
                                                                 </span>
                                                             )}
                                                         </li>
                                                     ))}
                                                 </ul>
                                             )}
-                                            {/* A new component when the place or the type changes, so it loads again */}
+                                            {/* A new component when the place, the type or the language changes, so it loads again */}
                                             <WikipediaInfo
-                                                key={`${stop.name}|${stop.latitude}|${stop.longitude}|${stop.type}`}
+                                                key={`${stop.name}|${stop.latitude}|${stop.longitude}|${stop.type}|${language}`}
                                                 stop={stop}
                                             />
                                             <div className="flex flex-wrap gap-2">
@@ -164,7 +168,7 @@ export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>
                                                     onClick={() => openEdit(stop)}
                                                     className={`${smallButton} border border-line-strong text-ink hover:border-accent`}
                                                 >
-                                                    Bearbeiten<span className="sr-only">: {stop.name}</span>
+                                                    {t.common.edit}<span className="sr-only">: {stop.name}</span>
                                                 </button>
                                                 {/* A trip keeps at least one place; the last one can only be changed */}
                                                 {trip.stops.length > 1 && (
@@ -173,7 +177,7 @@ export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>
                                                         onClick={() => setStopToDelete(stop)}
                                                         className={`${smallButton} text-red-700 hover:bg-red-50`}
                                                     >
-                                                        Löschen<span className="sr-only">: {stop.name}</span>
+                                                        {t.common.delete}<span className="sr-only">: {stop.name}</span>
                                                     </button>
                                                 )}
                                             </div>
@@ -210,9 +214,9 @@ export default function TripStops({trip, onTripChange}: Readonly<TripStopsProps>
 
             {stopToDelete && (
                 <ConfirmDialog
-                    title="Ort löschen?"
-                    message={`„${stopToDelete.name}“ wird aus dieser Reise entfernt.`}
-                    confirmLabel="Löschen"
+                    title={t.stops.deleteTitle}
+                    message={t.stops.deleteMessage(stopToDelete.name)}
+                    confirmLabel={t.common.delete}
                     onConfirm={() => void handleDelete(stopToDelete)}
                     onCancel={() => setStopToDelete(null)}
                 />

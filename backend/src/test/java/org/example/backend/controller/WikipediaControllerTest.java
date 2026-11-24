@@ -39,7 +39,7 @@ class WikipediaControllerTest {
 
     @Test
     void getArticle_returnsArticleFromTheService() throws Exception {
-        when(wikipediaService.find("Florenz", 43.77, 11.26)).thenReturn(Optional.of(
+        when(wikipediaService.find("Florenz", 43.77, 11.26, "de")).thenReturn(Optional.of(
                 new WikipediaResponse("Florenz", "Florenz ist die Hauptstadt der Toskana.",
                         "https://de.wikipedia.org/wiki/Florenz")));
 
@@ -50,8 +50,21 @@ class WikipediaControllerTest {
     }
 
     @Test
+    void getArticle_asksForTheEnglishArticle_whenTheUserInterfaceIsEnglish() throws Exception {
+        when(wikipediaService.find("Florenz", 43.77, 11.26, "en")).thenReturn(Optional.of(
+                new WikipediaResponse("Florence", "Florence is the capital city of Tuscany.",
+                        "https://en.wikipedia.org/wiki/Florence")));
+
+        mockMvc.perform(florence()
+                        .header(HttpHeaders.ACCEPT_LANGUAGE, "en")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtService.createToken("user-1")))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("Florence"));
+    }
+
+    @Test
     void getArticle_returnsNoContent_whenThereIsNoArticle() throws Exception {
-        when(wikipediaService.find("Florenz", 43.77, 11.26)).thenReturn(Optional.empty());
+        when(wikipediaService.find("Florenz", 43.77, 11.26, "de")).thenReturn(Optional.empty());
 
         mockMvc.perform(florence().header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtService.createToken("user-1")))
                 .andExpect(MockMvcResultMatchers.status().isNoContent());

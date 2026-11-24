@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react'
 import {loadPhotoUrl} from '../api/photos'
+import {useLanguage} from '../i18n/useLanguage'
 
 type AuthImageProps = {
     photoId: string
@@ -9,6 +10,7 @@ type AuthImageProps = {
 
 // A stored photo; it needs the token, so it is loaded with axios instead of a plain <img src>
 export default function AuthImage({photoId, alt, className = ''}: Readonly<AuthImageProps>) {
+    const {t} = useLanguage()
     const [url, setUrl] = useState<string | null>(null)
     const [failed, setFailed] = useState(false)
 
@@ -32,7 +34,7 @@ export default function AuthImage({photoId, alt, className = ''}: Readonly<AuthI
         return (
             <div
                 role="img"
-                aria-label={failed ? 'Foto nicht verfügbar' : alt}
+                aria-label={failed ? t.photos.unavailable : alt}
                 className={`bg-chip ${pulse} ${className}`}
             />
         )

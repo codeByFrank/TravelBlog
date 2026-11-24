@@ -8,13 +8,14 @@ import ListRowsSkeleton from '../components/skeletons/ListRowsSkeleton'
 import LoadingText from '../components/skeletons/LoadingText'
 import Skeleton from '../components/skeletons/Skeleton'
 import StatTilesSkeleton from '../components/skeletons/StatTilesSkeleton'
+import type {Texts} from '../i18n/de'
+import {useLanguage} from '../i18n/useLanguage'
 import type {CountryCollection} from '../types/country'
 import type {Trip} from '../types/trip'
-import {PRIORITY_LABELS, type WishlistEntry} from '../types/WishlistEntry'
-import {getContinents, getCountryName} from '../utils/countries'
+import type {WishlistEntry} from '../types/WishlistEntry'
+import {getContinents, getCountryName, getDestinationName} from '../utils/countries'
 import {loadCountryBorders} from '../utils/countryBorders'
 import {formatDateRange} from '../utils/dates'
-import {formatTripCount} from '../utils/tripFilters'
 import {collectVisitedCountries, getTripsToCountry, getWorldShare} from '../utils/visitedCountries'
 
 // All countries of all wishlist entries, each only once, e.g. ["IS", "AR", "CL"]
@@ -36,18 +37,21 @@ function getWishlistEntriesForCountry(entries: WishlistEntry[], code: string): W
 }
 
 // Short text next to a wishlist destination, e.g. "Priorität: hoch · Februar"
-function describeWish(entry: WishlistEntry): string {
-    const priority = `Priorität: ${PRIORITY_LABELS[entry.priority].toLowerCase()}`
+function describeWish(entry: WishlistEntry, t: Texts): string {
+    const priority = t.wishlist.priority(t.priorities[entry.priority])
     return entry.bestTravelTime ? `${priority} · ${entry.bestTravelTime}` : priority
 }
 
 export default function WorldMapPage() {
+    const {t, language} = useLanguage()
     const [countries, setCountries] = useState<CountryCollection | null>(null)
-    const [mapError, setMapError] = useState('')
+    // The errors are remembered as true/false and their texts are made when they are shown,
+    // so they follow a change of the language
+    const [mapFailed, setMapFailed] = useState(false)
     const [trips, setTrips] = useState<Trip[]>([])
-    const [tripsError, setTripsError] = useState('')
+    const [tripsFailed, setTripsFailed] = useState(false)
     const [wishlistEntries, setWishlistEntries] = useState<WishlistEntry[]>([])
-    const [wishlistError, setWishlistError] = useState('')
+    const [wishlistFailed, setWishlistFailed] = useState(false)
     // The number tiles need the trips and the wishlist; until both are loaded they show placeholders, not "0"
     const [tripsLoading, setTripsLoading] = useState(true)
     const [wishlistLoading, setWishlistLoading] = useState(true)
@@ -59,20 +63,20 @@ export default function WorldMapPage() {
     useEffect(() => {
         loadCountryBorders()
             .then((loadedCountries) => setCountries(loadedCountries))
-            .catch(() => setMapError('Die Weltkarte konnte nicht geladen werden.'))
+            .catch(() => setMapFailed(true))
 
         getTrips()
             .then((loadedTrips) => setTrips(loadedTrips))
-            .catch(() => setTripsError('Die Reisen konnten nicht geladen werden.'))
+            .catch(() => setTripsFailed(true))
             .finally(() => setTripsLoading(false))
 
         getWishlistEntries()
             .then((loadedEntries) => setWishlistEntries(loadedEntries))
-            .catch(() => setWishlistError('Die Wunschziele konnten nicht geladen werden.'))
+            .catch(() => setWishlistFailed(true))
             .finally(() => setWishlistLoading(false))
     }, [])
 
-    const visitedCountries = collectVisitedCountries(trips)
+    const visitedCountries = collectVisitedCountries(trips, language)
     const visitedCodes = visitedCountries.map((country) => country.code)
     const wishlistCodes = collectWishlistCodes(wishlistEntries)
     const selectedTrips = selectedCode ? getTripsToCountry(trips, selectedCode) : []
@@ -86,15 +90,15 @@ export default function WorldMapPage() {
 
     // Countries that are too small for the world map (e.g. Malta) count as visited,
     // but they have no continent in our list and so do not count for "Kontinente".
-    const continentCount = getContinents(visitedCodes).length
+    const continentCount = getContinents(visitedCodes, language).length
 
     // Tiles as in the mockup
     const stats: TripStat[] = [
-        {label: 'Länder besucht', value: String(visitedCodes.length)},
-        {label: 'Kontinente', value: String(continentCount)},
-        {label: 'Anteil der Welt', value: getWorldShare(visitedCodes.length)},
-        {label: 'Wunschziele', value: String(wishlistEntries.length)},
-        {label: 'Wunschländer', value: String(wishlistCodes.length)},
+        {label: t.worldMap.countriesVisited, value: String(visitedCodes.length)},
+        {label: t.worldMap.continents, value: String(continentCount)},
+        {label: t.worldMap.worldShare, value: getWorldShare(visitedCodes.length, language)},
+        {label: t.worldMap.wishes, value: String(wishlistEntries.length)},
+        {label: t.worldMap.wishCountries, value: String(wishlistCodes.length)},
     ]
 
     const loading = tripsLoading || wishlistLoading
@@ -102,28 +106,28 @@ export default function WorldMapPage() {
     // The hint under the map is only needed while a color is still missing (not while the data is loading)
     const hints: string[] = []
     if (!loading && visitedCodes.length === 0) {
-        hints.push('Besuchte Länder erscheinen hier, sobald deine Reisen Stopps haben.')
+        hints.push(t.worldMap.hintVisited)
     }
     if (!loading && wishlistCodes.length === 0) {
-        hints.push('Wunschziele erscheinen, sobald sie ein Land haben.')
+        hints.push(t.worldMap.hintWishes)
     }
 
     return (
         <section className="flex flex-col gap-8">
             <div className="flex flex-col gap-1.5">
-                <h1 className="text-4xl font-bold tracking-tight">Weltkarte</h1>
-                <p className="text-muted">Wo du schon warst – und wohin es noch gehen soll.</p>
+                <h1 className="text-4xl font-bold tracking-tight">{t.worldMap.title}</h1>
+                <p className="text-muted">{t.worldMap.subtitle}</p>
             </div>
 
             {loading ? <StatTilesSkeleton count={stats.length}/> : <TripStats stats={stats}/>}
 
-            {mapError && (
+            {mapFailed && (
                 <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {mapError}
+                    {t.worldMap.mapError}
                 </p>
             )}
 
-            {!mapError && (
+            {!mapFailed && (
                 <div className="flex flex-col gap-5 rounded-card bg-surface p-4 shadow-card md:p-6">
                     {countries ? (
                         <WorldMap
@@ -135,7 +139,7 @@ export default function WorldMapPage() {
                         />
                     ) : (
                         <>
-                            <LoadingText text="Weltkarte wird geladen …"/>
+                            <LoadingText text={t.worldMap.loading}/>
                             <Skeleton className="h-56 w-full rounded-xl md:h-[28rem]"/>
                         </>
                     )}
@@ -144,15 +148,15 @@ export default function WorldMapPage() {
                     <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-soft">
                         <li className="flex items-center gap-2">
                             <span aria-hidden="true" className="size-3 rounded-full bg-accent"/>
-                            <span>Besucht</span>
+                            <span>{t.worldMap.legendVisited}</span>
                         </li>
                         <li className="flex items-center gap-2">
                             <span aria-hidden="true" className="size-3 rounded-full bg-wish"/>
-                            <span>Wunschziel</span>
+                            <span>{t.worldMap.legendWish}</span>
                         </li>
                         <li className="flex items-center gap-2">
                             <span aria-hidden="true" className="size-3 rounded-full bg-land"/>
-                            <span>Noch offen</span>
+                            <span>{t.worldMap.legendOpen}</span>
                         </li>
                     </ul>
 
@@ -165,19 +169,19 @@ export default function WorldMapPage() {
             {selectedCode && (
                 <div className="flex flex-col gap-4 rounded-card bg-surface p-6 shadow-card">
                     <div className="flex items-center justify-between gap-4">
-                        <h2 className="text-lg font-bold tracking-tight">{getCountryName(selectedCode)}</h2>
+                        <h2 className="text-lg font-bold tracking-tight">{getCountryName(selectedCode, language)}</h2>
                         <button
                             type="button"
                             onClick={() => setSelectedCode(null)}
                             className="min-h-10 cursor-pointer rounded-full border border-line-strong bg-surface px-4 text-sm font-semibold text-accent hover:bg-accent-soft"
                         >
-                            Schließen
+                            {t.common.close}
                         </button>
                     </div>
 
                     {selectedTrips.length > 0 && (
                         <div className="flex flex-col gap-1">
-                            <h3 className="text-sm font-semibold text-muted">Deine Reisen</h3>
+                            <h3 className="text-sm font-semibold text-muted">{t.worldMap.yourTrips}</h3>
                             <ul className="flex flex-col">
                                 {selectedTrips.map((trip) => (
                                     <li key={trip.id} className="border-t border-line">
@@ -187,7 +191,7 @@ export default function WorldMapPage() {
                                         >
                                             <span className="font-semibold">{trip.title}</span>
                                             <span className="text-sm text-muted">
-                                                {formatDateRange(trip.startDate, trip.endDate)}
+                                                {formatDateRange(trip.startDate, trip.endDate, language)}
                                             </span>
                                         </Link>
                                     </li>
@@ -198,15 +202,17 @@ export default function WorldMapPage() {
 
                     {selectedWishlistEntries.length > 0 && (
                         <div className="flex flex-col gap-1">
-                            <h3 className="text-sm font-semibold text-muted">Deine Wunschziele</h3>
+                            <h3 className="text-sm font-semibold text-muted">{t.worldMap.yourWishes}</h3>
                             <ul className="flex flex-col">
                                 {selectedWishlistEntries.map((entry) => (
                                     <li
                                         key={entry.id}
                                         className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-line py-3 text-[15px]"
                                     >
-                                        <span className="font-semibold">{entry.destination}</span>
-                                        <span className="text-sm text-muted">{describeWish(entry)}</span>
+                                        <span className="font-semibold">
+                                            {getDestinationName(entry.destination, entry.countryCodes, language)}
+                                        </span>
+                                        <span className="text-sm text-muted">{describeWish(entry, t)}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -214,7 +220,7 @@ export default function WorldMapPage() {
                                 to="/wishlist"
                                 className="text-sm font-semibold text-accent underline hover:text-accent-dark"
                             >
-                                Zur Wunschliste
+                                {t.worldMap.toWishlist}
                             </Link>
                         </div>
                     )}
@@ -224,18 +230,18 @@ export default function WorldMapPage() {
             {/* As in the mockup: visited countries on the left, wishlist destinations on the right */}
             <div className="grid items-start gap-6 md:grid-cols-2">
                 <div className="flex flex-col gap-4 rounded-card bg-surface p-6 shadow-card">
-                    <h2 className="text-lg font-bold tracking-tight">Besuchte Länder</h2>
+                    <h2 className="text-lg font-bold tracking-tight">{t.worldMap.visitedCountries}</h2>
 
-                    {tripsError && (
+                    {tripsFailed && (
                         <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-                            {tripsError}
+                            {t.worldMap.tripsError}
                         </p>
                     )}
 
                     {tripsLoading && <ListRowsSkeleton/>}
 
-                    {!tripsLoading && !tripsError && visitedCountries.length === 0 && (
-                        <p className="text-sm text-muted">Noch keine Reisen mit Stopps.</p>
+                    {!tripsLoading && !tripsFailed && visitedCountries.length === 0 && (
+                        <p className="text-sm text-muted">{t.worldMap.noVisitedCountries}</p>
                     )}
 
                     {visitedCountries.length > 0 && (
@@ -254,7 +260,7 @@ export default function WorldMapPage() {
                                     >
                                         <span className="font-semibold">{country.name}</span>
                                         <span className="text-right text-sm text-muted">
-                                            {`${country.lastYear} · ${formatTripCount(country.tripCount)}`}
+                                            {`${country.lastYear} · ${t.common.trips(country.tripCount)}`}
                                         </span>
                                     </button>
                                 </li>
@@ -263,23 +269,23 @@ export default function WorldMapPage() {
                     )}
 
                     <Link to="/trips" className="text-sm font-semibold text-accent underline hover:text-accent-dark">
-                        Zu meinen Reisen
+                        {t.worldMap.toTrips}
                     </Link>
                 </div>
 
                 <div className="flex flex-col gap-4 rounded-card bg-surface p-6 shadow-card">
-                    <h2 className="text-lg font-bold tracking-tight">Wunschziele</h2>
+                    <h2 className="text-lg font-bold tracking-tight">{t.worldMap.wishes}</h2>
 
-                    {wishlistError && (
+                    {wishlistFailed && (
                         <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-                            {wishlistError}
+                            {t.worldMap.wishesError}
                         </p>
                     )}
 
                     {wishlistLoading && <ListRowsSkeleton/>}
 
-                    {!wishlistLoading && !wishlistError && wishlistEntries.length === 0 && (
-                        <p className="text-sm text-muted">Noch keine Wunschziele.</p>
+                    {!wishlistLoading && !wishlistFailed && wishlistEntries.length === 0 && (
+                        <p className="text-sm text-muted">{t.worldMap.noWishes}</p>
                     )}
 
                     {wishlistEntries.length > 0 && (
@@ -289,9 +295,11 @@ export default function WorldMapPage() {
                                     key={entry.id}
                                     className="flex items-baseline justify-between gap-4 border-t border-line py-3 text-[15px]"
                                 >
-                                    <span className="font-semibold">{entry.destination}</span>
+                                    <span className="font-semibold">
+                                        {getDestinationName(entry.destination, entry.countryCodes, language)}
+                                    </span>
                                     <span className="text-right text-sm text-muted">
-                                        {getContinents(entry.countryCodes).join(', ')}
+                                        {getContinents(entry.countryCodes, language).join(', ')}
                                     </span>
                                 </li>
                             ))}
@@ -299,7 +307,7 @@ export default function WorldMapPage() {
                     )}
 
                     <Link to="/wishlist" className="text-sm font-semibold text-accent underline hover:text-accent-dark">
-                        Zur Wunschliste
+                        {t.worldMap.toWishlist}
                     </Link>
                 </div>
             </div>

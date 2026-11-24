@@ -33,7 +33,7 @@ change or delete anything: the demo data is reset whenever the service restarts.
 > The app runs on Render's free plan, which sleeps after a while without visitors. The first page load can take about a
 > minute; after that it is fast.
 
-The user interface is in German.
+The user interface is in German and English: switch with **DE | EN** in the top right corner.
 
 ## Highlights
 
@@ -80,8 +80,10 @@ The user interface is in German.
   travel
 - **Plan a trip:** turns a wish into a new trip with the destination already filled in
 
-**Accounts**
+**Accounts and languages**
 - Registration and login; every user sees and changes only their own data
+- German and English user interface, including dates, numbers, country names, error messages, place search, and
+  Wikipedia
 
 ## Tech stack
 

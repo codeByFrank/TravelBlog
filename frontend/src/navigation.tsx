@@ -1,4 +1,5 @@
 import type {ReactElement} from 'react'
+import type {Texts} from './i18n/de'
 import StatsPage from './pages/StatsPage'
 import TripsPage from './pages/TripsPage'
 import WishlistPage from './pages/WishlistPage'
@@ -9,15 +10,15 @@ export const HOME_PATH = '/trips'
 
 type NavPage = {
     path: string
-    label: string
+    labelKey: Exclude<keyof Texts['nav'], 'main' | 'logout'> // the menu text in the chosen language, e.g. t.nav.trips
     element: ReactElement
 }
 
 // Pages in the main navigation, in menu order.
 // Each entry creates both the route (App.tsx) and the menu link (NavBar.tsx).
 export const navPages: NavPage[] = [
-    {path: HOME_PATH, label: 'Reisen', element: <TripsPage/>},
-    {path: '/map', label: 'Weltkarte', element: <WorldMapPage/>},
-    {path: '/stats', label: 'Statistik', element: <StatsPage/>},
-    {path: '/wishlist', label: 'Wunschliste', element: <WishlistPage/>},
+    {path: HOME_PATH, labelKey: 'trips', element: <TripsPage/>},
+    {path: '/map', labelKey: 'map', element: <WorldMapPage/>},
+    {path: '/stats', labelKey: 'stats', element: <StatsPage/>},
+    {path: '/wishlist', labelKey: 'wishlist', element: <WishlistPage/>},
 ]

@@ -3,13 +3,13 @@ package org.example.backend.service;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.example.backend.dto.PlaceResponse;
+import org.example.backend.exception.LocalizedException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -39,13 +39,14 @@ public class PlaceService {
         this.nominatimRestClient = nominatimRestClient;
     }
 
-    public List<PlaceResponse> search(String query) {
+    // language: "de" or "en" (UserLanguage); the names of the places and countries come in this language
+    public List<PlaceResponse> search(String query, String language) {
         String text = query == null ? "" : query.trim();
         if (text.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte einen Ort eingeben.");
+            throw new LocalizedException(HttpStatus.BAD_REQUEST, "error.places.queryRequired");
         }
         if (text.length() > MAX_QUERY_LENGTH) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Der Suchbegriff ist zu lang.");
+            throw new LocalizedException(HttpStatus.BAD_REQUEST, "error.places.queryTooLong");
         }
 
         NominatimPlace[] places;
@@ -56,14 +57,14 @@ public class PlaceService {
                             .queryParam("format", "jsonv2")
                             .queryParam("addressdetails", 1)
                             .queryParam("limit", REQUESTED_RESULTS)
-                            .queryParam("accept-language", "de")
+                            .queryParam("accept-language", language)
                             .build())
                     .header(HttpHeaders.USER_AGENT, USER_AGENT)
                     .retrieve()
                     .body(NominatimPlace[].class);
         } catch (RestClientException e) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "Die Ortssuche ist gerade nicht erreichbar. Bitte versuche es später noch einmal.", e);
+            throw new LocalizedException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "error.places.unavailable", e);
         }
 
         if (places == null) {

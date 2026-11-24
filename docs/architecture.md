@@ -92,7 +92,7 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
   picks them from a fixed list in the frontend (`utils/countries.ts`, generated from the same Natural Earth data as the
   world map, with German names and continents), so no place search is needed for the wishlist. The form asks for the
   countries first; the place or region is optional. Without one, the frontend sends the country names as the
-  destination (e.g. "Island", "Argentinien, Chile"), so the backend still always gets a destination and did not change.
+  destination in the current language (e.g. "Island", "Argentinien, Chile"), so the backend still always gets a destination and did not change.
   Entries stored before countries existed are returned with an empty list.
 - "Reise planen" on the wishlist passes the wish to the trips page in the React Router state (`tripDraft`), not in the
   URL, so the user's texts do not appear in the address. The trips page removes it from the history after reading it,
@@ -183,7 +183,7 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - The list of visited countries is the set of distinct country codes over all stops of the user. The frontend
   collects them from `GET /api/trips` (`utils/visitedCountries.ts`); there is no separate endpoint.
 - Countries too small for the 1:110m borders (e.g. Malta) still count as visited and appear in the list, with the
-  German name from the browser (`Intl.DisplayNames`), but they are not colored on the map and have no continent.
+  name from the browser (`Intl.DisplayNames`), but they are not colored on the map and have no continent.
 - Clicking a visited country shows its trips below the map; clicking a wishlist country shows its wishlist
   destinations there (both parts for a country that is both). The entries of the list "Besuchte Länder" are buttons that
   do the same, because the countries on the Leaflet map cannot be reached with the keyboard.
@@ -196,18 +196,27 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - The frontend does not call Nominatim directly but `GET /api/places?query=…`; the backend (`PlaceService`) asks
   Nominatim with a User-Agent that names the application, as its usage policy requires, and returns up to five
   places with name, full name, coordinates, and the country code in upper case. Results without a country (e.g. seas)
-  are left out. If Nominatim cannot be reached, the API answers 503 with a German message.
+  are left out. If Nominatim cannot be reached, the API answers 503 with a message in the user's language.
+- Nominatim is asked for names in the language of the user interface (`accept-language=de` or `en`), so a stop
+  saved in English is called "Florence" and one saved in German "Florenz". The name is stored with the stop and
+  not translated later.
 - The Nominatim address is configured in `app.nominatim.base-url`; the tests use a fake address and
   `MockRestServiceServer`, so they never call the real service.
 
 ## Wikipedia
 
-- A stop's card shows the first three sentences of the German Wikipedia article about its place (`WikipediaInfo`),
+- A stop's card shows the first three sentences of the Wikipedia article about its place (`WikipediaInfo`), in the
+  language of the user interface (de.wikipedia.org or en.wikipedia.org),
   with a link to the article and "Text: Wikipedia, CC BY-SA 4.0", which the license asks for.
 - The frontend asks `GET /api/wikipedia?name=…&latitude=…&longitude=…`; the backend (`WikipediaService`) asks the
-  MediaWiki API of de.wikipedia.org (`action=query`, `prop=extracts|coordinates|pageprops|info`, redirects resolved)
-  with the same User-Agent as for Nominatim. No API key is needed. The address is configured in
-  `app.wikipedia.base-url`; the tests use a fake address and `MockRestServiceServer`.
+  MediaWiki API of that Wikipedia (`action=query`, `prop=extracts|coordinates|pageprops|info|langlinks`, redirects
+  resolved) with the same User-Agent as for Nominatim. No API key is needed. The address is configured in
+  `app.wikipedia.base-url` with a `{language}` part (`https://{language}.wikipedia.org`); the tests use a fake
+  address and `MockRestServiceServer`.
+- A stop keeps the name it got from the place search in the language of that moment, e.g. "Venedig". If the
+  user's Wikipedia has no article with that name, the other Wikipedia is asked, and its link to the article in the
+  user's language is followed (`langlinks`): "Venedig" (de) → "Venice" (en). So the German demo trips also show
+  English Wikipedia texts.
 - The article is looked up by the stop's name and accepted only if it is no disambiguation page and its coordinates
   lie within 50 km of the stop, so "Florenz" does not return a town of the same name in the USA. Without a matching
   article the API answers 204 No Content and the card shows nothing. A stop renamed by the user (e.g. "Florenz
@@ -234,8 +243,8 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 ## Tags
 
 - The tags are a fixed list: `MOUNTAINS` (Berge), `SEA` (Meer), `CITY_TRIP` (Städtetrip), `FOOD` (Essen),
-  `FRIENDS_AND_FAMILY` (Freunde & Familie) — the enum `TripTag` in the backend, the German labels in
-  `frontend/src/types/trip.ts`. A fixed list avoids typos and duplicates such as "Meer" and "meer", and the filter
+  `FRIENDS_AND_FAMILY` (Freunde & Familie) — the enum `TripTag` in the backend, the labels in
+  `frontend/src/i18n/de.ts` and `en.ts`. A fixed list avoids typos and duplicates such as "Meer" and "meer", and the filter
   always shows the same buttons.
 - A trip stores its tags as a list in the trip document. The backend removes duplicates and sorts them in enum order;
   trips saved before tags existed are returned with an empty list. An unknown tag is rejected with 400.
@@ -249,7 +258,8 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - A trip belongs to the year in which it starts.
 - The tag filter accepts several tags and combines them with AND: only trips that have every selected tag are
   shown. "Alle" clears the selected tags. Tag, year, and search filters apply together.
-- Free-text search covers trip titles, descriptions, tag names, and the stops' names, countries (German names), and
+- Free-text search covers trip titles, descriptions, tag names, and the stops' names, countries (names in the
+  language of the user interface), and
   notes, so that "Florenz", "Frankreich" or "Eis" find a trip.
 - Statistics are calculated from the user's trips on request; nothing is stored redundantly. They have their own
   page "Statistik" (`/stats`, `StatsPage`), so that the trip overview starts with the trips instead of a screen of
@@ -296,17 +306,44 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
   API responses), `utils/` (helpers such as date formatting).
 - The menu pages are defined once in `navigation.tsx`; the routes in `App.tsx` and the links in `NavBar.tsx` are built
   from it. Pages behind the login are wrapped in `ProtectedRoute`.
-- Dates come from the API as ISO strings (`2024-05-12`) and are shown in German with `Intl.DateTimeFormat`
-  (`utils/dates.ts`), e.g. "12.–20. Mai 2024"; they are formatted in UTC so the day does not shift with the time zone.
+- Dates come from the API as ISO strings (`2024-05-12`) and are shown in the language of the user interface with
+  `Intl.DateTimeFormat` (`utils/dates.ts`), e.g. "12.–20. Mai 2024" or "12–20 May 2024"; they are formatted in UTC
+  so the day does not shift with the time zone.
 - Until trips have cover images, the trip cards use the four pastel cover colors of the mockups (`cover-1` to
   `cover-4` in the theme).
-- User interface texts are in German. A language switch is a future idea and not built yet; the application name
-  TravelBlog is the same in every language.
+- See Languages below for the texts of the user interface.
+
+## Languages
+
+- The user interface is in German (the default) and English. The application name TravelBlog is the same in both.
+- **Frontend:** all texts are in `frontend/src/i18n/de.ts` and `en.ts`. `en.ts` has the type of `de.ts`, so
+  TypeScript reports a missing or extra text. Texts with a number or a name are small functions, e.g.
+  `trips(3)` → "3 Reisen" / "3 trips", because the word order and the plural differ between the languages.
+  Components get the texts with `const {t} = useLanguage()` (`LanguageProvider` in `main.tsx`); helpers outside of
+  components (dates, numbers, country names, the trip search) get the language as a parameter. No library is used:
+  two languages and a few hundred texts do not need one.
+- The chosen language is kept in `localStorage` (`language`); on the first visit it is English for an English
+  browser and German for all others. "DE | EN" (`LanguageSwitch`) is in the header and on the login page.
+- Dates and numbers use `de-DE` and `en-GB` (British English: the day comes before the month, as in German).
+  English country names come from the browser (`Intl.DisplayNames`), with a few corrections, e.g. "DR Congo"
+  instead of "Congo - Kinshasa". Continents are stored as keys (`EUROPE`) and named in the texts.
+- A wishlist entry without its own place is named after its countries when it is saved (e.g. "Island"); the
+  wishlist recognises such a name in both languages and shows the countries in the current language ("Iceland").
+- Error texts are made when they are shown, not when the error happens, so they follow a change of the language.
+- **Backend:** the API client sends the language in the `Accept-Language` header with every request. Messages for
+  the user are in `messages.properties` (German) and `messages_en.properties` (English), with the same keys.
+  Validation annotations use keys (`message = "{validation.name.required}"`); services throw a
+  `LocalizedException` with a key and a status, and `GlobalExceptionHandler` looks up the text in the request's
+  language. Without the header, or for a language without its own file, the texts are German
+  (`spring.web.locale=de`, `spring.messages.fallback-to-system-locale=false`).
+- Controllers that call external services get the request's `Locale` and pass `UserLanguage.of(locale)` ("de" or
+  "en") to the place search and to Wikipedia.
+- The user's own content (titles, notes, the demo trips) is not translated.
 
 ## Error Handling
 
 - API errors use RFC 9457 `ProblemDetail` (`spring.mvc.problemdetails.enabled=true`); the frontend shows its `detail`
-  text (`getErrorMessage` in `api/client.ts`) or a German fallback message.
+  text (`getErrorMessage` in `api/client.ts`) or a fallback message in the language of the user interface.
 - Validation errors include an `errors` object (field name → message).
 - A request for a resource of another user is answered like a missing resource (404).
 

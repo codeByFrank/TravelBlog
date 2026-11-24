@@ -1,5 +1,8 @@
-// The same three values as the Priority enum in the backend
+// The same three values as the Priority enum in the backend; the labels are in the texts (i18n/de.ts → priorities)
 export type Priority = 'HIGH' | 'MEDIUM' | 'LOW'
+
+// In the order they are shown
+export const PRIORITIES: Priority[] = ['HIGH', 'MEDIUM', 'LOW']
 
 // A wishlist entry as the backend returns it (WishlistEntryResponse in the backend)
 export type WishlistEntry = {
@@ -20,9 +23,3 @@ export type WishlistEntryRequest = {
     countryCodes: string[] // may be empty
 }
 
-// German labels for the priorities, in the order they are shown
-export const PRIORITY_LABELS: Record<Priority, string> = {
-    HIGH: 'Hoch',
-    MEDIUM: 'Mittel',
-    LOW: 'Niedrig',
-}
