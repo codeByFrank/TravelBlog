@@ -36,6 +36,12 @@ public class PhotoStorage {
         }
     }
 
+    // Stores a photo that does not come from an upload, e.g. a sample photo of the demo user
+    public String save(InputStream content, String fileName, String contentType, String userId, String tripId) {
+        Document metadata = new Document("userId", userId).append("tripId", tripId);
+        return gridFsTemplate.store(content, fileName, contentType, metadata).toHexString();
+    }
+
     public Optional<GridFsResource> find(String photoId, String userId) {
         if (!ObjectId.isValid(photoId)) {
             return Optional.empty();
