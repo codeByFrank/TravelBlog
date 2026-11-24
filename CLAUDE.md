@@ -46,6 +46,8 @@ If a requested change conflicts with these documents, point out the conflict bef
 - Spring Validation
 - Spring Data MongoDB
 - Spring Security with JWT login tokens (jjwt)
+- Spring Boot Actuator (only the health check `/actuator/health`)
+- springdoc-openapi (API documentation, Swagger UI at `/swagger-ui.html`)
 
 ### Infrastructure
 

@@ -30,6 +30,9 @@ registration needed:
 The demo account has four sample trips (Italy, Portugal, Iceland, Japan) with photos, and a wishlist. Feel free to
 change or delete anything: the demo data is reset whenever the service restarts.
 
+**API documentation:** [Swagger UI](https://travelblog-latest.onrender.com/swagger-ui.html) lists every endpoint and
+lets you try it in the browser: log in with `POST /api/auth/login`, copy the token, click **Authorize**, and paste it.
+
 > The app runs on Render's free plan, which sleeps after a while without visitors. The first page load can take about a
 > minute; after that it is fast. If the server falls asleep while the app is open, the app shows a note while it wakes
 > up.
@@ -43,7 +46,8 @@ The user interface is in German and English: switch with **DE | EN** in the top 
 - **Continuous deployment:** every merge is tested, packaged as a Docker image, and live on Render within minutes
 - **140+ automated backend tests** with MockMvc and an embedded MongoDB; coverage measured with JaCoCo
 - **SonarQube Quality Gate on every pull request**, for the backend and the frontend
-- **20 REST endpoints**, secured with Spring Security and JWT; every user sees and changes only their own data
+- **20 REST endpoints**, secured with Spring Security and JWT and documented with OpenAPI / Swagger UI; every user
+  sees and changes only their own data
 - **Interactive maps** with Leaflet: the route of each trip and a world map of all visited and wished-for countries
 - **Three external services** integrated without API keys: OpenStreetMap, Nominatim place search, and Wikipedia
 - **Polished details:** photo upload with gallery and cover photo, skeleton loading, a demo account with sample data
@@ -92,7 +96,7 @@ The user interface is in German and English: switch with **DE | EN** in the top 
 | Area | Technologies |
 |---|---|
 | Frontend | React 19, TypeScript, Vite, React Router, Tailwind CSS v4, Leaflet with react-leaflet, axios |
-| Backend | Java 25, Spring Boot 4.1 (Web MVC, Validation, Security, Data MongoDB), Lombok, jjwt |
+| Backend | Java 25, Spring Boot 4.1 (Web MVC, Validation, Security, Data MongoDB, Actuator), Lombok, jjwt, springdoc-openapi (Swagger UI) |
 | Database | MongoDB Atlas; photos in GridFS |
 | External services | OpenStreetMap tiles, Nominatim place search, Wikipedia API (all free, no API key) |
 | Quality | JUnit 5 with MockMvc and an embedded MongoDB, JaCoCo, SonarQube Cloud, oxlint |
@@ -278,6 +282,7 @@ documents were kept up to date with every pull request.
 | [`TravelBlog – Seitenentwürfe.html`](TravelBlog%20–%20Seitenentwürfe.html) | Page mockups of the trip overview, trip detail, world map, and wishlist (open the file in a browser) |
 | [`docs/architecture.md`](docs/architecture.md) | Architecture decisions and their reasons, e.g. data model, maps, photos, security |
 | [`docs/deployment.md`](docs/deployment.md) | How a deployment runs, required secrets and environment variables |
+| [Swagger UI](https://travelblog-latest.onrender.com/swagger-ui.html) | The REST API, generated from the controllers, with every endpoint to try out |
 | [`CLAUDE.md`](CLAUDE.md) | Working rules for the AI coding assistant (Claude Code): tech stack, commands, architecture and code quality rules, Git workflow |
 
 ## Project structure

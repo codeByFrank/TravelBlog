@@ -97,6 +97,17 @@
             <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- Health check for Render: GET /actuator/health (see docs/deployment.md) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!-- API documentation: Swagger UI at /swagger-ui.html, OpenAPI description at /v3/api-docs -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>3.2.0</version>
+        </dependency>
     </dependencies>
 
     <build>

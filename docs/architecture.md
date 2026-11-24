@@ -14,6 +14,21 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - During local development, the Vite dev server proxies `/api` to the backend on `http://localhost:8080`.
 - Continuous integration and code analysis: see CI and Code Quality.
 
+## API Documentation and Health Check
+
+- The API is documented with OpenAPI. springdoc-openapi reads the controllers when the application starts and
+  serves the description at `/v3/api-docs` and a page to read and try it at `/swagger-ui.html` (Swagger UI). The
+  documentation is generated, so it cannot get out of date; `OpenApiConfig` only adds the title, a description, and
+  the JWT login (button "Authorize").
+- Only `/api/**` is documented (`springdoc.paths-to-match`), not the frontend paths of `FrontendController`.
+- The server address in the documentation is `/`, the address the page was loaded from: a generated address would
+  be `http://` behind Render's https proxy, and "Try it out" would fail.
+- The documentation is public, because it holds no user data and shows the project; every request from it still
+  needs a token like any other client.
+- Spring Boot Actuator provides `GET /actuator/health` for Render's health check: `{"status":"UP"}` while the
+  application and its database work. Only this endpoint is exposed (`management.endpoints.web.exposure.include`),
+  without details; Spring Security closes every other `/actuator/**` path.
+
 ## CI and Code Quality
 
 - GitHub Actions runs three check workflows (`.github/workflows/`); the fourth, `deploy.yml`, deploys every push to

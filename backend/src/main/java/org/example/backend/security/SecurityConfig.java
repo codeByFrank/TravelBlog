@@ -24,6 +24,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/error").permitAll()
                         // All other API endpoints need a logged-in user
                         .requestMatchers("/api/**").authenticated()
+                        // The health check for Render and the API documentation are public; they hold no user data.
+                        // Trying an endpoint in Swagger UI still needs a token (button "Authorize").
+                        .requestMatchers("/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                        .permitAll()
+                        // Other Actuator endpoints are not exposed; if one is turned on by mistake, it stays closed
+                        .requestMatchers("/actuator/**").denyAll()
                         // Everything else is the frontend (index.html, JavaScript, CSS), which the backend delivers
                         // in production. It holds no user data; the data only comes from the API above.
                         .anyRequest().permitAll())

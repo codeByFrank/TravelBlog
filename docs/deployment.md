@@ -51,6 +51,12 @@ Set in the Render service under Environment. They are the same variables as in l
 The container listens on port 8080 (`EXPOSE 8080` in the `Dockerfile`). Render finds the port by itself; if it does
 not, set the environment variable `PORT` to `8080` on Render.
 
+### Health check on Render
+
+In the Render service under Settings → Health Check Path, enter `/actuator/health`. Render then sends traffic to a
+new version only when this path answers `200` with `{"status":"UP"}`, and restarts the service if it stops
+answering. The path is public and shows no details (see `architecture.md` → API Documentation and Health Check).
+
 ## Updates
 
 No manual steps: merging a pull request into `main` deploys the new version. A new environment variable has to be
