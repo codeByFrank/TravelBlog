@@ -12,9 +12,9 @@ country you have visited, and keep a wishlist of places you still want to see.
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white)
 
-TravelBlog is a full-stack group project of three developers, built in a Java + React bootcamp: a Spring Boot REST
-API with MongoDB, a React single-page app with interactive maps, and a CI/CD pipeline that tests, analyzes, and deploys
-every change.
+TravelBlog is a full-stack group project of three developers, **built in 10 working days** in a Java + React
+bootcamp: a Spring Boot REST API with MongoDB, a React single-page app with interactive maps, and a CI/CD pipeline that
+tests, analyzes, and deploys every change.
 
 ![Trip overview](docs/screenshots/trips.png)
 
@@ -34,6 +34,18 @@ change or delete anything: the demo data is reset whenever the service restarts.
 > minute; after that it is fast.
 
 The user interface is in German.
+
+## Highlights
+
+- **10 working days, 3 developers, 40+ reviewed pull requests:** feature branches, code review by a teammate, and a
+  protected `main` branch
+- **Continuous deployment:** every merge is tested, packaged as a Docker image, and live on Render within minutes
+- **140+ automated backend tests** with MockMvc and an embedded MongoDB; coverage measured with JaCoCo
+- **SonarQube Quality Gate on every pull request**, for the backend and the frontend
+- **20 REST endpoints**, secured with Spring Security and JWT; every user sees and changes only their own data
+- **Interactive maps** with Leaflet: the route of each trip and a world map of all visited and wished-for countries
+- **Three external services** integrated without API keys: OpenStreetMap, Nominatim place search, and Wikipedia
+- **Polished details:** photo upload with gallery and cover photo, skeleton loading, a demo account with sample data
 
 ## Screenshots
 
