@@ -5,6 +5,7 @@ import {getTrips} from '../api/trips'
 import TripDialog from '../components/TripDialog'
 import TripCard from '../components/TripCard'
 import TripFilters from '../components/TripFilters'
+import TripCardsSkeleton from '../components/skeletons/TripCardsSkeleton'
 import type {Trip, TripDraft, TripTag} from '../types/trip'
 import {ALL_YEARS, filterTrips, getYears} from '../utils/tripFilters'
 
@@ -91,7 +92,7 @@ export default function TripsPage() {
                 </button>
             </section>
 
-            {loading && <p className="text-muted">Reisen werden geladen …</p>}
+            {loading && <TripCardsSkeleton/>}
 
             {!loading && error && (
                 <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">

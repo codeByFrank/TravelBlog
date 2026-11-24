@@ -6,6 +6,7 @@ import {getTrip, deleteTrip} from '../api/trips'
 import TagBadges from '../components/TagBadges'
 import TripDialog from '../components/TripDialog'
 import TripStops from '../components/TripStops'
+import TripDetailSkeleton from '../components/skeletons/TripDetailSkeleton'
 import type {Trip} from '../types/trip'
 import {formatDateRange} from '../utils/dates'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -64,7 +65,7 @@ export default function TripDetailPage() {
     }
 
     if (loading) {
-        return <p className="text-muted">Reise wird geladen …</p>
+        return <TripDetailSkeleton/>
     }
 
     if (notFound || !trip) {

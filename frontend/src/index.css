@@ -25,6 +25,13 @@
     --shadow-card: 0 8px 30px rgba(31, 80, 130, 0.08);
 }
 
+/* Always keep room for the scrollbar: otherwise the page shifts sideways when switching between a short page
+   (no scrollbar) and a long one */
+html {
+    scrollbar-gutter: stable;
+    background-color: var(--color-page); /* the kept room has the page color, not white */
+}
+
 body {
     background-color: var(--color-page);
     color: var(--color-ink);

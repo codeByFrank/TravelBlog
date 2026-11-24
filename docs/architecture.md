@@ -280,6 +280,13 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
   shadows and large corner radii, one blue accent color.
 - Small screens are covered with Tailwind breakpoints; the main breakpoint is `md` (768 px).
 - Pages load data once and are refreshed manually (no polling).
+- While a page loads its data, it shows a skeleton instead of a loading text: grey, gently pulsing blocks in the
+  shape and size of the real content (`components/skeletons/`), so the page does not jump when the data arrives.
+  The base block is `Skeleton`; each page has its own skeleton (e.g. `TripCardsSkeleton`). The pulsing respects the
+  system setting for less motion (`motion-safe:`); screen readers get a hidden "… wird geladen" text
+  (`LoadingText`). Photos that are still loading pulse in the same way (`AuthImage`).
+- The page always keeps room for the scrollbar (`scrollbar-gutter: stable` in `index.css`), so it does not shift
+  sideways when switching between a short and a long page.
 - Routing uses React Router; HTTP requests use axios.
 - Code layout in `frontend/src/`: `pages/` (one component per route, named `…Page`), `components/` (reusable parts),
   `api/` (one file per backend resource, built on the shared axios client in `api/client.ts`), `types/` (types of the

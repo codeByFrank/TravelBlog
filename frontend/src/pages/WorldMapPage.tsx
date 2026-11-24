@@ -4,6 +4,10 @@ import {getTrips} from '../api/trips'
 import {getWishlistEntries} from '../api/wishlistApi'
 import TripStats, {type TripStat} from '../components/TripStats'
 import WorldMap from '../components/WorldMap'
+import ListRowsSkeleton from '../components/skeletons/ListRowsSkeleton'
+import LoadingText from '../components/skeletons/LoadingText'
+import Skeleton from '../components/skeletons/Skeleton'
+import StatTilesSkeleton from '../components/skeletons/StatTilesSkeleton'
 import type {CountryCollection} from '../types/country'
 import type {Trip} from '../types/trip'
 import {PRIORITY_LABELS, type WishlistEntry} from '../types/WishlistEntry'
@@ -44,6 +48,9 @@ export default function WorldMapPage() {
     const [tripsError, setTripsError] = useState('')
     const [wishlistEntries, setWishlistEntries] = useState<WishlistEntry[]>([])
     const [wishlistError, setWishlistError] = useState('')
+    // The number tiles need the trips and the wishlist; until both are loaded they show placeholders, not "0"
+    const [tripsLoading, setTripsLoading] = useState(true)
+    const [wishlistLoading, setWishlistLoading] = useState(true)
     // The visited country whose trips are shown below the map; null while none is chosen
     const [selectedCode, setSelectedCode] = useState<string | null>(null)
 
@@ -57,10 +64,12 @@ export default function WorldMapPage() {
         getTrips()
             .then((loadedTrips) => setTrips(loadedTrips))
             .catch(() => setTripsError('Die Reisen konnten nicht geladen werden.'))
+            .finally(() => setTripsLoading(false))
 
         getWishlistEntries()
             .then((loadedEntries) => setWishlistEntries(loadedEntries))
             .catch(() => setWishlistError('Die Wunschziele konnten nicht geladen werden.'))
+            .finally(() => setWishlistLoading(false))
     }, [])
 
     const visitedCountries = collectVisitedCountries(trips)
@@ -88,12 +97,14 @@ export default function WorldMapPage() {
         {label: 'Wunschländer', value: String(wishlistCodes.length)},
     ]
 
-    // The hint under the map is only needed while a color is still missing
+    const loading = tripsLoading || wishlistLoading
+
+    // The hint under the map is only needed while a color is still missing (not while the data is loading)
     const hints: string[] = []
-    if (visitedCodes.length === 0) {
+    if (!loading && visitedCodes.length === 0) {
         hints.push('Besuchte Länder erscheinen hier, sobald deine Reisen Stopps haben.')
     }
-    if (wishlistCodes.length === 0) {
+    if (!loading && wishlistCodes.length === 0) {
         hints.push('Wunschziele erscheinen, sobald sie ein Land haben.')
     }
 
@@ -104,7 +115,7 @@ export default function WorldMapPage() {
                 <p className="text-muted">Wo du schon warst – und wohin es noch gehen soll.</p>
             </div>
 
-            <TripStats stats={stats}/>
+            {loading ? <StatTilesSkeleton count={stats.length}/> : <TripStats stats={stats}/>}
 
             {mapError && (
                 <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -123,9 +134,10 @@ export default function WorldMapPage() {
                             onCountryClick={toggleCountry}
                         />
                     ) : (
-                        <p className="flex h-56 items-center justify-center text-muted md:h-[28rem]">
-                            Weltkarte wird geladen …
-                        </p>
+                        <>
+                            <LoadingText text="Weltkarte wird geladen …"/>
+                            <Skeleton className="h-56 w-full rounded-xl md:h-[28rem]"/>
+                        </>
                     )}
 
                     {/* Legend as in the mockup; the colored dots are only decoration for screen readers */}
@@ -220,7 +232,9 @@ export default function WorldMapPage() {
                         </p>
                     )}
 
-                    {!tripsError && visitedCountries.length === 0 && (
+                    {tripsLoading && <ListRowsSkeleton/>}
+
+                    {!tripsLoading && !tripsError && visitedCountries.length === 0 && (
                         <p className="text-sm text-muted">Noch keine Reisen mit Stopps.</p>
                     )}
 
@@ -262,7 +276,9 @@ export default function WorldMapPage() {
                         </p>
                     )}
 
-                    {!wishlistError && wishlistEntries.length === 0 && (
+                    {wishlistLoading && <ListRowsSkeleton/>}
+
+                    {!wishlistLoading && !wishlistError && wishlistEntries.length === 0 && (
                         <p className="text-sm text-muted">Noch keine Wunschziele.</p>
                     )}
 
