@@ -5,19 +5,6 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>TravelBlog</title>
-<<<<<<< HEAD
-    <!-- Light or dark design before the first paint, so a dark page does not flash white (the same rule as getTheme in
-         src/theme.ts: the user's choice, otherwise the setting of the operating system) -->
-    <script>
-        try {
-            const saved = localStorage.getItem('theme');
-            const dark = saved ? saved === 'dark' : globalThis.matchMedia('(prefers-color-scheme: dark)').matches;
-            document.documentElement.classList.toggle('dark', dark);
-        } catch {
-            // Without access to localStorage the page simply starts light
-        }
-    </script>
-=======
     <meta name="description"
           content="A travel diary on a map: trips with stops, photos and notes, a world map of visited countries, statistics and a wishlist."/>
 
@@ -34,7 +21,18 @@
     <meta property="og:image:height" content="630"/>
     <meta property="og:image:alt" content="TravelBlog: a trip through Italy with its stops on a map"/>
     <meta name="twitter:card" content="summary_large_image"/>
->>>>>>> feature/link-preview
+
+    <!-- Light or dark design before the first paint, so a dark page does not flash white (the same rule as getTheme in
+         src/theme.ts: the user's choice, otherwise the setting of the operating system) -->
+    <script>
+        try {
+            const saved = localStorage.getItem('theme');
+            const dark = saved ? saved === 'dark' : globalThis.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.classList.toggle('dark', dark);
+        } catch {
+            // Without access to localStorage the page simply starts light
+        }
+    </script>
 </head>
 <body>
 <div id="root"></div>
