@@ -237,7 +237,13 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
   article the API answers 204 No Content and the card shows nothing. A stop renamed by the user (e.g. "Florenz
   (Altstadt)") then has no article; storing the article title from the place search would fix that later.
 - Overnight stops load the article when the page opens; day trips and places on the way load it with a button, so
-  a trip with many stops does not send a request for each of them. The answer is not stored or cached.
+  a trip with many stops does not send a request for each of them.
+- `WikipediaService` remembers every answer in memory (also "no article"), keyed by language, name and coordinates,
+  so a page view does not ask Wikipedia again; errors are not remembered, and a restart starts empty. At most 1000
+  answers are kept; then the memory starts again empty.
+- Only one request goes to Wikipedia at a time (`synchronized`): a trip page loads several stops at once, and in
+  English a German place name can need three requests (see above). Wikipedia answers "too many requests" when one
+  client sends many in parallel; one after the other it does not.
 - If Wikipedia cannot be reached, the API answers 503; an overnight stop then shows nothing, a button shows a note.
 
 ## Photos
