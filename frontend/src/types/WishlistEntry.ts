@@ -1,4 +1,4 @@
-// The same three values as the Priority enum in the backend; the labels are in the texts (i18n/de.ts → priorities)
+// The same three values as the Priority enum in the backend; the labels are in the texts (i18n/texts.ts → priorities)
 export type Priority = 'HIGH' | 'MEDIUM' | 'LOW'
 
 // In the order they are shown

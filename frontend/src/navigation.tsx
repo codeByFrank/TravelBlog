@@ -1,5 +1,5 @@
 import type {ReactElement} from 'react'
-import type {Texts} from './i18n/de'
+import type {Texts} from './i18n/texts'
 import StatsPage from './pages/StatsPage'
 import TripsPage from './pages/TripsPage'
 import WishlistPage from './pages/WishlistPage'

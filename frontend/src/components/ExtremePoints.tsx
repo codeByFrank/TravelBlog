@@ -1,5 +1,5 @@
 import {Link} from 'react-router-dom'
-import type {Texts} from '../i18n/de'
+import type {Texts} from '../i18n/texts'
 import {useLanguage} from '../i18n/useLanguage'
 import {getCountryName} from '../utils/countries'
 import type {ExtremePoint, ExtremePoints as Points} from '../utils/tripStats'

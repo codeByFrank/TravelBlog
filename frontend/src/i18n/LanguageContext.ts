@@ -1,6 +1,6 @@
 import {createContext} from 'react'
-import {de, type Texts} from './de'
 import type {Language} from './language'
+import {texts, type Texts} from './texts'
 
 export type LanguageContextValue = {
     language: Language
@@ -14,5 +14,5 @@ export const LanguageContext = createContext<LanguageContextValue>({
     setLanguage: () => {
         // Without a LanguageProvider there is nothing to change
     },
-    t: de,
+    t: texts.de,
 })

@@ -3,6 +3,12 @@ export type Language = 'de' | 'en'
 
 export const LANGUAGES: Language[] = ['de', 'en']
 
+// Each language is named in itself, so these names are not translated
+export const LANGUAGE_NAMES: Record<Language, string> = {
+    de: 'Deutsch',
+    en: 'English',
+}
+
 // The chosen language is kept in the browser, like the login token
 export const LANGUAGE_KEY = 'language'
 

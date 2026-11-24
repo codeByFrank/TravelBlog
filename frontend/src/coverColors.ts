@@ -1,6 +1,6 @@
-import type {Texts} from './i18n/de'
+import type {Texts} from './i18n/texts'
 
-// The colors a trip's cover can have; the names are in the texts (i18n/de.ts → coverColors)
+// The colors a trip's cover can have; the names are in the texts (i18n/texts.ts → coverColors)
 export const COVER_COLORS: { value: string, nameKey: keyof Texts['coverColors'] }[] = [
     {value: '#DCEAF7', nameKey: 'SKY'},
     {value: '#EAE6F5', nameKey: 'LAVENDER'},

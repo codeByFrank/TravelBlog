@@ -1,4 +1,4 @@
-import {LANGUAGES} from '../i18n/language'
+import {LANGUAGE_NAMES, LANGUAGES} from '../i18n/language'
 import {useLanguage} from '../i18n/useLanguage'
 
 // "DE | EN" in the header and on the login and registration pages. The pressed button is the current language.
@@ -16,7 +16,7 @@ export default function LanguageSwitch() {
                         type="button"
                         lang={option}
                         aria-pressed={active}
-                        title={t.language.names[option]}
+                        title={LANGUAGE_NAMES[option]}
                         onClick={() => setLanguage(option)}
                         className={`min-h-10 min-w-10 cursor-pointer rounded-full px-2.5 text-[13px] font-bold ${
                             active ? 'bg-accent text-white' : 'text-muted hover:text-ink'

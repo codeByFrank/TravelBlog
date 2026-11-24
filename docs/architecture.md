@@ -244,7 +244,7 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 
 - The tags are a fixed list: `MOUNTAINS` (Berge), `SEA` (Meer), `CITY_TRIP` (Städtetrip), `FOOD` (Essen),
   `FRIENDS_AND_FAMILY` (Freunde & Familie) — the enum `TripTag` in the backend, the labels in
-  `frontend/src/i18n/de.ts` and `en.ts`. A fixed list avoids typos and duplicates such as "Meer" and "meer", and the filter
+  `frontend/src/i18n/texts.ts`. A fixed list avoids typos and duplicates such as "Meer" and "meer", and the filter
   always shows the same buttons.
 - A trip stores its tags as a list in the trip document. The backend removes duplicates and sorts them in enum order;
   trips saved before tags existed are returned with an empty list. An unknown tag is rejected with 400.
@@ -316,8 +316,10 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 ## Languages
 
 - The user interface is in German (the default) and English. The application name TravelBlog is the same in both.
-- **Frontend:** all texts are in `frontend/src/i18n/de.ts` and `en.ts`. `en.ts` has the type of `de.ts`, so
-  TypeScript reports a missing or extra text. Texts with a number or a name are small functions, e.g.
+- **Frontend:** all texts are in `frontend/src/i18n/texts.ts`, each with both languages side by side, e.g.
+  `cancel: {de: 'Abbrechen', en: 'Cancel'}`. TypeScript reports a text with only one language. One file instead of
+  one per language keeps the two versions of a text together; two files with the same keys also counted as
+  duplicated code in SonarQube. `texts.de` and `texts.en` are picked from the pairs once. Texts with a number or a name are small functions, e.g.
   `trips(3)` → "3 Reisen" / "3 trips", because the word order and the plural differ between the languages.
   Components get the texts with `const {t} = useLanguage()` (`LanguageProvider` in `main.tsx`); helpers outside of
   components (dates, numbers, country names, the trip search) get the language as a parameter. No library is used:
