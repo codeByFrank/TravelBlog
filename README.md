@@ -261,9 +261,20 @@ flowchart LR
 `main` is protected: every change goes through a pull request with a passing build, a passing SonarQube Quality Gate,
 and a review by a teammate. Merging deploys automatically.
 
-More details: [`docs/architecture.md`](docs/architecture.md) (decisions and their reasons),
-[`docs/deployment.md`](docs/deployment.md) (deployment, secrets, environment variables), and
-[`docs/requirements.md`](docs/requirements.md) (what the application should do).
+More details are in the [documentation](#documentation).
+
+## Documentation
+
+The project was planned before it was built: requirements first, then page mockups, then the architecture. The
+documents were kept up to date with every pull request.
+
+| Document | Content |
+|---|---|
+| [`docs/requirements.md`](docs/requirements.md) | What the application should do: features, rules, non-functional requirements, non-goals |
+| [`TravelBlog – Seitenentwürfe.html`](TravelBlog%20–%20Seitenentwürfe.html) | Page mockups of the trip overview, trip detail, world map, and wishlist (open the file in a browser) |
+| [`docs/architecture.md`](docs/architecture.md) | Architecture decisions and their reasons, e.g. data model, maps, photos, security |
+| [`docs/deployment.md`](docs/deployment.md) | How a deployment runs, required secrets and environment variables |
+| [`CLAUDE.md`](CLAUDE.md) | Working rules for the AI coding assistant (Claude Code): tech stack, commands, architecture and code quality rules, Git workflow |
 
 ## Project structure
 

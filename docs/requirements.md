@@ -182,6 +182,11 @@ Stored passwords must not be retrievable in plaintext.
 
 All users have the same rights; there are no roles and there is no admin area.
 
+There is a demo account, so that visitors (e.g. in a presentation or from the README) can try the application without
+registering. It has sample trips with stops and photos, and wishlist entries. Visitors may change its data; the
+sample data is restored regularly (at every start of the application). The demo password is public and is used for
+nothing else.
+
 ## 13. Non-Functional Requirements
 
 ### Security
@@ -201,6 +206,8 @@ All users have the same rights; there are no roles and there is no admin area.
 * The design is modern, light, minimalist, and airy; the page mockups in `TravelBlog – Seitenentwürfe.html` are the
   reference.
 * The application should be usable on mobile devices.
+* While a page loads its data, it shows placeholders in the shape of the content (skeleton loading) instead of an
+  empty page or a loading text, so the page does not jump when the data arrives.
 
 ### Operation
 
