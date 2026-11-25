@@ -16,7 +16,7 @@ TravelBlog is a full-stack group project of three developers, **built in 10 work
 bootcamp: a Spring Boot REST API with MongoDB, a React single-page app with interactive maps, and a CI/CD pipeline that
 tests, analyzes, and deploys every change.
 
-![Trip overview](docs/screenshots/trips.png)
+![Trip overview in the light and the dark design](docs/screenshots/light-dark.png)
 
 ## Try it live
 
@@ -34,32 +34,43 @@ change or delete anything: the demo data is reset whenever the service restarts.
 lets you try it in the browser: log in with `POST /api/auth/login`, copy the token, click **Authorize**, and paste it.
 
 > The app runs on Render's free plan, which sleeps after a while without visitors. The first page load can take about a
-> minute; after that it is fast.
+> minute; after that it is fast. If the server falls asleep while the app is open, the app shows a note while it wakes
+> up.
 
-The user interface is in German and English: switch with **DE | EN** in the top right corner.
+The user interface is in German and English, in a light and a dark design: switch with **DE | EN** and the sun / moon
+button in the top right corner.
 
 ## Highlights
 
-- **10 working days, 3 developers, 40+ reviewed pull requests:** feature branches, code review by a teammate, and a
+- **10 working days, 3 developers, 45+ reviewed pull requests:** feature branches, code review by a teammate, and a
   protected `main` branch
 - **Continuous deployment:** every merge is tested, packaged as a Docker image, and live on Render within minutes
-- **140+ automated backend tests** with MockMvc and an embedded MongoDB; coverage measured with JaCoCo
+- **150+ automated backend tests** with MockMvc and an embedded MongoDB; coverage measured with JaCoCo
 - **SonarQube Quality Gate on every pull request**, for the backend and the frontend
 - **20 REST endpoints**, secured with Spring Security and JWT and documented with OpenAPI / Swagger UI; every user
   sees and changes only their own data
 - **Interactive maps** with Leaflet: the route of each trip and a world map of all visited and wished-for countries
 - **Three external services** integrated without API keys: OpenStreetMap, Nominatim place search, and Wikipedia
-- **Polished details:** photo upload with gallery and cover photo, skeleton loading, a demo account with sample data
+- **Two languages, two designs:** German and English (also error messages, place search, and Wikipedia), light and
+  dark mode
+- **Polished details:** photo upload with gallery and cover photo, skeleton loading, a note while the server wakes up,
+  link previews for LinkedIn and others, a demo account with sample data
 
 ## Screenshots
 
-| Trip with route map | Stops with photos and Wikipedia |
+The screenshots show the English interface of the demo account.
+
+| Trip overview | Trip with route map |
 |---|---|
-| ![Trip detail with the route on a map](docs/screenshots/trip-detail.png) | ![Stops with photos and a Wikipedia summary](docs/screenshots/trip-photos.png) |
-| **World map: visited countries and wishes** | **Statistics** |
-| ![World map with visited and wished-for countries](docs/screenshots/world-map.png) | ![Statistics with records and years](docs/screenshots/statistics.png) |
-| **Wishlist** | |
-| ![Wishlist with priorities and "plan a trip"](docs/screenshots/wishlist.png) | |
+| ![Trip overview with photos, filters, and tags](docs/screenshots/trips.png) | ![Trip detail with the route on a map](docs/screenshots/trip-detail.png) |
+| **Stops with photos and Wikipedia** | **World map: visited countries and wishes** |
+| ![Stops with photos and a Wikipedia summary](docs/screenshots/trip-photos.png) | ![World map with visited and wished-for countries](docs/screenshots/world-map.png) |
+| **Statistics** | **Wishlist** |
+| ![Statistics with records and years](docs/screenshots/statistics.png) | ![Wishlist with priorities and "plan a trip"](docs/screenshots/wishlist.png) |
+| **Dark mode** | **API documentation (Swagger UI)** |
+| ![Trip with route map in the dark design](docs/screenshots/dark-mode.png) | ![Swagger UI with all REST endpoints](docs/screenshots/swagger.png) |
+| **Note while the server wakes up** | |
+| ![A note at the bottom of the login page while the server wakes up](docs/screenshots/server-waking-up.png) | |
 
 ## Features
 
@@ -88,6 +99,7 @@ The user interface is in German and English: switch with **DE | EN** in the top 
 - Registration and login; every user sees and changes only their own data
 - German and English user interface, including dates, numbers, country names, error messages, place search, and
   Wikipedia
+- Light and dark design: follows the system setting, or switch with the sun / moon button
 
 ## Tech stack
 
@@ -106,7 +118,8 @@ The user interface is in German and English: switch with **DE | EN** in the top 
 
 The backend and the built frontend run together in **one Docker container**. The browser loads the React app and
 calls the REST API on the same address, so there is no CORS setup. Every endpoint under `/api` requires a JWT, except
-registration and login.
+registration and login. Every request also carries the language of the user interface. The API documentation
+(Swagger UI) and the health check for Render are public.
 
 ```mermaid
 flowchart LR
@@ -115,6 +128,7 @@ flowchart LR
     subgraph render["Render · Docker container"]
         direction TB
         static["Static frontend<br/>index.html, JS, CSS"]
+        docs["Swagger UI · /swagger-ui.html<br/>Health check · /actuator/health"]
         subgraph api["Spring Boot REST API · /api"]
             direction TB
             security["Spring Security<br/>JwtFilter"]
@@ -135,11 +149,12 @@ flowchart LR
         direction TB
         osm["OpenStreetMap<br/>map tiles"]
         nominatim["Nominatim<br/>place search"]
-        wikipedia["Wikipedia<br/>summaries"]
+        wikipedia["Wikipedia<br/>summaries, German and English"]
     end
 
     user -- "pages" --> static
-    user -- "JSON + JWT" --> security
+    user -- "JSON + JWT + language" --> security
+    user -- "API docs" --> docs
     user -- "tiles" --> osm
     repos --> collections
     repos --> gridfs
@@ -149,7 +164,8 @@ flowchart LR
 
 The backend calls Nominatim and Wikipedia itself instead of the browser. That keeps the frontend simple, lets the
 backend shape the answers, and keeps the external base URLs in configuration (`application.properties`), where the
-tests can replace them.
+tests can replace them. The backend remembers Wikipedia's answers in memory and sends one request at a time, because
+Wikipedia slows down clients that send many requests in parallel.
 
 ### Backend layers
 
@@ -163,7 +179,8 @@ Each feature follows the same path: **Controller → Service → Repository**.
 | Model / DTO | `model`, `dto` | Java records: documents in the database, requests and responses of the API |
 
 Errors are turned into a uniform JSON answer (`ProblemDetail`) in one place, `GlobalExceptionHandler`, so the
-frontend can show field errors next to the right input.
+frontend can show field errors next to the right input. The texts come from `messages.properties` (German) or
+`messages_en.properties` (English), depending on the language of the request.
 
 ### Login with JWT
 
@@ -188,6 +205,33 @@ sequenceDiagram
 
 The backend stays stateless: no sessions, no CSRF tokens. On a `401` answer the frontend removes the token and opens
 the login page.
+
+### Languages
+
+The user interface is in German and English. The chosen language travels with every request, so the backend answers
+in the same language and asks the external services in it.
+
+```mermaid
+flowchart LR
+    switch(["DE | EN switch<br/>saved in the browser"])
+    texts["Frontend texts<br/>i18n/texts.ts"]
+    switch --> texts
+    switch -- "Accept-Language: en" --> api["Spring Boot API"]
+    api --> messages["Error messages<br/>messages_en.properties"]
+    api --> nominatim["Nominatim<br/>accept-language=en"]
+    api --> wiki["en.wikipedia.org"]
+    wiki -.->|"no article named Venedig"| dewiki["de.wikipedia.org<br/>link to the English article"]
+    dewiki -.->|"Venice"| wiki
+```
+
+- **Frontend:** all texts are in one file, German and English side by side (`cancel: {de: 'Abbrechen', en: 'Cancel'}`);
+  TypeScript reports a text with only one language. Dates, numbers, and country names use the browser's `Intl` API.
+- **Backend:** validation and error messages are keys that Spring looks up in `messages.properties` or
+  `messages_en.properties`. Without the header, or for another language, everything stays German.
+- **External services:** the place search returns names in the chosen language. A stop keeps the name it was saved
+  with, so for a German name like "Venedig" the backend follows the language link of the German Wikipedia article to
+  the English one, "Venice".
+- The user's own content (titles, notes, the demo trips) is not translated.
 
 ### Data model
 
@@ -244,11 +288,17 @@ GridFS, the MongoDB storage for files, with the owner in their metadata.
 |---|---|
 | `pages/` | One component per route: trips, trip detail, world map, statistics, wishlist, login, registration |
 | `components/` | Reusable parts such as `TripMap`, `WorldMap`, `TripDialog`, `PhotoLightbox`, `WikipediaInfo` |
-| `api/` | axios calls per resource; `client.ts` adds the token and handles `401` |
+| `api/` | axios calls per resource; `client.ts` adds the token and the language, handles `401`, and notices slow answers |
+| `i18n/` | All texts of the user interface, German and English side by side (`texts.ts`), and the chosen language |
 | `utils/`, `types/` | Pure helper functions (filters, dates, countries) and TypeScript types of the API |
 
 The Vite dev server forwards `/api` to the backend, so the frontend uses the same relative URLs locally and in
 production.
+
+Colors come from theme tokens in `index.css` (e.g. `surface`, `ink`, `accent`), each with a light and a dark value.
+The sun / moon button puts the class `dark` on `<html>`, and every component changes with it, without dark mode code
+of its own. A small script in `index.html` sets the design before the first paint, so a dark page does not flash
+white.
 
 ### CI/CD pipeline
 
@@ -289,7 +339,7 @@ documents were kept up to date with every pull request.
 TravelBlog/
 ├── backend/                 Spring Boot application
 │   └── src/main/java/org/example/backend/
-│       ├── config/          clients for Nominatim and Wikipedia
+│       ├── config/          clients for Nominatim and Wikipedia, API documentation
 │       ├── controller/      REST endpoints under /api
 │       ├── dto/             request and response records
 │       ├── exception/       uniform error answers
@@ -298,7 +348,7 @@ TravelBlog/
 │       ├── security/        Spring Security and the JWT filter
 │       └── service/         business logic
 ├── frontend/                React application (Vite)
-│   └── src/                 pages, components, api, utils, types
+│   └── src/                 pages, components, api, i18n, utils, types
 ├── docs/                    requirements, architecture, deployment, screenshots
 ├── .github/workflows/       CI, SonarQube analysis, deployment
 └── Dockerfile               one image with backend and frontend
@@ -433,5 +483,5 @@ The frontend has no automated tests (not part of the course); lint, type check, 
 - Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors; place search by
   [Nominatim](https://nominatim.org/)
 - Country borders from [Natural Earth](https://www.naturalearthdata.com/) (public domain)
-- Place summaries from [Wikipedia](https://de.wikipedia.org/) (CC BY-SA 4.0)
+- Place summaries from the German and English [Wikipedia](https://www.wikipedia.org/) (CC BY-SA 4.0)
 - Photos of the demo trips from [Unsplash](https://unsplash.com/) (Unsplash License)
