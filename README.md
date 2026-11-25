@@ -47,6 +47,7 @@ button in the top right corner.
 - **Continuous deployment:** every merge is tested, packaged as a Docker image, and live on Render within minutes
 - **150+ automated backend tests** with MockMvc and an embedded MongoDB; coverage measured with JaCoCo
 - **SonarQube Quality Gate on every pull request**, for the backend and the frontend
+- **Lighthouse 100 / 100 / 100 / 100** in performance, accessibility, best practices, and SEO, on mobile and desktop
 - **20 REST endpoints**, secured with Spring Security and JWT and documented with OpenAPI / Swagger UI; every user
   sees and changes only their own data
 - **Interactive maps** with Leaflet: the route of each trip and a world map of all visited and wished-for countries
@@ -470,6 +471,20 @@ npm run build
 ```
 
 The frontend has no automated tests (not part of the course); lint, type check, and build are its checks.
+
+### Lighthouse
+
+Measured on the live app with Lighthouse 13.6 ([PageSpeed Insights](https://pagespeed.web.dev/analysis/https-travelblog-latest-onrender-com-login/fqzrua4kiqn9m3a39ypuqq?form_factor=mobile)),
+on 25 November 2026:
+
+| | Performance | Accessibility | Best practices | SEO |
+|---|---|---|---|---|
+| Mobile (Moto G Power, slow 4G) | 100 | 100 | 100 | 100 |
+| Desktop | 100 | 100 | 100 | 100 |
+
+On mobile the first content appears after 0.9 s, with no blocking time and no layout shift. PageSpeed Insights can
+only measure pages without a login, so these are the scores of the login page; the pages behind the login can be
+measured in Chrome's developer tools (tab Lighthouse) while logged in.
 
 ## Working together
 
