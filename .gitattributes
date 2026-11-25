@@ -1,0 +1,4 @@
+# GitHub language statistics (Linguist): the page mockups are one large HTML file and documentation, not code.
+# Without this line GitHub shows the repository as mostly HTML instead of TypeScript and Java.
+# The wildcards stand for the space and the special characters in the file name.
+TravelBlog*Seitenentw*.html linguist-documentation
