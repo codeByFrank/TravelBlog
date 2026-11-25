@@ -307,6 +307,9 @@ Decisions that complement `requirements.md`. Update this file when a decision ch
 - The page always keeps room for the scrollbar (`scrollbar-gutter: stable` in `index.css`), so it does not shift
   sideways when switching between a short and a long page.
 - Routing uses React Router; HTTP requests use axios.
+- `index.html` has a description and Open Graph tags, so a link to the app shows a title, a text and a picture on
+  LinkedIn, Slack or WhatsApp. The picture is `frontend/public/og-image.png` (1200 × 630 px, the size LinkedIn
+  expects); like every file in `public/` it is served without a login.
 - Code layout in `frontend/src/`: `pages/` (one component per route, named `…Page`), `components/` (reusable parts),
   `api/` (one file per backend resource, built on the shared axios client in `api/client.ts`), `types/` (types of the
   API responses), `utils/` (helpers such as date formatting).
