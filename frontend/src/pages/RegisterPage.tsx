@@ -3,8 +3,10 @@ import {Link, useNavigate} from 'react-router-dom'
 import api, {getErrorMessage} from '../api/client'
 import AuthCard from '../components/AuthCard'
 import FormField from '../components/FormField'
+import {useLanguage} from '../i18n/useLanguage'
 
 export default function RegisterPage() {
+    const {t} = useLanguage()
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
@@ -16,11 +18,11 @@ export default function RegisterPage() {
         setError('')
 
         if (username.trim().length < 3 || username.trim().length > 30) {
-            setError('Der Benutzername muss 3 bis 30 Zeichen lang sein.')
+            setError(t.auth.usernameLength)
             return
         }
         if (password.length < 8) {
-            setError('Das Passwort muss mindestens 8 Zeichen lang sein.')
+            setError(t.auth.passwordLength)
             return
         }
 
@@ -29,7 +31,7 @@ export default function RegisterPage() {
             await api.post('/api/auth/register', {username, password})
             void navigate('/login')
         } catch (err) {
-            setError(getErrorMessage(err, 'Registrierung fehlgeschlagen.'))
+            setError(getErrorMessage(err, t.auth.registerFailed))
         } finally {
             setSubmitting(false)
         }
@@ -37,13 +39,13 @@ export default function RegisterPage() {
 
     return (
         <AuthCard
-            title="Konto erstellen"
-            subtitle="Alle Reisen an einem Ort – mit Karte, Fotos und Eindrücken."
+            title={t.auth.registerTitle}
+            subtitle={t.auth.registerSubtitle}
             footer={
                 <>
-                    Schon ein Konto?{' '}
+                    {t.auth.haveAccount}{' '}
                     <Link to="/login" className="font-semibold text-accent hover:text-accent-dark">
-                        Anmelden
+                        {t.auth.login}
                     </Link>
                 </>
             }
@@ -51,8 +53,8 @@ export default function RegisterPage() {
             <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5">
                 <FormField
                     id="username"
-                    label="Benutzername"
-                    placeholder="3 bis 30 Zeichen"
+                    label={t.auth.username}
+                    placeholder={t.auth.usernameHint}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     autoComplete="username"
@@ -60,9 +62,9 @@ export default function RegisterPage() {
                 />
                 <FormField
                     id="password"
-                    label="Passwort"
+                    label={t.auth.password}
                     type="password"
-                    placeholder="Mindestens 8 Zeichen"
+                    placeholder={t.auth.passwordHint}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="new-password"
@@ -80,7 +82,7 @@ export default function RegisterPage() {
                     disabled={submitting}
                     className="mt-2 min-h-12 cursor-pointer rounded-full bg-accent px-6 text-[15px] font-semibold text-white shadow-[0_6px_18px_rgba(31,111,191,0.25)] hover:bg-accent-dark disabled:cursor-default disabled:opacity-60"
                 >
-                    {submitting ? 'Wird erstellt …' : 'Registrieren'}
+                    {submitting ? t.auth.registering : t.auth.register}
                 </button>
             </form>
         </AuthCard>

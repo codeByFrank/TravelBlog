@@ -1,10 +1,13 @@
 import {Link, NavLink} from "react-router-dom";
 import {HOME_PATH, navPages} from '../navigation'
+import {useLanguage} from '../i18n/useLanguage'
+import LanguageSwitch from './LanguageSwitch'
 import LogoutButton from './LogoutButton'
 
 const linkBase = 'flex min-h-11 items-center rounded-full px-4 text-[15px] font-semibold'
 
 export default function NavBar() {
+    const {t} = useLanguage()
     const username = localStorage.getItem('username')
     return (
         <header className="border-b border-line bg-surface">
@@ -17,7 +20,7 @@ export default function NavBar() {
                 </Link>
 
                 <nav
-                    aria-label="Hauptnavigation"
+                    aria-label={t.nav.main}
                     className="order-last flex basis-full flex-wrap gap-1 md:order-0 md:flex-1 md:basis-auto"
                 >
                     {navPages.map((page) => (
@@ -31,13 +34,14 @@ export default function NavBar() {
                                     : `${linkBase} text-muted hover:text-ink`
                             }
                         >
-                            {page.label}
+                            {t.nav[page.labelKey]}
                         </NavLink>
                     ))}
                 </nav>
 
-                {/* Logged-in user and logout */}
+                {/* Language, logged-in user and logout */}
                 <div className="ml-auto flex items-center gap-3">
+                    <LanguageSwitch/>
                     <span className="text-[15px] font-semibold text-muted">{username}</span>
                     <LogoutButton/>
                 </div>

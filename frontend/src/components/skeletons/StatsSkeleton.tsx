@@ -1,3 +1,4 @@
+import {useLanguage} from '../../i18n/useLanguage'
 import LoadingText from './LoadingText'
 import Skeleton from './Skeleton'
 import StatTilesSkeleton from './StatTilesSkeleton'
@@ -8,9 +9,10 @@ const YEARS = [1, 2, 3, 4]
 // Placeholder for the statistics page while the trips load: number tiles, records and the bars per year,
 // in the same sizes as TripStats, TripRecords and YearStats
 export default function StatsSkeleton() {
+    const {t} = useLanguage()
     return (
         <div className="flex flex-col gap-7">
-            <LoadingText text="Statistik wird geladen …"/>
+            <LoadingText text={t.stats.loading}/>
 
             <StatTilesSkeleton count={5}/>
 

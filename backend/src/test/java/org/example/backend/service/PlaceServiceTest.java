@@ -40,6 +40,22 @@ class PlaceServiceTest {
     }
 
     @Test
+    void search_asksForNamesInTheLanguageOfTheUserInterface() {
+        server.expect(requestTo(startsWith(SEARCH_URL)))
+                .andExpect(queryParam("q", "Florence"))
+                .andExpect(queryParam("accept-language", "en"))
+                .andRespond(withSuccess("""
+                        [{"name": "Florence", "display_name": "Florence, Tuscany, Italy", "lat": "43.77", "lon": "11.25",
+                          "address": {"country_code": "it"}}]
+                        """, MediaType.APPLICATION_JSON));
+
+        List<PlaceResponse> places = placeService.search("Florence", "en");
+
+        server.verify();
+        assertEquals("Florence, Tuscany, Italy", places.getFirst().displayName());
+    }
+
+    @Test
     void search_returnsPlacesWithCoordinatesAndCountryCode() {
         server.expect(requestTo(startsWith(SEARCH_URL)))
                 .andExpect(method(HttpMethod.GET))
@@ -59,7 +75,7 @@ class PlaceServiceTest {
                         ]
                         """, MediaType.APPLICATION_JSON));
 
-        List<PlaceResponse> places = placeService.search(" Florenz ");
+        List<PlaceResponse> places = placeService.search(" Florenz ", "de");
 
         server.verify();
         assertEquals(List.of(new PlaceResponse("Florenz", "Florenz, Toskana, Italien", 43.7697955, 11.2556404, "IT")),
@@ -77,7 +93,7 @@ class PlaceServiceTest {
                         ]
                         """, MediaType.APPLICATION_JSON));
 
-        List<PlaceResponse> places = placeService.search("Rom");
+        List<PlaceResponse> places = placeService.search("Rom", "de");
 
         assertEquals(1, places.size());
         assertEquals("Rom", places.getFirst().name());
@@ -99,7 +115,7 @@ class PlaceServiceTest {
                         ]
                         """, MediaType.APPLICATION_JSON));
 
-        List<PlaceResponse> places = placeService.search("Strasburg");
+        List<PlaceResponse> places = placeService.search("Strasburg", "de");
 
         assertEquals(List.of("Straßburg, Grand Est, Frankreich", "Strasburg, Mecklenburg-Vorpommern, Deutschland"),
                 places.stream().map(PlaceResponse::displayName).toList());
@@ -111,7 +127,7 @@ class PlaceServiceTest {
         server.expect(requestTo(startsWith(SEARCH_URL)))
                 .andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
 
-        assertTrue(placeService.search("xyzxyz").isEmpty());
+        assertTrue(placeService.search("xyzxyz", "de").isEmpty());
     }
 
     @Test
@@ -120,7 +136,7 @@ class PlaceServiceTest {
                 .andRespond(withServerError());
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> placeService.search("Florenz"));
+                () -> placeService.search("Florenz", "de"));
 
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatusCode());
     }
@@ -128,7 +144,7 @@ class PlaceServiceTest {
     @Test
     void search_throwsBadRequest_withoutCallingNominatim_whenQueryIsBlank() {
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> placeService.search("   "));
+                () -> placeService.search("   ", "de"));
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
         server.verify();

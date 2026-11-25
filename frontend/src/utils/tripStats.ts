@@ -71,7 +71,8 @@ export function getCountryTimes(trips: Trip[]): CountryTime[] {
         .map(([code, days]) => ({code, trips: tripsByCountry.get(code)?.size ?? 0, days: days.size}))
         .sort((a, b) => b.days - a.days
             || b.trips - a.trips
-            || getCountryName(a.code).localeCompare(getCountryName(b.code), 'de'))
+            // Ties in a fixed order by the German name, the same in both languages
+            || getCountryName(a.code, 'de').localeCompare(getCountryName(b.code, 'de'), 'de'))
 }
 
 // Travel days in each month over all years: index 0 is January. A trip from 28 March to 10 April

@@ -2,6 +2,7 @@ import {useEffect, useRef, useState, type KeyboardEvent} from 'react'
 import {getErrorMessage} from '../api/client'
 import {deletePhoto} from '../api/photos'
 import {setCover} from '../api/trips'
+import {useLanguage} from '../i18n/useLanguage'
 import type {Trip} from '../types/trip'
 import AuthImage from './AuthImage'
 import ConfirmDialog from './ConfirmDialog'
@@ -18,6 +19,7 @@ const roundButton = 'flex size-12 cursor-pointer items-center justify-center rou
 const actionButton = 'min-h-11 cursor-pointer rounded-full px-5 text-sm font-semibold disabled:cursor-default disabled:opacity-60'
 
 export default function PhotoLightbox({trip, stopId, startIndex, onClose, onTripChange}: Readonly<PhotoLightboxProps>) {
+    const {t} = useLanguage()
     const dialogRef = useRef<HTMLDialogElement>(null)
     const [index, setIndex] = useState(startIndex)
     const [confirmDelete, setConfirmDelete] = useState(false)
@@ -55,7 +57,7 @@ export default function PhotoLightbox({trip, stopId, startIndex, onClose, onTrip
         try {
             onTripChange(await setCover(trip.id, photoId))
         } catch (err) {
-            setError(getErrorMessage(err, 'Das Titelbild konnte nicht gespeichert werden.'))
+            setError(getErrorMessage(err, t.lightbox.coverError))
         } finally {
             setBusy(false)
         }
@@ -68,7 +70,7 @@ export default function PhotoLightbox({trip, stopId, startIndex, onClose, onTrip
         try {
             onTripChange(await deletePhoto(trip.id, stopId, photoId))
         } catch (err) {
-            setError(getErrorMessage(err, 'Das Foto konnte nicht gelöscht werden.'))
+            setError(getErrorMessage(err, t.lightbox.deleteError))
         } finally {
             setBusy(false)
         }
@@ -81,36 +83,37 @@ export default function PhotoLightbox({trip, stopId, startIndex, onClose, onTrip
             ref={dialogRef}
             onClose={onClose}
             onKeyDown={handleKeyDown}
-            aria-label={`Fotos von ${stop.name}`}
+            aria-label={t.lightbox.label(stop.name)}
             className="m-auto h-full max-h-none w-full max-w-none bg-ink p-0 text-white backdrop:bg-ink/60"
         >
             <div className="flex h-full flex-col gap-4 p-4 sm:p-6">
                 <div className="flex items-center justify-between gap-3">
                     <p className="font-semibold">
-                        {stop.name} <span className="text-white/70">· {position + 1} von {photoIds.length}</span>
+                        <span>{stop.name}</span>{' '}
+                        <span className="text-white/70">· {t.lightbox.position(position + 1, photoIds.length)}</span>
                     </p>
                     <button type="button" onClick={onClose} className={roundButton}>
                         <span aria-hidden="true">×</span>
-                        <span className="sr-only">Schließen</span>
+                        <span className="sr-only">{t.common.close}</span>
                     </button>
                 </div>
 
                 <div className="flex min-h-0 flex-1 items-center gap-2 sm:gap-4">
                     <button type="button" onClick={() => show(position - 1)} disabled={position === 0} className={roundButton}>
                         <span aria-hidden="true">‹</span>
-                        <span className="sr-only">Vorheriges Foto</span>
+                        <span className="sr-only">{t.lightbox.previous}</span>
                     </button>
                     <div className="flex h-full min-w-0 flex-1 items-center justify-center">
                         <AuthImage
                             key={photoId}
                             photoId={photoId}
-                            alt={`${stop.name}, Foto ${position + 1}`}
+                            alt={`${stop.name}, ${t.common.photo(position + 1)}`}
                             className="max-h-full max-w-full rounded-xl object-contain!"
                         />
                     </div>
                     <button type="button" onClick={() => show(position + 1)} disabled={position === photoIds.length - 1} className={roundButton}>
                         <span aria-hidden="true">›</span>
-                        <span className="sr-only">Nächstes Foto</span>
+                        <span className="sr-only">{t.lightbox.next}</span>
                     </button>
                 </div>
 
@@ -123,7 +126,7 @@ export default function PhotoLightbox({trip, stopId, startIndex, onClose, onTrip
                         disabled={busy || isCover}
                         className={`${actionButton} bg-white text-ink hover:bg-white/85`}
                     >
-                        {isCover ? '✓ Titelbild der Reise' : 'Als Titelbild'}
+                        {isCover ? t.lightbox.isCover : t.lightbox.makeCover}
                     </button>
                     <button
                         type="button"
@@ -131,7 +134,7 @@ export default function PhotoLightbox({trip, stopId, startIndex, onClose, onTrip
                         disabled={busy}
                         className={`${actionButton} text-red-300 hover:bg-white/10`}
                     >
-                        Foto löschen
+                        {t.lightbox.deletePhoto}
                     </button>
                 </div>
             </div>
@@ -139,9 +142,9 @@ export default function PhotoLightbox({trip, stopId, startIndex, onClose, onTrip
             {/* Inside the <dialog>, otherwise the question would lie behind it */}
             {confirmDelete && (
                 <ConfirmDialog
-                    title="Foto löschen?"
-                    message="Das Foto wird endgültig gelöscht."
-                    confirmLabel="Löschen"
+                    title={t.lightbox.deleteTitle}
+                    message={t.lightbox.deleteMessage}
+                    confirmLabel={t.common.delete}
                     onConfirm={() => void handleDelete()}
                     onCancel={() => setConfirmDelete(false)}
                 />

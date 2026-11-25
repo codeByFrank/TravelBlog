@@ -5,9 +5,11 @@ import {addWishlistEntry, deleteWishlistEntry, getWishlistEntries, updateWishlis
 import ConfirmDialog from '../components/ConfirmDialog'
 import WishlistForm from '../components/WishlistForm'
 import WishlistSkeleton from '../components/skeletons/WishlistSkeleton'
+import type {Language} from '../i18n/language'
+import {useLanguage} from '../i18n/useLanguage'
 import type {TripDraft} from '../types/trip'
-import {PRIORITY_LABELS, type Priority, type WishlistEntry, type WishlistEntryRequest} from '../types/WishlistEntry'
-import {describeCountries, getContinents, getCountryNames} from '../utils/countries'
+import type {Priority, WishlistEntry, WishlistEntryRequest} from '../types/WishlistEntry'
+import {describeCountries, getContinents, getDestinationName, isNamedAfterCountries} from '../utils/countries'
 
 // Colors of the priority badge
 const PRIORITY_STYLES: Record<Priority, string> = {
@@ -27,17 +29,20 @@ const PRIORITY_ORDER: Record<Priority, number> = {
 // "Machu Picchu" → "Peru · Südamerika", "Patagonien" → "Argentinien, Chile · Südamerika".
 // An entry that is only named after its countries shows just the continent, so the name does not appear twice:
 // "Island" → "Europa".
-function describeWishCountries(entry: WishlistEntry): string {
-    if (entry.destination === getCountryNames(entry.countryCodes)) {
-        return getContinents(entry.countryCodes).join(', ')
+function describeWishCountries(entry: WishlistEntry, language: Language): string {
+    if (isNamedAfterCountries(entry.destination, entry.countryCodes)) {
+        return getContinents(entry.countryCodes, language).join(', ')
     }
-    return describeCountries(entry.countryCodes)
+    return describeCountries(entry.countryCodes, language)
 }
 
 export default function WishlistPage() {
+    const {t, language} = useLanguage()
     const navigate = useNavigate()
     const [entries, setEntries] = useState<WishlistEntry[]>([])
     const [loading, setLoading] = useState(true)
+    // Loading failed; the text is made when it is shown, so it follows a change of the language
+    const [loadError, setLoadError] = useState<unknown>(null)
     const [error, setError] = useState('')
 
     // The entry shown in the form; while this is null the form creates a new entry
@@ -49,10 +54,11 @@ export default function WishlistPage() {
     // The values go in the router state, not in the address, so the user's texts do not appear in the URL.
     // The wish stays on the wishlist, because some places are worth more than one trip.
     function planTrip(entry: WishlistEntry) {
+        const destination = getDestinationName(entry.destination, entry.countryCodes, language)
         const tripDraft: TripDraft = {
-            title: entry.destination,
+            title: destination,
             description: entry.reason,
-            placeQuery: entry.destination,
+            placeQuery: destination,
         }
         void navigate('/trips', {state: {tripDraft}})
     }
@@ -61,7 +67,7 @@ export default function WishlistPage() {
     useEffect(() => {
         getWishlistEntries()
             .then((loadedEntries) => setEntries(loadedEntries))
-            .catch((err) => setError(getErrorMessage(err, 'Die Wunschliste konnte nicht geladen werden.')))
+            .catch((err) => setLoadError(err))
             .finally(() => setLoading(false))
     }, [])
 
@@ -87,10 +93,11 @@ export default function WishlistPage() {
                 setEntryToEdit(null)
             }
         } catch (err) {
-            setError(getErrorMessage(err, 'Der Eintrag konnte nicht gelöscht werden.'))
+            setError(getErrorMessage(err, t.wishlist.deleteError))
         }
     }
 
+    const shownError = loadError ? getErrorMessage(loadError, t.wishlist.loadError) : error
     const sortedEntries = entries.toSorted(
         (a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority],
     )
@@ -98,13 +105,13 @@ export default function WishlistPage() {
     return (
         <section className="flex flex-col gap-8">
             <div className="flex flex-col gap-1.5">
-                <h1 className="text-4xl font-bold tracking-tight">Wunschliste</h1>
-                <p className="text-muted">Orte, die du noch sehen möchtest – und warum.</p>
+                <h1 className="text-4xl font-bold tracking-tight">{t.wishlist.title}</h1>
+                <p className="text-muted">{t.wishlist.subtitle}</p>
             </div>
 
-            {error && (
+            {shownError && (
                 <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {error}
+                    {shownError}
                 </p>
             )}
 
@@ -113,9 +120,9 @@ export default function WishlistPage() {
                 <div className="flex flex-col gap-4">
                     {loading && <WishlistSkeleton/>}
 
-                    {!loading && !error && entries.length === 0 && (
+                    {!loading && !shownError && entries.length === 0 && (
                         <p className="rounded-card bg-surface p-8 text-center text-muted shadow-card">
-                            Deine Wunschliste ist noch leer. Füge dein erstes Wunschziel hinzu.
+                            {t.wishlist.empty}
                         </p>
                     )}
 
@@ -130,24 +137,26 @@ export default function WishlistPage() {
                                 <div className="flex items-start justify-between gap-3">
                                     {/* As in the mockup: the countries and continent in small letters next to the name */}
                                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                                        <h2 className="text-xl font-bold tracking-tight">{entry.destination}</h2>
-                                        {describeWishCountries(entry) && (
+                                        <h2 className="text-xl font-bold tracking-tight">
+                                            {getDestinationName(entry.destination, entry.countryCodes, language)}
+                                        </h2>
+                                        {describeWishCountries(entry, language) && (
                                             <span className="text-sm text-muted">
-                                                {describeWishCountries(entry)}
+                                                {describeWishCountries(entry, language)}
                                             </span>
                                         )}
                                     </div>
                                     <span
                                         className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${PRIORITY_STYLES[entry.priority]}`}
                                     >
-                                        Priorität: {PRIORITY_LABELS[entry.priority].toLowerCase()}
+                                        {t.wishlist.priority(t.priorities[entry.priority])}
                                     </span>
                                 </div>
                                 <p className="whitespace-pre-line text-ink-soft">{entry.reason}</p>
                                 {/* As in the mockup: the best travel time on the left, the buttons on the right */}
                                 <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
                                     <p className="text-sm text-muted">
-                                        {entry.bestTravelTime && `Beste Reisezeit: ${entry.bestTravelTime}`}
+                                        {entry.bestTravelTime && t.wishlist.bestTravelTime(entry.bestTravelTime)}
                                     </p>
                                     <div className="flex flex-wrap gap-3">
                                         <button
@@ -155,21 +164,21 @@ export default function WishlistPage() {
                                             onClick={() => planTrip(entry)}
                                             className="min-h-10 cursor-pointer rounded-full bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-dark"
                                         >
-                                            Reise planen
+                                            {t.wishlist.planTrip}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setEntryToEdit(entry)}
                                             className="min-h-10 cursor-pointer rounded-full border border-line-strong bg-surface px-4 text-sm font-semibold text-accent hover:bg-accent-soft"
                                         >
-                                            Bearbeiten
+                                            {t.common.edit}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setEntryToDelete(entry)}
                                             className="min-h-10 cursor-pointer rounded-full border border-line-strong bg-surface px-4 text-sm font-semibold text-red-700 hover:bg-red-50"
                                         >
-                                            Löschen
+                                            {t.common.delete}
                                         </button>
                                     </div>
                                 </div>
@@ -193,9 +202,9 @@ export default function WishlistPage() {
 
             {entryToDelete && (
                 <ConfirmDialog
-                    title="Wunschziel löschen?"
-                    message={`„${entryToDelete.destination}“ wird endgültig von deiner Wunschliste entfernt.`}
-                    confirmLabel="Löschen"
+                    title={t.wishlist.deleteTitle}
+                    message={t.wishlist.deleteMessage(getDestinationName(entryToDelete.destination, entryToDelete.countryCodes, language))}
+                    confirmLabel={t.common.delete}
                     onConfirm={() => void handleDelete(entryToDelete)}
                     onCancel={() => setEntryToDelete(null)}
                 />

@@ -1,7 +1,8 @@
 import {useEffect, useRef, useState, type SubmitEvent} from 'react'
 import {getErrorMessage, getFieldErrors} from '../api/client'
 import {createTrip, setCover, updateTrip} from '../api/trips'
-import {TRIP_TAG_LABELS, TRIP_TAGS, type StopType, type Trip, type TripDraft, type TripTag} from '../types/trip'
+import {useLanguage} from '../i18n/useLanguage'
+import {TRIP_TAGS, type StopType, type Trip, type TripDraft, type TripTag} from '../types/trip'
 import type {Place} from '../types/place'
 import {COVER_COLORS, DEFAULT_COVER_COLOR} from '../coverColors'
 import {todayIso} from '../utils/dates'
@@ -9,7 +10,7 @@ import DialogHeader from './DialogHeader'
 import FormField from './FormField'
 import PlaceSearch from './PlaceSearch'
 import StopTypeField from './StopTypeField'
-import {photoWarning, savePhotos} from '../api/photos'
+import {savePhotos} from '../api/photos'
 import PhotoPicker from './PhotoPicker'
 import AuthImage from './AuthImage'
 
@@ -64,6 +65,7 @@ function toNewForm(draft: TripDraft | null | undefined): TripForm {
 }
 
 export default function TripDialog({open, trip, draft, onClose, onSaved}: Readonly<TripDialogProps>) {
+    const {t} = useLanguage()
     const dialogRef = useRef<HTMLDialogElement>(null)
     const [form, setForm] = useState(EMPTY_FORM)
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -122,12 +124,12 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
         setError('')
 
         if (form.startDate && form.endDate && form.endDate < form.startDate) {
-            setFieldErrors({endDate: 'Das Enddatum darf nicht vor dem Startdatum liegen.'})
+            setFieldErrors({endDate: t.tripDialog.endBeforeStart})
             return
         }
 
         if (!trip && !place) {
-            setFieldErrors({place: 'Bitte einen Ort suchen und auswählen.'})
+            setFieldErrors({place: t.tripDialog.placeRequired})
             return
         }
 
@@ -157,10 +159,10 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
             }
             setUploading(true)
             const result = await savePhotos(created.id, created.stops[0].id, [], files)
-            onSaved(result.trip ?? created, photoWarning(result.failed))
+            onSaved(result.trip ?? created, result.failed > 0 ? t.photos.saveWarning(result.failed) : undefined)
         } catch (err) {
             setFieldErrors(getFieldErrors(err))
-            setError(getErrorMessage(err, 'Die Reise konnte nicht gespeichert werden.'))
+            setError(getErrorMessage(err, t.tripDialog.saveError))
         } finally {
             setSubmitting(false)
             setUploading(false)
@@ -182,9 +184,9 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
 
     const tripPhotoIds = trip ? trip.stops.flatMap((stop) => stop.photoIds) : []
 
-    let submitLabel = 'Speichern'
-    if (uploading) submitLabel = 'Fotos werden hochgeladen …'
-    else if (submitting) submitLabel = 'Wird gespeichert …'
+    let submitLabel = t.common.save
+    if (uploading) submitLabel = t.common.uploadingPhotos
+    else if (submitting) submitLabel = t.common.saving
 
     return (
         <dialog
@@ -195,7 +197,7 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
         >
             <DialogHeader
                 titleId="trip-dialog-title"
-                title={trip ? 'Reise bearbeiten' : 'Neue Reise'}
+                title={trip ? t.tripDialog.editTitle : t.tripDialog.newTitle}
                 onClose={onClose}
             />
             <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5 px-6 pb-6 sm:px-8 sm:pb-8">
@@ -213,14 +215,14 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
                             <StopTypeField name="trip-first-stop-type" value={firstStopType} onChange={setTypeChoice}/>
                         )}
                         {place && <PhotoPicker files={files} onFilesChange={setFiles}/>}
-                        <p className="-mt-2 text-sm text-muted">Weitere Orte fügst du danach auf der Seite der Reise hinzu.</p>
+                        <p className="-mt-2 text-sm text-muted">{t.tripDialog.morePlacesHint}</p>
                     </>
                 )}
 
                 <FormField
                     id="trip-title"
-                    label={<>Titel <span className="font-normal text-muted">(optional)</span></>}
-                    placeholder={trip && !trip.customTitle ? trip.title : 'Leer lassen – wird aus den Orten erstellt'}
+                    label={<><span>{t.tripDialog.title}</span>{' '}<span className="font-normal text-muted">{t.common.optional}</span></>}
+                    placeholder={trip && !trip.customTitle ? trip.title : t.tripDialog.titlePlaceholder}
                     value={form.title}
                     onChange={(e) => update('title', e.target.value)}
                     error={fieldErrors.title}
@@ -229,7 +231,7 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
                 <div className="grid gap-5 sm:grid-cols-2">
                     <FormField
                         id="trip-start"
-                        label="Von"
+                        label={t.tripDialog.from}
                         type="date"
                         value={form.startDate}
                         onChange={(e) => updateStartDate(e.target.value)}
@@ -238,7 +240,7 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
                     />
                     <FormField
                         id="trip-end"
-                        label="Bis"
+                        label={t.tripDialog.to}
                         type="date"
                         min={form.startDate || undefined}
                         value={form.endDate}
@@ -250,7 +252,8 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
 
                 <div className="flex flex-col gap-2">
                     <label htmlFor="trip-description" className="text-sm font-semibold text-ink-soft">
-                        Beschreibung <span className="font-normal text-muted">(optional)</span>
+                        <span>{t.tripDialog.description}</span>{' '}
+                        <span className="font-normal text-muted">{t.common.optional}</span>
                     </label>
                     <textarea
                         id="trip-description"
@@ -263,7 +266,7 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
 
                 {tripPhotoIds.length > 0 && (
                     <fieldset className="flex flex-col gap-2">
-                        <legend className="mb-2 text-sm font-semibold text-ink-soft">Titelbild</legend>
+                        <legend className="mb-2 text-sm font-semibold text-ink-soft">{t.tripDialog.coverPhoto}</legend>
                         <div className="flex flex-wrap gap-3">
                             {tripPhotoIds.map((photoId, index) => (
                                 <label key={photoId} className="cursor-pointer">
@@ -277,7 +280,7 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
                                     />
                                     <AuthImage
                                         photoId={photoId}
-                                        alt={`Foto ${index + 1}`}
+                                        alt={t.common.photo(index + 1)}
                                         className="size-16 rounded-xl peer-checked:ring-4 peer-checked:ring-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-accent"
                                     />
                                 </label>
@@ -288,13 +291,13 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
 
                 <fieldset className="flex flex-col gap-2">
                     <legend className="mb-2 text-sm font-semibold text-ink-soft">
-                        Farbe der Titelkarte
-                        {tripPhotoIds.length > 0 && <span className="font-normal text-muted"> (nur für Reisen ohne Fotos)</span>}
+                        <span>{t.tripDialog.coverColor}</span>
+                        {tripPhotoIds.length > 0 && <span className="font-normal text-muted">{t.tripDialog.onlyWithoutPhotos}</span>}
                     </legend>
                     
                     <div className="flex flex-wrap gap-3">
                         {COVER_COLORS.map((color) => (
-                            <label key={color.value} title={color.label} className="cursor-pointer">
+                            <label key={color.value} title={t.coverColors[color.nameKey]} className="cursor-pointer">
                                 <input
                                     type="radio"
                                     name="coverColor"
@@ -307,7 +310,7 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
                                     className="block size-10 rounded-full border border-line-strong peer-checked:ring-4 peer-checked:ring-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-accent"
                                     style={{backgroundColor: color.value}}
                                 />
-                                <span className="sr-only">{color.label}</span>
+                                <span className="sr-only">{t.coverColors[color.nameKey]}</span>
                             </label>
                         ))}
                     </div>
@@ -315,7 +318,8 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
 
                 <fieldset className="flex flex-col gap-2">
                     <legend className="mb-2 text-sm font-semibold text-ink-soft">
-                        Tags <span className="font-normal text-muted">(optional, mehrere möglich)</span>
+                        <span>{t.tripDialog.tags}</span>{' '}
+                        <span className="font-normal text-muted">{t.tripDialog.tagsHint}</span>
                     </legend>
                     <div className="flex flex-wrap gap-2">
                         {TRIP_TAGS.map((tag) => {
@@ -332,7 +336,7 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
                                             : 'border-line-strong bg-surface text-ink hover:border-accent'
                                     }`}
                                 >
-                                    {TRIP_TAG_LABELS[tag]}
+                                    {t.tags[tag]}
                                 </button>
                             )
                         })}
@@ -351,7 +355,7 @@ export default function TripDialog({open, trip, draft, onClose, onSaved}: Readon
                         onClick={onClose}
                         className="min-h-12 cursor-pointer rounded-full px-5 text-[15px] font-semibold text-muted hover:text-ink"
                     >
-                        Abbrechen
+                        {t.common.cancel}
                     </button>
                     <button
                         type="submit"

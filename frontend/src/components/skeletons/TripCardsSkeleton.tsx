@@ -1,3 +1,4 @@
+import {useLanguage} from '../../i18n/useLanguage'
 import LoadingText from './LoadingText'
 import Skeleton from './Skeleton'
 
@@ -7,9 +8,10 @@ const CARDS = [1, 2, 3]
 // Placeholder for "Meine Reisen" while the trips load: the filter bar and trip cards in the same sizes as
 // TripFilters and TripCard, so the page does not jump when the trips arrive
 export default function TripCardsSkeleton() {
+    const {t} = useLanguage()
     return (
         <div className="flex flex-col gap-7">
-            <LoadingText text="Reisen werden geladen …"/>
+            <LoadingText text={t.trips.loading}/>
 
             {/* Search field and year buttons, then the tag buttons */}
             <div aria-hidden="true" className="flex flex-col gap-3">

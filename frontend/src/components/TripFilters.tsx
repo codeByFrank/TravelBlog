@@ -1,5 +1,6 @@
-import {TRIP_TAG_LABELS, TRIP_TAGS, type TripTag} from '../types/trip'
-import {ALL_YEARS, formatTripCount} from '../utils/tripFilters'
+import {useLanguage} from '../i18n/useLanguage'
+import {TRIP_TAGS, type TripTag} from '../types/trip'
+import {ALL_YEARS} from '../utils/tripFilters'
 
 type TripFiltersProps = {
     query: string
@@ -25,6 +26,8 @@ export default function TripFilters({
                                         onTagsChange,
                                         resultCount,
                                     }: Readonly<TripFiltersProps>) {
+    const {t} = useLanguage()
+
     // A tag button adds the tag to the filter or removes it again
     function toggleTag(tag: TripTag) {
         onTagsChange(selectedTags.includes(tag) ? selectedTags.filter((t) => t !== tag) : [...selectedTags, tag])
@@ -35,7 +38,7 @@ export default function TripFilters({
             <div className="flex flex-wrap items-center gap-3">
                 <div className="relative flex-[1_1_280px] md:max-w-105">
                     <label htmlFor="trip-search" className="sr-only">
-                        Reisen durchsuchen
+                        {t.trips.searchLabel}
                     </label>
                     <SearchIcon/>
                     <input
@@ -43,13 +46,13 @@ export default function TripFilters({
                         type="search"
                         value={query}
                         onChange={(e) => onQueryChange(e.target.value)}
-                        placeholder="Ort, Land oder Stichwort suchen"
+                        placeholder={t.trips.searchPlaceholder}
                         className="h-11 w-full rounded-full border border-line-strong bg-surface pr-4 pl-11 text-[15px] text-ink outline-none focus:ring-4 focus:ring-accent-soft"
                     />
                 </div>
 
                 <fieldset className="flex flex-wrap gap-2">
-                    <legend className="sr-only">Nach Jahr filtern</legend>
+                    <legend className="sr-only">{t.trips.filterByYear}</legend>
                     {[ALL_YEARS, ...years].map((year) => {
                         const active = year === selectedYear
                         return (
@@ -64,20 +67,20 @@ export default function TripFilters({
                                         : `${pillBase} border-line-strong bg-surface text-ink hover:border-accent`
                                 }
                             >
-                                {year}
+                                {year === ALL_YEARS ? t.common.all : year}
                             </button>
                         )
                     })}
                 </fieldset>
 
                 <span aria-live="polite" className="ml-auto text-sm text-muted">
-                    {formatTripCount(resultCount)}
+                    {t.common.trips(resultCount)}
                 </span>
             </div>
 
             {/* Several tags can be selected; a trip must have all of them. "Alle" clears the tag filter. */}
             <fieldset className="flex flex-wrap items-center gap-2">
-                <legend className="float-left mr-1 text-sm font-semibold text-muted">Tags</legend>
+                <legend className="float-left mr-1 text-sm font-semibold text-muted">{t.trips.tags}</legend>
                 <button
                     type="button"
                     aria-pressed={selectedTags.length === 0}
@@ -88,7 +91,7 @@ export default function TripFilters({
                             : `${pillBase} border-line-strong bg-surface text-ink hover:border-accent`
                     }
                 >
-                    Alle
+                    {t.common.all}
                 </button>
                 {TRIP_TAGS.map((tag) => {
                     const active = selectedTags.includes(tag)
@@ -104,7 +107,7 @@ export default function TripFilters({
                                     : `${pillBase} border-line-strong bg-surface text-ink hover:border-accent`
                             }
                         >
-                            {TRIP_TAG_LABELS[tag]}
+                            {t.tags[tag]}
                         </button>
                     )
                 })}

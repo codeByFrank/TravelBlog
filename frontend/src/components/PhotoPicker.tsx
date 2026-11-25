@@ -1,5 +1,6 @@
 import {useEffect, useMemo, useState, type ChangeEvent} from 'react'
 import {MAX_PHOTOS_PER_STOP} from '../api/photos'
+import {useLanguage} from '../i18n/useLanguage'
 import AuthImage from './AuthImage'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -13,6 +14,7 @@ type PhotoPickerProps = {
 
 // Chooses up to 5 photos of a stop. Nothing is uploaded or deleted here: that happens on "Speichern".
 export default function PhotoPicker({files, onFilesChange, existingPhotoIds = [], onExistingChange}: Readonly<PhotoPickerProps>) {
+    const {t} = useLanguage()
     const [error, setError] = useState('')
     const free = MAX_PHOTOS_PER_STOP - existingPhotoIds.length - files.length
 
@@ -27,10 +29,10 @@ export default function PhotoPicker({files, onFilesChange, existingPhotoIds = []
 
         const photos = chosen.filter((file) => ALLOWED_TYPES.includes(file.type))
         if (photos.length < chosen.length) {
-            setError('Bitte nur Fotos im Format JPEG, PNG oder WebP wählen.')
+            setError(t.photos.wrongType)
         }
         if (photos.length > free) {
-            setError(`Pro Ort sind höchstens ${MAX_PHOTOS_PER_STOP} Fotos möglich.`)
+            setError(t.photos.tooMany(MAX_PHOTOS_PER_STOP))
         }
         onFilesChange([...files, ...photos.slice(0, free)])
     }
@@ -41,19 +43,20 @@ export default function PhotoPicker({files, onFilesChange, existingPhotoIds = []
     return (
         <div className="flex flex-col gap-2">
             <span className="text-sm font-semibold text-ink-soft">
-                Fotos <span className="font-normal text-muted">(optional, höchstens {MAX_PHOTOS_PER_STOP})</span>
+                <span>{t.photos.label}</span>{' '}
+                <span className="font-normal text-muted">{t.photos.limitHint(MAX_PHOTOS_PER_STOP)}</span>
             </span>
             <ul className="flex flex-wrap gap-3">
                 {existingPhotoIds.map((photoId, index) => (
                     <li key={photoId} className="relative">
-                        <AuthImage photoId={photoId} alt={`Foto ${index + 1}`} className={thumb}/>
+                        <AuthImage photoId={photoId} alt={t.common.photo(index + 1)} className={thumb}/>
                         <button
                             type="button"
                             onClick={() => onExistingChange?.(existingPhotoIds.filter((id) => id !== photoId))}
                             className={removeButton}
                         >
                             <span aria-hidden="true">×</span>
-                            <span className="sr-only">Foto {index + 1} entfernen</span>
+                            <span className="sr-only">{t.photos.remove(t.common.photo(index + 1))}</span>
                         </button>
                     </li>
                 ))}
@@ -66,7 +69,7 @@ export default function PhotoPicker({files, onFilesChange, existingPhotoIds = []
                             className={removeButton}
                         >
                             <span aria-hidden="true">×</span>
-                            <span className="sr-only">{file.name} entfernen</span>
+                            <span className="sr-only">{t.photos.remove(file.name)}</span>
                         </button>
                     </li>
                 ))}
@@ -74,7 +77,7 @@ export default function PhotoPicker({files, onFilesChange, existingPhotoIds = []
                     <li>
                         <label className={`${thumb} flex cursor-pointer flex-col items-center justify-center border-2 border-dashed border-line-strong text-muted hover:border-accent hover:text-accent focus-within:border-accent`}>
                             <span aria-hidden="true" className="text-2xl leading-none">+</span>
-                            <span className="text-xs font-semibold">Foto</span>
+                            <span className="text-xs font-semibold">{t.photos.add}</span>
                             <input
                                 type="file"
                                 accept={ALLOWED_TYPES.join(',')}

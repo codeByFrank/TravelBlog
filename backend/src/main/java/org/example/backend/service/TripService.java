@@ -4,6 +4,7 @@ import org.example.backend.dto.CoverRequest;
 import org.example.backend.dto.FirstStopRequest;
 import org.example.backend.dto.TripRequest;
 import org.example.backend.dto.TripResponse;
+import org.example.backend.exception.LocalizedException;
 import org.example.backend.model.Stop;
 import org.example.backend.model.Trip;
 import org.example.backend.model.TripTag;
@@ -11,7 +12,6 @@ import org.example.backend.repository.TripRepo;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -40,7 +40,7 @@ public class TripService {
         checkDateRange(request);
         FirstStopRequest firstStop = request.firstStop();
         if (firstStop == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte einen Ort auswählen.");
+            throw new LocalizedException(HttpStatus.BAD_REQUEST, "error.trip.placeRequired");
         }
         Stop stop = new Stop(UUID.randomUUID().toString(),
                 firstStop.name().trim(),
@@ -127,7 +127,7 @@ public class TripService {
 
     Trip findTripOfUser(String userId, String id) {
         return tripRepo.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reise nicht gefunden."));
+                .orElseThrow(() -> new LocalizedException(HttpStatus.NOT_FOUND, "error.trip.notFound"));
     }
 
     public TripResponse updateTrip(String userId, String id, TripRequest request) {
@@ -136,8 +136,8 @@ public class TripService {
         boolean stopOutsideNewDates = stopsOf(trip).stream()
                 .anyMatch(stop -> isOutsideTrip(stop.date(), request.startDate(), request.endDate()));
         if (stopOutsideNewDates) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Einige Orte liegen außerhalb des neuen Zeitraums. Ändere zuerst ihr Datum.");
+            throw new LocalizedException(HttpStatus.BAD_REQUEST,
+                    "error.trip.stopsOutsideDates");
         }
         Trip updated = trip
                 .withTitle(customTitle(request.title()))
@@ -151,8 +151,8 @@ public class TripService {
 
     private static void checkDateRange(TripRequest request) {
         if (request.endDate().isBefore(request.startDate())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Das Enddatum darf nicht vor dem Startdatum liegen.");
+            throw new LocalizedException(HttpStatus.BAD_REQUEST,
+                    "error.trip.endBeforeStart");
         }
     }
 
@@ -167,7 +167,7 @@ public class TripService {
         Trip trip = findTripOfUser(userId, id);
         String photoId = request.photoId();
         if (photoId != null && !allPhotoIdsOf(trip).contains(photoId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dieses Foto gehört nicht zu dieser Reise.");
+            throw new LocalizedException(HttpStatus.BAD_REQUEST, "error.trip.photoNotInTrip");
         }
         return toResponse(tripRepo.save(trip.withCoverPhotoId(photoId)));
     }

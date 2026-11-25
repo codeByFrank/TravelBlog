@@ -12,19 +12,19 @@ import java.util.List;
 
 public record TripRequest(
         // Optional; without a title the trip is named after its places (see TripTitles)
-        @Size(max = 100, message = "Der Titel darf höchstens 100 Zeichen lang sein.")
+        @Size(max = 100, message = "{validation.title.size}")
         String title,
 
-        @Size(max = 2000, message = "Die Beschreibung darf höchstens 2000 Zeichen lang sein.")
+        @Size(max = 2000, message = "{validation.description.size}")
         String description,
 
-        @NotNull(message = "Bitte ein Startdatum wählen.")
+        @NotNull(message = "{validation.startDate.required}")
         LocalDate startDate,
 
-        @NotNull(message = "Bitte ein Enddatum wählen.")
+        @NotNull(message = "{validation.endDate.required}")
         LocalDate endDate,
 
-        @Pattern(regexp = "^#[0-9A-Fa-f]{6}$", message = "Ungültige Farbe.")
+        @Pattern(regexp = "^#[0-9A-Fa-f]{6}$", message = "{validation.color.invalid}")
         String coverColor,
 
         // Optional; unknown values are rejected when the JSON is read

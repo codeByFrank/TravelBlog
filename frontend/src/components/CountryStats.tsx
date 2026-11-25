@@ -1,6 +1,6 @@
 import {useState} from 'react'
+import {useLanguage} from '../i18n/useLanguage'
 import {getCountryName} from '../utils/countries'
-import {formatDays, formatTripCount} from '../utils/tripFilters'
 import type {CountryTime} from '../utils/tripStats'
 
 // Countries shown before "Alle anzeigen"
@@ -9,22 +9,23 @@ const FIRST_COUNTRIES = 8
 // "Länder" on the statistics page: each country with its trips and days, most days first, and a bar for the days
 // compared with the country with the most days. Long lists show the first countries and a button for the rest.
 export default function CountryStats({countries}: Readonly<{ countries: CountryTime[] }>) {
+    const {t, language} = useLanguage()
     const [showAll, setShowAll] = useState(false)
     const maxDays = Math.max(...countries.map((country) => country.days))
     const shown = showAll ? countries : countries.slice(0, FIRST_COUNTRIES)
 
     return (
         <section aria-labelledby="country-stats-title" className="flex flex-col gap-3 rounded-card bg-surface px-6 py-5 shadow-card">
-            <h2 id="country-stats-title" className="text-[13px] font-semibold text-muted">Länder nach Reisetagen</h2>
+            <h2 id="country-stats-title" className="text-[13px] font-semibold text-muted">{t.stats.countriesByDays}</h2>
             <ul className="flex flex-col gap-3">
                 {shown.map((country) => (
                     <li key={country.code} className="flex flex-col gap-1.5">
                         <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                            <span className="font-semibold text-ink">{getCountryName(country.code)}</span>
+                            <span className="font-semibold text-ink">{getCountryName(country.code, language)}</span>
                             <span className="flex gap-x-1.5 text-sm text-ink-soft">
-                                <span className="whitespace-nowrap">{formatTripCount(country.trips)}</span>
+                                <span className="whitespace-nowrap">{t.common.trips(country.trips)}</span>
                                 <span aria-hidden="true">·</span>
-                                <span className="whitespace-nowrap">{formatDays(country.days)}</span>
+                                <span className="whitespace-nowrap">{t.common.days(country.days)}</span>
                             </span>
                         </div>
                         {/* The numbers are in the text; the bar only shows the proportions */}
@@ -41,7 +42,7 @@ export default function CountryStats({countries}: Readonly<{ countries: CountryT
                     aria-expanded={showAll}
                     className="mt-1 min-h-11 w-fit cursor-pointer rounded-full border border-line-strong px-4 text-sm font-semibold text-ink hover:border-accent"
                 >
-                    {showAll ? 'Weniger anzeigen' : `Alle ${countries.length} Länder anzeigen`}
+                    {showAll ? t.stats.showLess : t.stats.showAllCountries(countries.length)}
                 </button>
             )}
         </section>

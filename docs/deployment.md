@@ -73,5 +73,9 @@ added on Render before the pull request that needs it is merged.
 - On Render's free plan the service sleeps after a while without visitors; the first request afterwards takes about
   a minute.
 - Changing `JWT_SECRET` logs out all users.
+- The link preview (Open Graph tags in `frontend/index.html`) uses the absolute address of the live app,
+  `https://travelblog-latest.onrender.com/`, for the page and for its image `og-image.png`. If the address on Render
+  changes, change it there too. LinkedIn keeps a preview for a few days; the Post Inspector
+  (linkedin.com/post-inspector) loads it again.
 - The demo user `demo` belongs to the application: do not register it as a normal user, because every start
   replaces its trips and wishlist.

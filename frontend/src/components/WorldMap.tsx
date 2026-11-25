@@ -1,7 +1,9 @@
 import {GeoJSON, MapContainer} from 'react-leaflet'
 import type {Layer, PathOptions} from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import {useLanguage} from '../i18n/useLanguage'
 import type {Country, CountryCollection} from '../types/country'
+import {getCountryName} from '../utils/countries'
 import MapWheelZoom from './MapWheelZoom'
 
 type WorldMapProps = {
@@ -17,11 +19,6 @@ type WorldMapProps = {
     onCountryClick: (code: string) => void
 }
 
-// Shows the German name when the mouse is over a country.
-// Outside the component, because it does not use props or state.
-function addCountryName(country: Country, layer: Layer) {
-    layer.bindTooltip(country.properties.name, {sticky: true})
-}
 
 // Shows the world as colored countries, without a street map below:
 // visited countries in blue, wishlist destinations in orange, all others light grey (as in the mockup).
@@ -33,6 +30,8 @@ export default function WorldMap({
     selectedCode,
     onCountryClick,
 }: Readonly<WorldMapProps>) {
+    const {t, language} = useLanguage()
+
     // Leaflet asks this function for the look of each country.
     // The Tailwind classes work because Leaflet draws the countries as SVG paths.
     function styleCountry(country: Country | undefined): PathOptions {
@@ -60,18 +59,22 @@ export default function WorldMap({
     // Leaflet calls this once for each country when it draws the map:
     // the name as a tooltip for all countries, and a click handler for the visited and wished ones
     function prepareCountry(country: Country, layer: Layer) {
-        addCountryName(country, layer)
-
         // A few areas have no code (null); they can never be visited or wished
         const code = country.properties.code
+
+        // The name in the language of the user interface when the mouse is over a country;
+        // areas without a code keep the German name of the map data
+        layer.bindTooltip(code ? getCountryName(code, language) : country.properties.name, {sticky: true})
+
         if (code && (visitedCodes.includes(code) || wishlistCodes.includes(code))) {
             layer.on('click', () => onCountryClick(code))
         }
     }
 
     // react-leaflet draws a GeoJSON layer only once. The key changes when the codes or the chosen country change,
-    // so React builds the layer again with the new colors and click handlers.
-    const colorKey = `${visitedCodes.join(',')}|${wishlistCodes.join(',')}|${selectedCode ?? ''}`
+    // so React builds the layer again with the new colors, click handlers and names.
+    // The language is part of it, so the names of the countries change with it.
+    const colorKey = `${visitedCodes.join(',')}|${wishlistCodes.join(',')}|${selectedCode ?? ''}|${language}`
 
     return (
         <MapContainer
@@ -93,7 +96,7 @@ export default function WorldMap({
                 data={countries}
                 style={styleCountry}
                 onEachFeature={prepareCountry}
-                attribution="Grenzen: Natural Earth"
+                attribution={t.worldMap.bordersCredit}
             />
             <MapWheelZoom/>
         </MapContainer>

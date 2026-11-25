@@ -80,10 +80,10 @@ Users must be able to:
 
 The order of the stops defines the course of the trip.
 
-A stop should show the first sentences of the German Wikipedia article about its place, with a link to the whole
-article and the source and license of the text (Wikipedia, CC BY-SA). Overnight stops show it right away; for day
-trips and places on the way the user loads it with a button. A stop without a matching article shows nothing (or,
-after the button, a short note).
+A stop should show the first sentences of the Wikipedia article about its place in the language of the user
+interface, with a link to the whole article and the source and license of the text (Wikipedia, CC BY-SA). Overnight
+stops show it right away; for day trips and places on the way the user loads it with a button. A stop without a
+matching article shows nothing (or, after the button, a short note).
 
 ## 6. Trip Map
 
@@ -202,7 +202,10 @@ nothing else.
 ### Usability
 
 * The application is called TravelBlog; the name is not translated.
-* The user interface is in German in the first version.
+* The user interface is in German and English. German is the default; on the first visit an English browser gets
+  English. The user switches the language with "DE | EN" in the header and on the login page; the choice is kept in
+  the browser. Error messages of the backend, place names from the place search, and Wikipedia texts follow the
+  chosen language. The user's own content (titles, notes, the demo trips) is not translated.
 * The design is modern, light, minimalist, and airy; the page mockups in `TravelBlog – Seitenentwürfe.html` are the
   reference.
 * The application should be usable on mobile devices.
@@ -268,7 +271,6 @@ Potential future functionality may include:
 * routes along roads instead of straight lines, and the means of transport per section
 * historical weather for a stop's place and date
 * reading a photo's location from its EXIF data
-* a language switch, so that each user can choose the language of the user interface
 
 Future ideas should not be implemented unless explicitly requested.
 

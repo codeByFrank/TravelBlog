@@ -1,6 +1,7 @@
 import {useState, type KeyboardEvent} from 'react'
 import {getErrorMessage} from '../api/client'
 import {searchPlaces} from '../api/places'
+import {useLanguage} from '../i18n/useLanguage'
 import type {Place} from '../types/place'
 
 type PlaceSearchProps = {
@@ -13,6 +14,7 @@ type PlaceSearchProps = {
 // Search field for a place by name. The search runs on the button or Enter, not on every key,
 // because Nominatim allows only one request per second.
 export default function PlaceSearch({selected, onSelect, error, initialQuery}: Readonly<PlaceSearchProps>) {
+    const {t} = useLanguage()
     const [query, setQuery] = useState(initialQuery ?? '')
     const [results, setResults] = useState<Place[] | null>(null) // null: not searched yet
     const [searching, setSearching] = useState(false)
@@ -26,7 +28,7 @@ export default function PlaceSearch({selected, onSelect, error, initialQuery}: R
             setResults(await searchPlaces(query))
         } catch (err) {
             setResults(null)
-            setSearchError(getErrorMessage(err, 'Die Ortssuche hat nicht funktioniert.'))
+            setSearchError(getErrorMessage(err, t.placeSearch.error))
         } finally {
             setSearching(false)
         }
@@ -45,7 +47,7 @@ export default function PlaceSearch({selected, onSelect, error, initialQuery}: R
     return (
         <div className="flex flex-col gap-2">
             <label htmlFor="place-search" className="text-sm font-semibold text-ink-soft">
-                Ort suchen
+                {t.placeSearch.label}
             </label>
             <div className="flex gap-2">
                 <input
@@ -54,7 +56,7 @@ export default function PlaceSearch({selected, onSelect, error, initialQuery}: R
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="z. B. Florenz"
+                    placeholder={t.placeSearch.placeholder}
                     aria-invalid={message ? true : undefined}
                     aria-describedby={message ? 'place-search-error' : undefined}
                     className="min-h-12 min-w-0 flex-1 rounded-xl border border-line-strong bg-surface px-4 text-[15px] text-ink outline-none placeholder:text-muted/70 focus:border-accent focus:ring-4 focus:ring-accent-soft"
@@ -65,7 +67,7 @@ export default function PlaceSearch({selected, onSelect, error, initialQuery}: R
                     disabled={searching || !query.trim()}
                     className="min-h-12 cursor-pointer rounded-xl border border-line-strong bg-surface px-4 text-[15px] font-semibold text-ink hover:border-accent disabled:cursor-default disabled:opacity-60"
                 >
-                    {searching ? 'Suche …' : 'Suchen'}
+                    {searching ? t.placeSearch.searching : t.placeSearch.search}
                 </button>
             </div>
 
@@ -76,12 +78,12 @@ export default function PlaceSearch({selected, onSelect, error, initialQuery}: R
             )}
 
             {results?.length === 0 && (
-                <p className="text-sm text-muted">Kein Ort gefunden. Versuche einen anderen Namen.</p>
+                <p className="text-sm text-muted">{t.placeSearch.noResults}</p>
             )}
 
             {results && results.length > 0 && (
                 <fieldset className="flex flex-col gap-1.5">
-                    <legend className="sr-only">Gefundene Orte – einen auswählen</legend>
+                    <legend className="sr-only">{t.placeSearch.results}</legend>
                     {results.map((place) => {
                         const isSelected = selected?.latitude === place.latitude
                             && selected?.longitude === place.longitude

@@ -1,3 +1,4 @@
+import {useLanguage} from '../../i18n/useLanguage'
 import LoadingText from './LoadingText'
 import Skeleton from './Skeleton'
 
@@ -6,9 +7,10 @@ const ENTRIES = [1, 2, 3]
 // Placeholder for the wishlist entries while they load, in the same size as the real entries
 // (the form next to the list is shown at once, it needs no data)
 export default function WishlistSkeleton() {
+    const {t} = useLanguage()
     return (
         <div className="flex flex-col gap-4">
-            <LoadingText text="Wunschliste wird geladen …"/>
+            <LoadingText text={t.wishlist.loading}/>
 
             {ENTRIES.map((entry) => (
                 <div key={entry} aria-hidden="true" className="flex flex-col gap-4 rounded-card bg-surface p-6 shadow-card">
