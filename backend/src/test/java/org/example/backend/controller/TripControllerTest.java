@@ -261,6 +261,24 @@ class TripControllerTest {
     }
 
     @Test
+    void getTrip_returnsEnglishError_whenTheUserInterfaceIsEnglish() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/unknown")
+                        .header("Authorization", bearer())
+                        .header("Accept-Language", "en"))
+                .andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.detail").value("Trip not found."));
+    }
+
+    @Test
+    void getTrip_returnsGermanError_forALanguageWithoutOwnTexts() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/trips/unknown")
+                        .header("Authorization", bearer())
+                        .header("Accept-Language", "fr"))
+                .andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.detail").value("Reise nicht gefunden."));
+    }
+
+    @Test
     void updateTrip_changesTrip_whenTripBelongsToUser() throws Exception {
         saveTrip(USER_ID);
 

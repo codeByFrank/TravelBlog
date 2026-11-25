@@ -2,6 +2,7 @@ import {useEffect} from 'react'
 import {MapContainer, Marker, Polyline, Popup, TileLayer, Tooltip, useMap} from 'react-leaflet'
 import {divIcon, latLngBounds, type LatLngTuple} from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import {useLanguage} from '../i18n/useLanguage'
 import type {Stop} from '../types/trip'
 import {getCountryName} from '../utils/countries'
 import {formatStay} from '../utils/dates'
@@ -65,6 +66,7 @@ function FitToStops({positionsKey}: Readonly<{ positionsKey: string }>) {
 // the base to each day trip, and below the map the number of places and the route length.
 // A click on a marker shows the place, its dates and the note.
 export default function TripMap({stops, routeLengthKm, className = ''}: Readonly<TripMapProps>) {
+    const {t, language} = useLanguage()
     const positions: LatLngTuple[] = stops.map((stop) => [stop.latitude, stop.longitude])
     const routePositions: LatLngTuple[] = stops
         .filter((stop) => stop.onRoute)
@@ -142,7 +144,7 @@ export default function TripMap({stops, routeLengthKm, className = ''}: Readonly
                                 <div className="flex max-w-60 flex-col gap-1 font-sans">
                                     <strong className="text-base text-ink">{stop.name}</strong>
                                     <span className="text-[13px] font-semibold text-muted">
-                                        {formatStay(stop.date, stop.departureDate)} · {getCountryName(stop.countryCode)}
+                                        {formatStay(stop.date, stop.departureDate, language)} · {getCountryName(stop.countryCode, language)}
                                     </span>
                                     {stop.note && <span className="text-sm text-ink-soft">{stop.note}</span>}
                                 </div>
@@ -157,13 +159,13 @@ export default function TripMap({stops, routeLengthKm, className = ''}: Readonly
             {severalStops && (
                 <dl className="grid grid-cols-2 gap-4 px-2 pb-1">
                     <div className="flex flex-col gap-1">
-                        <dt className="text-[13px] font-semibold text-muted">Orte</dt>
+                        <dt className="text-[13px] font-semibold text-muted">{t.stops.places}</dt>
                         <dd className="text-2xl font-bold">{stops.length}</dd>
                     </div>
                     {hasRoute && (
                         <div className="flex flex-col gap-1">
-                            <dt className="text-[13px] font-semibold text-muted">Strecke (Luftlinie)</dt>
-                            <dd className="text-2xl font-bold">{formatKm(routeLengthKm)}</dd>
+                            <dt className="text-[13px] font-semibold text-muted">{t.stops.route}</dt>
+                            <dd className="text-2xl font-bold">{formatKm(routeLengthKm, language)}</dd>
                         </div>
                     )}
                 </dl>

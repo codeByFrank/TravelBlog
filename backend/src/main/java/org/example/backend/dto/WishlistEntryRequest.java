@@ -13,7 +13,7 @@ import java.util.List;
  * The data the frontend sends when a wishlist entry is created or changed.
  * It has no id and no userId: the id is created by MongoDB,
  * and the user id always comes from the login, never from the request.
- * The messages are German because the frontend shows them to the user.
+ * The messages are keys in messages.properties: the frontend shows them in the user's language.
  *
  * @param destination    the place or country, must not be empty
  * @param reason         why the user wants to go there, must not be empty
@@ -23,21 +23,21 @@ import java.util.List;
  *                       each code is two capital letters (ISO 3166-1 alpha-2)
  */
 public record WishlistEntryRequest(
-        @NotBlank(message = "Bitte einen Ort oder ein Land eingeben.")
+        @NotBlank(message = "{validation.destination.required}")
         String destination,
 
-        @NotBlank(message = "Bitte einen Grund eingeben.")
+        @NotBlank(message = "{validation.reason.required}")
         String reason,
 
-        @NotNull(message = "Bitte eine Priorität wählen.")
+        @NotNull(message = "{validation.priority.required}")
         Priority priority,
 
-        @Size(max = 100, message = "Die Reisezeit darf höchstens 100 Zeichen lang sein.")
+        @Size(max = 100, message = "{validation.bestTravelTime.size}")
         String bestTravelTime,
 
         // The rule inside the brackets is checked for every single code in the list
-        @NotEmpty(message = "Bitte mindestens ein Land wählen.")
-        @Size(max = 10, message = "Bitte höchstens 10 Länder wählen.")
-        List<@Pattern(regexp = "^[A-Z]{2}$", message = "Ungültiger Ländercode.") String> countryCodes
+        @NotEmpty(message = "{validation.countries.required}")
+        @Size(max = 10, message = "{validation.countries.size}")
+        List<@Pattern(regexp = "^[A-Z]{2}$", message = "{validation.countryCode.invalid}") String> countryCodes
 ) {
 }

@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react'
 import {useMap} from 'react-leaflet'
+import {useLanguage} from '../i18n/useLanguage'
 
 // How long the hint stays after the last scroll over the map
 const HINT_DURATION_MS = 1500
@@ -11,6 +12,7 @@ const HINT_DURATION_MS = 1500
 // It has to be a component inside MapContainer, because only there useMap knows the map.
 export default function MapWheelZoom() {
     const map = useMap()
+    const {t} = useLanguage()
     const [hintVisible, setHintVisible] = useState(false)
 
     useEffect(() => {
@@ -44,7 +46,7 @@ export default function MapWheelZoom() {
             }`}
         >
             <p className="rounded-full bg-surface px-5 py-2.5 text-center text-[15px] font-semibold text-ink shadow-card">
-                Zum Zoomen zwei Finger spreizen oder Strg + Mausrad
+                {t.stops.zoomHint}
             </p>
         </div>
     )

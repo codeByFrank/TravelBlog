@@ -1,4 +1,6 @@
-import {TRIP_TAG_LABELS, type Stop, type TripTag} from '../types/trip'
+import {LOCALES, type Language} from '../i18n/language'
+import {texts} from '../i18n/texts'
+import type {Stop, TripTag} from '../types/trip'
 import {getCountryName} from './countries'
 
 // Search, year and tag filter and small calculations for the trip overview.
@@ -13,8 +15,8 @@ export type FilterableTrip = {
     routeLengthKm?: number
 }
 
-// Value of the year filter that shows all trips
-export const ALL_YEARS = 'Alle'
+// Value of the year filter that shows all trips; its button says "Alle" / "All"
+export const ALL_YEARS = 'all'
 
 // A trip belongs to the year in which it starts
 export function getTripYear(trip: FilterableTrip): string {
@@ -26,10 +28,15 @@ export function getYears(trips: FilterableTrip[]): string[] {
     return [...new Set(trips.map(getTripYear))].sort((a, b) => b.localeCompare(a))
 }
 
-// Everything the free-text search looks at, e.g. "Italien 2024 … Berge Rom Italien Bestes Eis der Reise"
-function getSearchText(trip: FilterableTrip): string {
-    const tagNames = (trip.tags ?? []).map((tag) => TRIP_TAG_LABELS[tag])
-    const stopTexts = (trip.stops ?? []).flatMap((stop) => [stop.name, getCountryName(stop.countryCode), stop.note ?? ''])
+// Everything the free-text search looks at, e.g. "Italien 2024 … Berge Rom Italien Bestes Eis der Reise".
+// Tags and countries in the language of the user interface, so "Mountains" finds a trip in English.
+function getSearchText(trip: FilterableTrip, language: Language): string {
+    const tagNames = (trip.tags ?? []).map((tag) => texts[language].tags[tag])
+    const stopTexts = (trip.stops ?? []).flatMap((stop) => [
+        stop.name,
+        getCountryName(stop.countryCode, language),
+        stop.note ?? '',
+    ])
     return [trip.title, trip.description ?? '', ...tagNames, ...stopTexts].join(' ')
 }
 
@@ -41,14 +48,15 @@ export function filterTrips<T extends FilterableTrip>(
     trips: T[],
     query: string,
     year: string,
-    selectedTags: TripTag[] = [],
+    selectedTags: TripTag[],
+    language: Language,
 ): T[] {
-    const search = query.trim().toLocaleLowerCase('de')
+    const search = query.trim().toLocaleLowerCase(language)
     return trips.filter((trip) => {
         const tags = trip.tags ?? []
         const matchesYear = year === ALL_YEARS || getTripYear(trip) === year
         const matchesTags = selectedTags.every((tag) => tags.includes(tag))
-        const text = getSearchText(trip).toLocaleLowerCase('de')
+        const text = getSearchText(trip, language).toLocaleLowerCase(language)
         return matchesYear && matchesTags && text.includes(search)
     })
 }
@@ -60,11 +68,6 @@ export function getTripDays(trip: FilterableTrip): number {
     const start = Date.parse(trip.startDate)
     const end = Date.parse(trip.endDate)
     return Math.round((end - start) / DAY_IN_MS) + 1
-}
-
-// "1 Reise", "6 Reisen"
-export function formatTripCount(count: number): string {
-    return count === 1 ? '1 Reise' : `${count} Reisen`
 }
 
 // Countries of a trip in the order of the route, each only once, e.g. ["IT", "FR"]
@@ -103,17 +106,7 @@ export function getTotalsByYear(trips: FilterableTrip[]): YearTotals[] {
     })
 }
 
-// "1 Tag", "12 Tage"
-export function formatDays(days: number): string {
-    return days === 1 ? '1 Tag' : `${days} Tage`
-}
-
-// "1 Land", "5 Länder"
-export function formatCountryCount(count: number): string {
-    return count === 1 ? '1 Land' : `${count} Länder`
-}
-
-// "1.234 km"
-export function formatKm(km: number): string {
-    return `${km.toLocaleString('de-DE')} km`
+// "1.234 km" in German, "1,234 km" in English
+export function formatKm(km: number, language: Language): string {
+    return `${km.toLocaleString(LOCALES[language])} km`
 }

@@ -2,13 +2,13 @@ package org.example.backend.service;
 
 import org.example.backend.dto.StopRequest;
 import org.example.backend.dto.TripResponse;
+import org.example.backend.exception.LocalizedException;
 import org.example.backend.model.Stop;
 import org.example.backend.model.Trip;
 import org.example.backend.repository.TripRepo;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -58,10 +58,10 @@ public class StopService {
         Stop deleted = stops.stream()
                 .filter(stop -> stop.id().equals(stopId))
                 .findFirst()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ort nicht gefunden."));
+                .orElseThrow(() -> new LocalizedException(HttpStatus.NOT_FOUND, "error.stop.notFound"));
         if (stops.size() == 1) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Eine Reise braucht mindestens einen Ort. Ändere ihn stattdessen.");
+            throw new LocalizedException(HttpStatus.BAD_REQUEST,
+                    "error.stop.lastStop");
         }
         List<Stop> remaining = stops.stream()
                 .filter(stop -> !stop.id().equals(stopId))
@@ -99,15 +99,15 @@ public class StopService {
 
     private static void checkDateWithinTrip(Trip trip, StopRequest request) {
         if (TripService.isOutsideTrip(request.date(), trip.startDate(), trip.endDate())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Das Datum muss innerhalb der Reise liegen.");
+            throw new LocalizedException(HttpStatus.BAD_REQUEST,
+                    "error.stop.dateOutsideTrip");
         }
     }
 
     private static void checkStopExists(List<Stop> stops, String stopId) {
         boolean exists = stops.stream().anyMatch(stop -> stop.id().equals(stopId));
         if (!exists) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ort nicht gefunden.");
+            throw new LocalizedException(HttpStatus.NOT_FOUND, "error.stop.notFound");
         }
     }
 }

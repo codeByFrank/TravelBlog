@@ -1,9 +1,10 @@
 import type {ReactNode} from 'react'
 import {Link} from 'react-router-dom'
 import type {Trip} from '../types/trip'
+import {useLanguage} from '../i18n/useLanguage'
 import {getCountryName} from '../utils/countries'
 import {formatDateRange} from '../utils/dates'
-import {formatDays, formatKm, getCountryCodes, getTripDays} from '../utils/tripFilters'
+import {formatKm, getCountryCodes, getTripDays} from '../utils/tripFilters'
 import AuthImage from './AuthImage'
 import TagBadges from './TagBadges'
 
@@ -21,9 +22,10 @@ function Badge({children}: Readonly<{ children: ReactNode }>) {
 
 // One tile on the "Meine Reisen" page; the whole card links to the trip's detail page
 export default function TripCard({trip, index}: Readonly<TripCardProps>) {
+    const {t, language} = useLanguage()
     // The color chosen in "Neue Reise" wins; trips without a color get a pastel tone in turn
     const fallbackClass = trip.coverColor ? '' : fallbackCoverColors[index % fallbackCoverColors.length]
-    const countries = getCountryCodes(trip).map((code) => getCountryName(code)).join(' · ')
+    const countries = getCountryCodes(trip).map((code) => getCountryName(code, language)).join(' · ')
     // As on the detail page: with one place, "1 Ort" and "0 km" say nothing the title does not say;
     // a base with only day trips around it has several places but no route
     const severalStops = trip.stops.length > 1
@@ -48,17 +50,17 @@ export default function TripCard({trip, index}: Readonly<TripCardProps>) {
 
             <div className="flex flex-col gap-2.5 px-5.5 pt-5 pb-5.5">
                 <span className="text-[13px] font-semibold text-muted">
-                    {formatDateRange(trip.startDate, trip.endDate)}
+                    {formatDateRange(trip.startDate, trip.endDate, language)}
                 </span>
                 <h2 className="text-xl font-bold tracking-tight text-ink group-hover:text-accent">{trip.title}</h2>
                 {countries && <span className="text-[15px] font-semibold text-ink-soft">{countries}</span>}
                 {trip.description && <p className="line-clamp-2 text-[15px] text-ink-soft">{trip.description}</p>}
 
                 <div className="mt-1 flex flex-wrap gap-2">
-                    <Badge>{formatDays(getTripDays(trip))}</Badge>
-                    {severalStops && <Badge>{trip.stops.length} Orte</Badge>}
-                    {hasRoute && <Badge>{formatKm(trip.routeLengthKm)}</Badge>}
-                    {photoCount > 0 && <Badge>{photoCount === 1 ? '1 Foto' : `${photoCount} Fotos`}</Badge>}
+                    <Badge>{t.common.days(getTripDays(trip))}</Badge>
+                    {severalStops && <Badge>{t.common.places(trip.stops.length)}</Badge>}
+                    {hasRoute && <Badge>{formatKm(trip.routeLengthKm, language)}</Badge>}
+                    {photoCount > 0 && <Badge>{t.common.photos(photoCount)}</Badge>}
                 </div>
                 <TagBadges tags={trip.tags}/>
             </div>

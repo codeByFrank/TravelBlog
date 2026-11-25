@@ -1,3 +1,4 @@
+import {LOCALES, type Language} from '../i18n/language'
 import type {Trip} from '../types/trip'
 import {getCountryName} from './countries'
 import {getCountryCodes} from './tripFilters'
@@ -9,14 +10,14 @@ export const WORLD_COUNTRY_COUNT = 195
 // One line of the list "Besuchte Länder", e.g. Italien · 2024 · 2 Reisen
 export type VisitedCountry = {
     code: string // e.g. "IT"
-    name: string // German name, e.g. "Italien"
+    name: string // name in the language of the user interface, e.g. "Italien" / "Italy"
     lastYear: string // year of the latest stop in this country, e.g. "2024"
     tripCount: number // number of trips with at least one stop in this country
 }
 
 // All countries the user has visited, each only once, newest first.
 // A country counts as visited when at least one stop lies in it (requirements, section 8).
-export function collectVisitedCountries(trips: Trip[]): VisitedCountry[] {
+export function collectVisitedCountries(trips: Trip[], language: Language): VisitedCountry[] {
     const visitedCountries: VisitedCountry[] = []
 
     for (const trip of trips) {
@@ -31,7 +32,7 @@ export function collectVisitedCountries(trips: Trip[]): VisitedCountry[] {
                     existingCountry.lastYear = lastYear
                 }
             } else {
-                visitedCountries.push({code, name: getCountryName(code), lastYear, tripCount: 1})
+                visitedCountries.push({code, name: getCountryName(code, language), lastYear, tripCount: 1})
             }
         }
     }
@@ -41,7 +42,7 @@ export function collectVisitedCountries(trips: Trip[]): VisitedCountry[] {
         if (a.lastYear !== b.lastYear) {
             return b.lastYear.localeCompare(a.lastYear)
         }
-        return a.name.localeCompare(b.name, 'de')
+        return a.name.localeCompare(b.name, language)
     })
 }
 
@@ -66,8 +67,8 @@ function getLastYearInCountry(trip: Trip, code: string): string {
     return lastYear
 }
 
-// Share of the world's countries, rounded to whole percent, e.g. 8 countries → "4 %"
-export function getWorldShare(countryCount: number): string {
-    const percent = Math.round((countryCount / WORLD_COUNTRY_COUNT) * 100)
-    return `${percent} %`
+// Share of the world's countries, rounded to whole percent, e.g. 8 countries → "4 %" in German, "4%" in English
+export function getWorldShare(countryCount: number, language: Language): string {
+    const share = Math.round((countryCount / WORLD_COUNTRY_COUNT) * 100) / 100
+    return share.toLocaleString(LOCALES[language], {style: 'percent'})
 }

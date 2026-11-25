@@ -1,15 +1,18 @@
 import axios from 'axios'
+import {getLanguage} from '../i18n/language'
 
 export const TOKEN_KEY = 'token'
 
 const api = axios.create()
 
-// Send the JWT with every request
+// Send the JWT and the language of the user interface with every request.
+// The backend answers with messages in that language and asks the place search and Wikipedia in it.
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem(TOKEN_KEY)
     if (token) {
         config.headers.Authorization = `Bearer ${token}`
     }
+    config.headers['Accept-Language'] = getLanguage()
     return config
 })
 

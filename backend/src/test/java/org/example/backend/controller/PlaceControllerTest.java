@@ -31,7 +31,7 @@ class PlaceControllerTest {
 
     @Test
     void searchPlaces_returnsPlacesFromTheService() throws Exception {
-        when(placeService.search("Florenz")).thenReturn(List.of(
+        when(placeService.search("Florenz", "de")).thenReturn(List.of(
                 new PlaceResponse("Florenz", "Florenz, Toskana, Italien", 43.77, 11.26, "IT")));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/places").param("query", "Florenz")
@@ -40,6 +40,18 @@ class PlaceControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].name").value("Florenz"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].latitude").value(43.77))
                 .andExpect(MockMvcResultMatchers.jsonPath("$[0].countryCode").value("IT"));
+    }
+
+    @Test
+    void searchPlaces_searchesInEnglish_whenTheUserInterfaceIsEnglish() throws Exception {
+        when(placeService.search("Florence", "en")).thenReturn(List.of(
+                new PlaceResponse("Florence", "Florence, Tuscany, Italy", 43.77, 11.26, "IT")));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/places").param("query", "Florence")
+                        .header(HttpHeaders.ACCEPT_LANGUAGE, "en")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtService.createToken("user-1")))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0].name").value("Florence"));
     }
 
     @Test

@@ -3,6 +3,7 @@ import {Link, useNavigate} from 'react-router-dom'
 import api, {getErrorMessage, TOKEN_KEY} from '../api/client'
 import AuthCard from '../components/AuthCard'
 import FormField from '../components/FormField'
+import {useLanguage} from '../i18n/useLanguage'
 
 type LoginResponse = {
     token: string
@@ -10,6 +11,7 @@ type LoginResponse = {
 }
 
 export default function LoginPage() {
+    const {t} = useLanguage()
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
@@ -26,7 +28,7 @@ export default function LoginPage() {
             localStorage.setItem('username', response.data.username)
             void navigate('/')
         } catch (err) {
-            setError(getErrorMessage(err, 'Anmeldung fehlgeschlagen.'))
+            setError(getErrorMessage(err, t.auth.loginFailed))
         } finally {
             setSubmitting(false)
         }
@@ -34,13 +36,13 @@ export default function LoginPage() {
 
     return (
         <AuthCard
-            title="Willkommen zurück"
-            subtitle="Melde dich an, um deine Reisen zu sehen."
+            title={t.auth.loginTitle}
+            subtitle={t.auth.loginSubtitle}
             footer={
                 <>
-                    Noch kein Konto?{' '}
+                    {t.auth.noAccount}{' '}
                     <Link to="/register" className="font-semibold text-accent hover:text-accent-dark">
-                        Jetzt registrieren
+                        {t.auth.registerNow}
                     </Link>
                 </>
             }
@@ -48,7 +50,7 @@ export default function LoginPage() {
             <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-5">
                 <FormField
                     id="username"
-                    label="Benutzername"
+                    label={t.auth.username}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     autoComplete="username"
@@ -56,7 +58,7 @@ export default function LoginPage() {
                 />
                 <FormField
                     id="password"
-                    label="Passwort"
+                    label={t.auth.password}
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -75,7 +77,7 @@ export default function LoginPage() {
                     disabled={submitting}
                     className="mt-2 min-h-12 cursor-pointer rounded-full bg-accent px-6 text-[15px] font-semibold text-white shadow-[0_6px_18px_rgba(31,111,191,0.25)] hover:bg-accent-dark disabled:cursor-default disabled:opacity-60"
                 >
-                    {submitting ? 'Wird angemeldet …' : 'Anmelden'}
+                    {submitting ? t.auth.loggingIn : t.auth.login}
                 </button>
             </form>
         </AuthCard>

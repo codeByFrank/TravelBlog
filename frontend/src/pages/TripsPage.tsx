@@ -6,6 +6,7 @@ import TripDialog from '../components/TripDialog'
 import TripCard from '../components/TripCard'
 import TripFilters from '../components/TripFilters'
 import TripCardsSkeleton from '../components/skeletons/TripCardsSkeleton'
+import {useLanguage} from '../i18n/useLanguage'
 import type {Trip, TripDraft, TripTag} from '../types/trip'
 import {ALL_YEARS, filterTrips, getYears} from '../utils/tripFilters'
 
@@ -16,13 +17,14 @@ function readTripDraft(state: unknown): TripDraft | null {
 }
 
 export default function TripsPage() {
+    const {t, language} = useLanguage()
     const navigate = useNavigate()
     const location = useLocation()
     // The statistics page links here with ?year=2024 to show the trips of one year
     const [searchParams] = useSearchParams()
     const [trips, setTrips] = useState<Trip[]>([])
     const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
+    const [loadError, setLoadError] = useState<unknown>(null)
     // The planned wish, if the page was opened with "Reise planen"; the dialog then opens at once with its values
     const [tripDraft, setTripDraft] = useState<TripDraft | null>(() => readTripDraft(location.state))
     const [dialogOpen, setDialogOpen] = useState(tripDraft !== null)
@@ -46,7 +48,7 @@ export default function TripsPage() {
                 if (!cancelled) setTrips(data)
             })
             .catch((err) => {
-                if (!cancelled) setError(getErrorMessage(err, 'Deine Reisen konnten nicht geladen werden.'))
+                if (!cancelled) setLoadError(err)
             })
             .finally(() => {
                 if (!cancelled) setLoading(false)
@@ -56,7 +58,10 @@ export default function TripsPage() {
         }
     }, [])
 
-    const shownTrips = filterTrips(trips, query, year, selectedTags)
+    // The text is made here and not when the error happens, so it follows a change of the language
+    const error = loadError ? getErrorMessage(loadError, t.trips.loadError) : ''
+
+    const shownTrips = filterTrips(trips, query, year, selectedTags, language)
 
     function resetFilters() {
         setQuery('')
@@ -79,8 +84,8 @@ export default function TripsPage() {
         <div className="flex flex-col gap-7">
             <section className="flex flex-wrap items-end justify-between gap-4">
                 <div className="flex flex-col gap-1.5">
-                    <h1 className="text-4xl font-bold tracking-tight">Meine Reisen</h1>
-                    <p className="text-muted">Alle Reisen an einem Ort – mit Karte, Fotos und Eindrücken.</p>
+                    <h1 className="text-4xl font-bold tracking-tight">{t.trips.title}</h1>
+                    <p className="text-muted">{t.trips.subtitle}</p>
                 </div>
                 <button
                     type="button"
@@ -88,7 +93,7 @@ export default function TripsPage() {
                     className="flex min-h-12 cursor-pointer items-center gap-2 rounded-full bg-accent px-6 text-[15px] font-semibold text-white shadow-[0_6px_18px_rgba(31,111,191,0.25)] hover:bg-accent-dark"
                 >
                     <span aria-hidden="true" className="text-xl leading-none">+</span>
-                    <span>Neue Reise</span>
+                    <span>{t.trips.newTrip}</span>
                 </button>
             </section>
 
@@ -102,10 +107,8 @@ export default function TripsPage() {
 
             {!loading && !error && trips.length === 0 && (
                 <section className="flex flex-col items-center gap-2 rounded-card bg-surface px-6 py-14 text-center shadow-card">
-                    <h2 className="text-xl font-bold">Noch keine Reisen</h2>
-                    <p className="max-w-md text-muted">
-                        Sobald du deine erste Reise anlegst, erscheint sie hier.
-                    </p>
+                    <h2 className="text-xl font-bold">{t.trips.emptyTitle}</h2>
+                    <p className="max-w-md text-muted">{t.trips.emptyText}</p>
                 </section>
             )}
 
@@ -124,14 +127,14 @@ export default function TripsPage() {
 
                     {shownTrips.length === 0 ? (
                         <section className="flex flex-col items-center gap-3 rounded-card bg-surface px-6 py-14 text-center shadow-card">
-                            <h2 className="text-xl font-bold">Keine Reisen gefunden</h2>
-                            <p className="max-w-md text-muted">Ändere den Suchbegriff, das Jahr oder die Tags.</p>
+                            <h2 className="text-xl font-bold">{t.trips.noResultsTitle}</h2>
+                            <p className="max-w-md text-muted">{t.trips.noResultsText}</p>
                             <button
                                 type="button"
                                 onClick={resetFilters}
                                 className="mt-1 min-h-11 cursor-pointer rounded-full border border-line-strong bg-surface px-5 text-sm font-semibold text-ink hover:border-accent"
                             >
-                                Filter zurücksetzen
+                                {t.trips.resetFilters}
                             </button>
                         </section>
                     ) : (
